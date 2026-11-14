@@ -1,4 +1,5 @@
 // npm run test:vscode [-- --vsix <file>] [--version <stable|minimum|insiders|x.y.z>]
+//                     [--executable <path>]
 //
 // End-to-end test of the extension AS PACKAGED, in a real VS Code:
 //   1. packages the extension (vsce, production build), unless --vsix gives a package to test;
@@ -11,6 +12,9 @@
 //
 // --version picks the VS Code to run in: "stable" (default), "minimum" for the oldest version
 // the manifest accepts (engines.vscode), or an exact version. $VSCODE_VERSION does the same.
+// --executable runs an editor already on disk instead, e.g. an unpacked VSCodium
+// (`--executable <dir>/codium`): VS Code builds without Microsoft's services, that install from
+// Open VSX.
 //
 // Everything is created under .vscode-test/ (ignored by git); the developer's own VS Code profile
 // and extensions are never read or written. Needs Docker, and on Linux a display:
@@ -47,8 +51,16 @@ const { values: cli } = parseArgs({
     options: {
         vsix: { type: "string" },
         version: { type: "string", default: process.env.VSCODE_VERSION || "stable" },
+        executable: { type: "string" },
     },
 });
+
+/** The command-line launcher next to an editor executable (VSCodium's is bin/codium). */
+function cliPath(executablePath) {
+    if (path.basename(executablePath) === "codium")
+        return path.join(path.dirname(executablePath), "bin", "codium");
+    return resolveCliPathFromVSCodeExecutablePath(executablePath);
+}
 
 const manifest = JSON.parse(await readFile(path.join(rootDir, "package.json"), "utf8"));
 // Lowercase, as VS Code names the install folder and as the comparisons below expect: the
@@ -86,7 +98,7 @@ async function resolveVsix() {
 
 /** Installs the .vsix like a user would, and returns the folder VS Code unpacked it into. */
 async function installVsix(vscodeExecutablePath, vsix) {
-    const codeCli = resolveCliPathFromVSCodeExecutablePath(vscodeExecutablePath);
+    const codeCli = cliPath(vscodeExecutablePath);
     const result = spawnSync(
         codeCli,
         [
@@ -290,11 +302,19 @@ try {
 
     const vsix = await resolveVsix();
 
-    step(`Getting VS Code ${vscodeVersion}`);
-    const vscodeExecutablePath = await downloadAndUnzipVSCode({
-        version: vscodeVersion,
-        cachePath: cacheDir,
-    });
+    let vscodeExecutablePath;
+    if (cli.executable) {
+        vscodeExecutablePath = path.resolve(cli.executable);
+        if (!existsSync(vscodeExecutablePath))
+            throw new Error(`--executable: ${vscodeExecutablePath} does not exist`);
+        step(`Using ${vscodeExecutablePath}`);
+    } else {
+        step(`Getting VS Code ${vscodeVersion}`);
+        vscodeExecutablePath = await downloadAndUnzipVSCode({
+            version: vscodeVersion,
+            cachePath: cacheDir,
+        });
+    }
 
     step(`Installing ${path.relative(rootDir, vsix)} into an empty profile`);
     const installDir = await installVsix(vscodeExecutablePath, vsix);
