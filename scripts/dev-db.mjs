@@ -48,8 +48,9 @@ if (!stopping) {
     console.log(`
 The development databases are ready (reachable from this machine only):
 
-  SQL Server   ${mssql.host},${mssql.port}   user ${mssql.user}   password ${mssql.password}   database ${mssql.database}
-  PostgreSQL   ${pg.host}:${pg.port}   user ${pg.user}   password ${pg.password}   database ${pg.database}
+  SQL Server   ${mssql.host},${mssql.port}   user ${mssql.user}   database ${mssql.database}
+  PostgreSQL   ${pg.host}:${pg.port}   user ${pg.user}   database ${pg.database}
+  Password     DEV_PASSWORD in scripts/dev-db.mjs (also in dev-workspace/.vscode/settings.json)
 
 Press F5 in VS Code: the "Docker" connections of dev-workspace/ point to them.
 Press Ctrl+C here to stop and remove them.`);

@@ -2,7 +2,7 @@
 // Drop / Execute"), the way vscode-mssql's ScriptingService does, and records the exact text.
 // This is the oracle for the SQL Server driver's scripts. Output: object -> operation -> script.
 // Usage: start the databases with `npm run dev:db` in another terminal, then run
-//   MSSQL_SA_PASSWORD='<password printed by dev:db>' node tools/sts-script-probe.js docs/reference
+//   MSSQL_SA_PASSWORD='<DEV_PASSWORD of scripts/dev-db.mjs>' node tools/sts-script-probe.js docs/reference
 // To capture more, add objects to OBJECTS or operations to OPERATIONS.
 const path = require("path");
 const fs = require("fs");

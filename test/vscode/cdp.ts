@@ -186,6 +186,30 @@ async function sessionOf(target: Target): Promise<Session> {
     return session;
 }
 
+const UNSAFE_IN_SCRIPT: Record<string, string> = {
+    "<": "\\u003C",
+    ">": "\\u003E",
+    "\b": "\\b",
+    "\f": "\\f",
+    "\n": "\\n",
+    "\r": "\\r",
+    "\t": "\\t",
+    "\0": "\\0",
+    "\u2028": "\\u2028",
+    "\u2029": "\\u2029",
+};
+
+/**
+ * A value written as a JavaScript literal into code that a page evaluates: JSON, with what could
+ * close a script or a line escaped (the escaping CodeQL recommends after JSON.stringify).
+ */
+export function jsLiteral(value: unknown): string {
+    return JSON.stringify(value).replace(
+        /[<>\b\f\n\r\t\0\u2028\u2029]/g,
+        (char) => UNSAFE_IN_SCRIPT[char],
+    );
+}
+
 /** Every session opened so far, including those of webviews that are closed by now. */
 export function allSessions(): Session[] {
     return [...sessions.values()];
