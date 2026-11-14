@@ -1,0 +1,232 @@
+{
+  "_note": "Captured from sqltoolsservice 6.0.20260918.1 (connection/parseConnectionString and connection/getconnectionstring) by running a probe against the real service. STS fills defaults (connectTimeout 30, applicationName sqltools, Pooling=False) and masks the password as ****** when not included; our implementation intentionally differs there.",
+  "parse": [
+    {
+      "input": "Server=tcp:myhost,1444;Database=db1;User Id=bob;Password=p;w;d;",
+      "error": "Format of the initialization string does not conform to specification starting at index 59."
+    },
+    {
+      "input": "Data Source=h\\inst;Initial Catalog=x;UID=u;PWD='a;b';Encrypt=true;TrustServerCertificate=yes",
+      "options": {
+        "encrypt": "true",
+        "connectTimeout": 30,
+        "connectRetryInterval": 10,
+        "connectRetryCount": 1,
+        "password": "a;b",
+        "server": "h\\inst",
+        "applicationName": "sqltools",
+        "database": "x",
+        "authenticationType": "SqlLogin",
+        "trustServerCertificate": true,
+        "user": "u",
+        "commandTimeout": 30
+      }
+    },
+    {
+      "input": "Addr=h;Integrated Security=true",
+      "options": {
+        "encrypt": "true",
+        "connectTimeout": 30,
+        "connectRetryInterval": 10,
+        "connectRetryCount": 1,
+        "server": "h",
+        "applicationName": "sqltools",
+        "authenticationType": "Integrated",
+        "trustServerCertificate": false,
+        "user": "",
+        "commandTimeout": 30
+      }
+    },
+    {
+      "input": "Server=h;Authentication=Active Directory Interactive;Encrypt=strict",
+      "options": {
+        "encrypt": "Strict",
+        "connectTimeout": 30,
+        "connectRetryInterval": 10,
+        "connectRetryCount": 1,
+        "password": "",
+        "server": "h",
+        "applicationName": "sqltools",
+        "authenticationType": "AzureMFA",
+        "trustServerCertificate": false,
+        "user": "",
+        "commandTimeout": 30
+      }
+    },
+    {
+      "input": "Server=h;Authentication=SqlPassword;User=u;Password=\"a\"\"b\";Encrypt=False;Connection Timeout=5;App=zz;WSID=ws;Packet Size=4096;Language=us_english;ApplicationIntent=ReadOnly;MultiSubnetFailover=true;Host Name In Certificate=hh;Command Timeout=7",
+      "options": {
+        "encrypt": "False",
+        "workstationId": "ws",
+        "connectTimeout": 5,
+        "connectRetryInterval": 10,
+        "connectRetryCount": 1,
+        "password": "a\"b",
+        "server": "h",
+        "applicationName": "zz",
+        "multiSubnetFailover": true,
+        "hostNameInCertificate": "hh",
+        "currentLanguage": "us_english",
+        "applicationIntent": "ReadOnly",
+        "authenticationType": "SqlLogin",
+        "trustServerCertificate": false,
+        "user": "u",
+        "packetSize": 4096,
+        "commandTimeout": 7
+      }
+    },
+    {
+      "input": "Server=h;Bogus=1",
+      "error": "Keyword not supported: 'bogus'."
+    },
+    {
+      "input": "Server=h;;Database=d",
+      "options": {
+        "encrypt": "true",
+        "connectTimeout": 30,
+        "connectRetryInterval": 10,
+        "connectRetryCount": 1,
+        "password": "",
+        "server": "h",
+        "applicationName": "sqltools",
+        "database": "d",
+        "authenticationType": "SqlLogin",
+        "trustServerCertificate": false,
+        "user": "",
+        "commandTimeout": 30
+      }
+    },
+    {
+      "input": "Server=h;Database",
+      "error": "Format of the initialization string does not conform to specification starting at index 9."
+    },
+    {
+      "input": "Server=h;Encrypt=maybe",
+      "error": "Invalid value for key 'Encrypt'."
+    },
+    {
+      "input": "Server=h;Authentication=Active Directory Password;User ID=u;Password=p",
+      "options": {
+        "encrypt": "true",
+        "connectTimeout": 30,
+        "connectRetryInterval": 10,
+        "connectRetryCount": 1,
+        "password": "p",
+        "server": "h",
+        "applicationName": "sqltools",
+        "authenticationType": "ActiveDirectoryPassword",
+        "trustServerCertificate": false,
+        "user": "u",
+        "commandTimeout": 30
+      }
+    }
+  ],
+  "build": [
+    {
+      "options": {
+        "server": "h,1433",
+        "database": "d",
+        "authenticationType": "SqlLogin",
+        "user": "u",
+        "password": "p;q",
+        "encrypt": "Mandatory",
+        "trustServerCertificate": true,
+        "applicationName": "a b",
+        "connectTimeout": 30,
+        "commandTimeout": 30,
+        "applicationIntent": "ReadOnly",
+        "multiSubnetFailover": true,
+        "packetSize": 4096,
+        "workstationId": "w",
+        "currentLanguage": "us_english",
+        "hostNameInCertificate": "hh"
+      },
+      "includePassword": true,
+      "result": "Data Source=h,1433;Initial Catalog=d;User ID=u;Password=\"p;q\";Pooling=False;Connect Timeout=30;Encrypt=True;Host Name In Certificate=hh;Trust Server Certificate=True;Packet Size=4096;Authentication=SqlPassword;Application Name=\"a b\";Current Language=us_english;Workstation ID=w;Application Intent=ReadOnly;Multi Subnet Failover=True;Command Timeout=30"
+    },
+    {
+      "options": {
+        "server": "h,1433",
+        "database": "d",
+        "authenticationType": "SqlLogin",
+        "user": "u",
+        "password": "p;q",
+        "encrypt": "Mandatory",
+        "trustServerCertificate": true,
+        "applicationName": "a b",
+        "connectTimeout": 30,
+        "commandTimeout": 30,
+        "applicationIntent": "ReadOnly",
+        "multiSubnetFailover": true,
+        "packetSize": 4096,
+        "workstationId": "w",
+        "currentLanguage": "us_english",
+        "hostNameInCertificate": "hh"
+      },
+      "includePassword": false,
+      "result": "Data Source=h,1433;Initial Catalog=d;User ID=u;Password=******;Pooling=False;Connect Timeout=30;Encrypt=True;Host Name In Certificate=hh;Trust Server Certificate=True;Packet Size=4096;Authentication=SqlPassword;Application Name=\"a b\";Current Language=us_english;Workstation ID=w;Application Intent=ReadOnly;Multi Subnet Failover=True;Command Timeout=30"
+    },
+    {
+      "options": {
+        "server": "h",
+        "authenticationType": "AzureMFA",
+        "user": "u@x.com",
+        "encrypt": "Strict"
+      },
+      "includePassword": true,
+      "result": "Data Source=h;Pooling=False;Encrypt=Strict"
+    },
+    {
+      "options": {
+        "server": "h",
+        "authenticationType": "AzureMFA",
+        "user": "u@x.com",
+        "encrypt": "Strict"
+      },
+      "includePassword": false,
+      "result": "Data Source=h;Password=******;Pooling=False;Encrypt=Strict"
+    },
+    {
+      "options": {
+        "server": "h",
+        "port": 1500,
+        "authenticationType": "SqlLogin",
+        "user": "u",
+        "password": "it's \"x\"",
+        "encrypt": "Optional",
+        "trustServerCertificate": false
+      },
+      "includePassword": true,
+      "result": "Data Source=h,1500;User ID=u;Password=\"it's \"\"x\"\"\";Pooling=False;Encrypt=False;Trust Server Certificate=False;Authentication=SqlPassword"
+    },
+    {
+      "options": {
+        "server": "h",
+        "port": 1500,
+        "authenticationType": "SqlLogin",
+        "user": "u",
+        "password": "it's \"x\"",
+        "encrypt": "Optional",
+        "trustServerCertificate": false
+      },
+      "includePassword": false,
+      "result": "Data Source=h,1500;User ID=u;Password=******;Pooling=False;Encrypt=False;Trust Server Certificate=False;Authentication=SqlPassword"
+    },
+    {
+      "options": {
+        "server": "h",
+        "authenticationType": "Integrated"
+      },
+      "includePassword": true,
+      "result": "Data Source=h;Integrated Security=True;Pooling=False"
+    },
+    {
+      "options": {
+        "server": "h",
+        "authenticationType": "Integrated"
+      },
+      "includePassword": false,
+      "result": "Data Source=h;Integrated Security=True;Password=******;Pooling=False"
+    }
+  ]
+}

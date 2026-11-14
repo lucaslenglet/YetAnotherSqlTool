@@ -1,0 +1,14 @@
+{
+    "extends": "./tsconfig.base.json",
+    "compilerOptions": {
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "lib": ["ES2024", "dom"],
+        "experimentalDecorators": true,
+        "noUnusedLocals": true,
+        "strict": false,
+        "types": ["node"]
+    },
+    "include": ["src", "typings"],
+    "exclude": ["node_modules", "src/webviews"]
+}

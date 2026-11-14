@@ -1,0 +1,1325 @@
+{
+    "name": "yet-another-sql-tool",
+    "displayName": "YetAnotherSqlTool",
+    "description": "Multi-database SQL client for VS Code (SQL Server, PostgreSQL), inspired by the mssql extension",
+    "version": "0.1.0",
+    "publisher": "YetAnotherSqlTool",
+    "private": true,
+    "license": "MIT",
+    "preview": true,
+    "icon": "media/icon.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/lucaslenglet/YetAnotherSqlTool.git"
+    },
+    "bugs": {
+        "url": "https://github.com/lucaslenglet/YetAnotherSqlTool/issues"
+    },
+    "homepage": "https://github.com/lucaslenglet/YetAnotherSqlTool#readme",
+    "keywords": [
+        "sql",
+        "database",
+        "sql server",
+        "mssql",
+        "azure sql",
+        "postgresql",
+        "postgres",
+        "query",
+        "object explorer"
+    ],
+    "engines": {
+        "vscode": "^1.101.0"
+    },
+    "categories": [
+        "Programming Languages",
+        "Other"
+    ],
+    "main": "./dist/extension.js",
+    "capabilities": {
+        "untrustedWorkspaces": {
+            "supported": "limited",
+            "description": "%yast.untrustedWorkspaces.description%",
+            "restrictedConfigurations": [
+                "yast.connections",
+                "yast.connectionGroups"
+            ]
+        }
+    },
+    "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "yastObjectExplorerContainer",
+                    "title": "%yast.viewsContainers.yastObjectExplorerContainer%",
+                    "icon": "media/server_page_dark.svg"
+                }
+            ],
+            "panel": [
+                {
+                    "id": "yastQueryResult",
+                    "title": "%yast.viewsContainers.yastQueryResult%",
+                    "icon": "media/queryResultView.svg"
+                }
+            ]
+        },
+        "views": {
+            "yastObjectExplorerContainer": [
+                {
+                    "id": "yastObjectExplorer",
+                    "name": "%yast.views.yastObjectExplorer%",
+                    "icon": "media/objectTypes/Database.svg"
+                }
+            ],
+            "yastQueryResult": [
+                {
+                    "type": "webview",
+                    "id": "yastQueryResult",
+                    "name": "%yast.views.yastQueryResult%",
+                    "icon": "media/queryResultView.svg"
+                }
+            ]
+        },
+        "commands": [
+            {
+                "command": "yast.addObjectExplorer",
+                "title": "%yast.addObjectExplorer%",
+                "category": "%yast.category%",
+                "icon": {
+                    "light": "media/addNewConnection_light.svg",
+                    "dark": "media/addNewConnection_dark.svg"
+                }
+            },
+            {
+                "command": "yast.removeObjectExplorerNode",
+                "title": "%yast.removeObjectExplorerNode%",
+                "category": "%yast.category%"
+            },
+            {
+                "command": "yast.refreshObjectExplorerNode",
+                "title": "%yast.refreshObjectExplorerNode%",
+                "category": "%yast.category%",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "yast.disconnectObjectExplorerNode",
+                "title": "%yast.disconnectObjectExplorerNode%",
+                "category": "%yast.category%",
+                "icon": "$(debug-disconnect)"
+            },
+            {
+                "command": "yast.copyObjectName",
+                "title": "%yast.copyObjectName%",
+                "category": "%yast.category%"
+            },
+            {
+                "command": "yast.connectionGroups.delete",
+                "title": "%yast.connectionGroups.delete%",
+                "category": "%yast.category%",
+                "icon": "$(trash)"
+            },
+            {
+                "command": "yast.connectObjectExplorerNode",
+                "title": "%yast.connectObjectExplorerNode%",
+                "category": "%yast.category%"
+            },
+            {
+                "command": "yast.editConnection",
+                "title": "%yast.editConnection%",
+                "category": "%yast.category%",
+                "icon": "$(edit)"
+            },
+            {
+                "command": "yast.connectionGroups.create",
+                "title": "%yast.connectionGroups.create%",
+                "category": "%yast.category%",
+                "icon": "$(new-folder)"
+            },
+            {
+                "command": "yast.connectionGroups.edit",
+                "title": "%yast.connectionGroups.edit%",
+                "category": "%yast.category%",
+                "icon": "$(edit)"
+            },
+            {
+                "command": "yast.runQuery",
+                "title": "%yast.runQuery%",
+                "category": "%yast.category%",
+                "icon": "$(debug-start)"
+            },
+            {
+                "command": "yast.runCurrentStatement",
+                "title": "%yast.runCurrentStatement%",
+                "category": "%yast.category%"
+            },
+            {
+                "command": "yast.cancelQuery",
+                "title": "%yast.cancelQuery%",
+                "category": "%yast.category%",
+                "icon": "$(debug-stop)"
+            },
+            {
+                "command": "yast.showObjectInformation",
+                "title": "%yast.showObjectInformation%",
+                "category": "%yast.category%"
+            },
+            {
+                "command": "yast.revealQueryResult",
+                "title": "%yast.revealQueryResult%",
+                "category": "%yast.category%",
+                "icon": {
+                    "dark": "media/queryResultView_dark.svg",
+                    "light": "media/queryResultView_light.svg"
+                }
+            },
+            {
+                "command": "yast.toggleQueryResultPanel",
+                "title": "%yast.toggleQueryResultPanel%",
+                "category": "%yast.category%"
+            },
+            {
+                "command": "yast.connect",
+                "title": "%yast.connect%",
+                "category": "%yast.category%",
+                "icon": "$(plug)"
+            },
+            {
+                "command": "yast.disconnect",
+                "title": "%yast.disconnect%",
+                "category": "%yast.category%",
+                "icon": "$(debug-disconnect)"
+            },
+            {
+                "command": "yast.changeConnection",
+                "title": "%yast.changeConnection%",
+                "category": "%yast.category%",
+                "icon": {
+                    "dark": "media/changeConnection_dark.svg",
+                    "light": "media/changeConnection_light.svg"
+                }
+            },
+            {
+                "command": "yast.changeDatabase",
+                "title": "%yast.changeDatabase%",
+                "category": "%yast.category%",
+                "icon": "$(database)"
+            },
+            {
+                "command": "yast.chooseDatabase",
+                "title": "%yast.chooseDatabase%",
+                "category": "%yast.category%"
+            },
+            {
+                "command": "yast.newQuery",
+                "title": "%yast.newQuery%",
+                "category": "%yast.category%"
+            },
+            {
+                "command": "yast.objectExplorerNewQuery",
+                "title": "%yast.objectExplorerNewQuery%",
+                "category": "%yast.category%"
+            },
+            {
+                "command": "yast.scriptSelect",
+                "title": "%yast.scriptSelect%",
+                "category": "%yast.category%"
+            },
+            {
+                "command": "yast.rebuildIntelliSenseCache",
+                "title": "%yast.rebuildIntelliSenseCache%",
+                "category": "%yast.category%"
+            },
+            {
+                "command": "yast.scriptCreate",
+                "title": "%yast.scriptCreate%",
+                "category": "%yast.category%"
+            },
+            {
+                "command": "yast.scriptDelete",
+                "title": "%yast.scriptDelete%",
+                "category": "%yast.category%"
+            },
+            {
+                "command": "yast.scriptExecute",
+                "title": "%yast.scriptExecute%",
+                "category": "%yast.category%"
+            },
+            {
+                "command": "yast.scriptAlter",
+                "title": "%yast.scriptAlter%",
+                "category": "%yast.category%"
+            },
+            {
+                "command": "yast.scriptDatabase",
+                "title": "%yast.scriptDatabase%",
+                "category": "%yast.category%"
+            }
+        ],
+        "submenus": [
+            {
+                "id": "yast.sqlScriptsSubmenu",
+                "title": "%yast.sqlScriptsSubmenu%",
+                "label": "%yast.sqlScriptsSubmenu%"
+            }
+        ],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "yast.removeObjectExplorerNode",
+                    "when": "false"
+                },
+                {
+                    "command": "yast.refreshObjectExplorerNode",
+                    "when": "false"
+                },
+                {
+                    "command": "yast.disconnectObjectExplorerNode",
+                    "when": "false"
+                },
+                {
+                    "command": "yast.copyObjectName",
+                    "when": "false"
+                },
+                {
+                    "command": "yast.connectionGroups.delete",
+                    "when": "false"
+                },
+                {
+                    "command": "yast.connectObjectExplorerNode",
+                    "when": "false"
+                },
+                {
+                    "command": "yast.editConnection",
+                    "when": "false"
+                },
+                {
+                    "command": "yast.connectionGroups.edit",
+                    "when": "false"
+                },
+                {
+                    "command": "yast.objectExplorerNewQuery",
+                    "when": "false"
+                },
+                {
+                    "command": "yast.chooseDatabase",
+                    "when": "false"
+                },
+                {
+                    "command": "yast.scriptSelect",
+                    "when": "false"
+                },
+                {
+                    "command": "yast.showObjectInformation",
+                    "when": "editorLangId == sql"
+                },
+                {
+                    "command": "yast.scriptCreate",
+                    "when": "false"
+                },
+                {
+                    "command": "yast.scriptDelete",
+                    "when": "false"
+                },
+                {
+                    "command": "yast.scriptExecute",
+                    "when": "false"
+                },
+                {
+                    "command": "yast.scriptAlter",
+                    "when": "false"
+                },
+                {
+                    "command": "yast.scriptDatabase",
+                    "when": "false"
+                }
+            ],
+            "yast.sqlScriptsSubmenu": [
+                {
+                    "command": "yast.scriptCreate",
+                    "group": "1_scripts@1"
+                },
+                {
+                    "command": "yast.scriptDelete",
+                    "group": "1_scripts@2"
+                }
+            ],
+            "view/title": [
+                {
+                    "command": "yast.addObjectExplorer",
+                    "when": "view == yastObjectExplorer",
+                    "group": "navigation"
+                },
+                {
+                    "command": "yast.connectionGroups.create",
+                    "when": "view == yastObjectExplorer",
+                    "group": "navigation"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "yast.addObjectExplorer",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(ConnectionGroup)\\b/",
+                    "group": "0_MSSQL_connectionGroups@0"
+                },
+                {
+                    "command": "yast.connectionGroups.delete",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(ConnectionGroup)\\b/",
+                    "group": "0_MSSQL_connectionGroups@9"
+                },
+                {
+                    "command": "yast.disconnectObjectExplorerNode",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(Server)\\b/",
+                    "group": "2_MSSQL_connection@2"
+                },
+                {
+                    "command": "yast.removeObjectExplorerNode",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(disconnectedServer|Server)\\b/",
+                    "group": "2_MSSQL_connection@3"
+                },
+                {
+                    "command": "yast.copyObjectName",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(?!(Folder|Server|disconnectedServer|ConnectionGroup)\\b)[^,]+/",
+                    "group": "1_MSSQL_primary@95"
+                },
+                {
+                    "command": "yast.refreshObjectExplorerNode",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(?!(disconnectedServer|ConnectionGroup)\\b)[^,]+/",
+                    "group": "1_MSSQL_primary@90"
+                },
+                {
+                    "command": "yast.addObjectExplorer",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(ConnectionGroup)\\b/",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "yast.connectionGroups.delete",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(ConnectionGroup)\\b/",
+                    "group": "inline@2"
+                },
+                {
+                    "command": "yast.disconnectObjectExplorerNode",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(Server)\\b/",
+                    "group": "inline@2"
+                },
+                {
+                    "command": "yast.refreshObjectExplorerNode",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(?!(disconnectedServer|ConnectionGroup)\\b)[^,]+/",
+                    "group": "inline@9999"
+                },
+                {
+                    "command": "yast.connectionGroups.edit",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(ConnectionGroup)\\b/",
+                    "group": "0_MSSQL_connectionGroups@1"
+                },
+                {
+                    "command": "yast.editConnection",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(disconnectedServer|Server)\\b/",
+                    "group": "2_MSSQL_connection@1"
+                },
+                {
+                    "command": "yast.connectionGroups.edit",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(ConnectionGroup)\\b/",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "yast.editConnection",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(disconnectedServer|Server)\\b/",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "yast.objectExplorerNewQuery",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(disconnectedServer|Server|Database)\\b/",
+                    "group": "1_MSSQL_primary@1"
+                },
+                {
+                    "command": "yast.objectExplorerNewQuery",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(Table|HistoryTable)\\b/",
+                    "group": "1_MSSQL_primary@1"
+                },
+                {
+                    "command": "yast.scriptSelect",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(Table|HistoryTable)\\b/",
+                    "group": "1_MSSQL_primary@2"
+                },
+                {
+                    "submenu": "yast.sqlScriptsSubmenu",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(Table|HistoryTable)\\b/",
+                    "group": "3a_MSSQL_tableScripts@1"
+                },
+                {
+                    "command": "yast.scriptSelect",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(View)\\b/",
+                    "group": "3_MSSQL_script@1"
+                },
+                {
+                    "command": "yast.scriptCreate",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(View|ScalarValuedFunction|Schema|StoredProcedure|TableValuedFunction|User|UserDefinedTableType|Trigger|DatabaseTrigger|Index|Key|DatabaseRole|ApplicationRole)\\b/",
+                    "group": "3_MSSQL_script@2"
+                },
+                {
+                    "command": "yast.scriptDelete",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(View|ScalarValuedFunction|Schema|StoredProcedure|TableValuedFunction|User|UserDefinedTableType|Trigger|DatabaseTrigger|Index|Key|DatabaseRole|ApplicationRole)\\b/",
+                    "group": "3_MSSQL_script@3"
+                },
+                {
+                    "command": "yast.scriptAlter",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(ScalarValuedFunction|StoredProcedure|TableValuedFunction|View)\\b/",
+                    "group": "3_MSSQL_script@4"
+                },
+                {
+                    "command": "yast.scriptExecute",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(StoredProcedure)\\b/",
+                    "group": "3_MSSQL_script@5"
+                },
+                {
+                    "command": "yast.scriptDatabase",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(Database)\\b/",
+                    "group": "3_MSSQL_script@6"
+                }
+            ],
+            "editor/title": [
+                {
+                    "command": "yast.runQuery",
+                    "when": "editorLangId == sql && !isInDiffEditor && resource not in yast.runningQueries",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "yast.cancelQuery",
+                    "when": "editorLangId == sql && !isInDiffEditor && resource in yast.runningQueries",
+                    "group": "navigation@2"
+                },
+                {
+                    "command": "yast.revealQueryResult",
+                    "when": "editorLangId == sql && !isInDiffEditor && resource in yast.connections",
+                    "group": "navigation@2"
+                },
+                {
+                    "command": "yast.connect",
+                    "when": "editorLangId == sql && !isInDiffEditor && resource not in yast.connections",
+                    "group": "navigation@3"
+                },
+                {
+                    "command": "yast.disconnect",
+                    "when": "editorLangId == sql && !isInDiffEditor && resource in yast.connections && resource not in yast.runningQueries",
+                    "group": "navigation@3"
+                },
+                {
+                    "command": "yast.changeConnection",
+                    "when": "editorLangId == sql && !isInDiffEditor && resource in yast.connections && resource not in yast.runningQueries",
+                    "group": "navigation@4"
+                },
+                {
+                    "command": "yast.changeDatabase",
+                    "when": "editorLangId == sql && !isInDiffEditor && resource in yast.connections && resource not in yast.runningQueries",
+                    "group": "navigation@5"
+                }
+            ],
+            "editor/context": [
+                {
+                    "command": "yast.runQuery",
+                    "when": "editorLangId == sql",
+                    "group": "0_yast"
+                },
+                {
+                    "command": "yast.changeConnection",
+                    "when": "editorLangId == sql && !isInDiffEditor && resource in yast.connections && resource not in yast.runningQueries",
+                    "group": "0_yast"
+                }
+            ]
+        },
+        "configuration": {
+            "title": "%yast.configuration.title%",
+            "properties": {
+                "yast.connections": {
+                    "type": "array",
+                    "description": "%yast.connections%",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "provider": {
+                                "type": "string",
+                                "enum": [
+                                    "mssql",
+                                    "pg"
+                                ],
+                                "enumDescriptions": [
+                                    "%yast.connections.provider.enumDescriptions.mssql%",
+                                    "%yast.connections.provider.enumDescriptions.pg%"
+                                ],
+                                "default": "mssql",
+                                "description": "%yast.connections.provider%"
+                            },
+                            "id": {
+                                "type": "string",
+                                "description": "%yast.connections.id%"
+                            },
+                            "groupId": {
+                                "type": "string",
+                                "description": "%yast.connections.groupId%"
+                            },
+                            "server": {
+                                "type": "string",
+                                "default": "{{put-server-name-here}}",
+                                "description": "%yast.connections.server%"
+                            },
+                            "database": {
+                                "type": "string",
+                                "default": "{{put-database-name-here}}",
+                                "description": "%yast.connections.database%"
+                            },
+                            "user": {
+                                "type": "string",
+                                "default": "{{put-username-here}}",
+                                "description": "%yast.connections.user%"
+                            },
+                            "password": {
+                                "type": "string",
+                                "default": "{{put-password-here}}",
+                                "description": "%yast.connections.password%"
+                            },
+                            "authenticationType": {
+                                "type": "string",
+                                "default": "SqlLogin",
+                                "enum": [
+                                    "SqlLogin",
+                                    "Integrated",
+                                    "AzureMFA",
+                                    "ActiveDirectoryDefault",
+                                    "ActiveDirectoryServicePrincipal"
+                                ],
+                                "enumDescriptions": [
+                                    "%yast.connections.authenticationType.enumDescriptions.SqlLogin%",
+                                    "%yast.connections.authenticationType.enumDescriptions.Integrated%",
+                                    "%yast.connections.authenticationType.enumDescriptions.AzureMFA%",
+                                    "%yast.connections.authenticationType.enumDescriptions.ActiveDirectoryDefault%",
+                                    "%yast.connections.authenticationType.enumDescriptions.ActiveDirectoryServicePrincipal%"
+                                ],
+                                "description": "%yast.connections.authenticationType%"
+                            },
+                            "port": {
+                                "type": "number",
+                                "default": 1433,
+                                "description": "%yast.connections.port%"
+                            },
+                            "encrypt": {
+                                "type": "string",
+                                "default": "Mandatory",
+                                "enum": [
+                                    "Mandatory",
+                                    "Strict",
+                                    "Optional"
+                                ],
+                                "description": "%yast.connections.encrypt%"
+                            },
+                            "trustServerCertificate": {
+                                "type": "boolean",
+                                "default": false,
+                                "description": "%yast.connections.trustServerCertificate%"
+                            },
+                            "hostNameInCertificate": {
+                                "type": "string",
+                                "default": "",
+                                "description": "%yast.connections.hostNameInCertificate%"
+                            },
+                            "persistSecurityInfo": {
+                                "type": "boolean",
+                                "default": false,
+                                "description": "%yast.connections.persistSecurityInfo%"
+                            },
+                            "connectTimeout": {
+                                "type": "number",
+                                "default": 30,
+                                "description": "%yast.connections.connectTimeout%"
+                            },
+                            "commandTimeout": {
+                                "type": "number",
+                                "default": 30,
+                                "description": "%yast.connections.commandTimeout%"
+                            },
+                            "connectRetryCount": {
+                                "type": "number",
+                                "default": 1,
+                                "description": "%yast.connections.connectRetryCount%"
+                            },
+                            "connectRetryInterval": {
+                                "type": "number",
+                                "default": 10,
+                                "description": "%yast.connections.connectRetryInterval%"
+                            },
+                            "applicationName": {
+                                "type": "string",
+                                "default": "YetAnotherSqlTool",
+                                "description": "%yast.connections.applicationName%"
+                            },
+                            "workstationId": {
+                                "type": "string",
+                                "default": "",
+                                "description": "%yast.connections.workstationId%"
+                            },
+                            "applicationIntent": {
+                                "type": "string",
+                                "default": "ReadWrite",
+                                "enum": [
+                                    "ReadWrite",
+                                    "ReadOnly"
+                                ],
+                                "description": "%yast.connections.applicationIntent%"
+                            },
+                            "currentLanguage": {
+                                "type": "string",
+                                "default": "",
+                                "description": "%yast.connections.currentLanguage%"
+                            },
+                            "pooling": {
+                                "type": "boolean",
+                                "default": false,
+                                "description": "%yast.connections.pooling%"
+                            },
+                            "maxPoolSize": {
+                                "type": "number",
+                                "default": 100,
+                                "description": "%yast.connections.maxPoolSize%"
+                            },
+                            "minPoolSize": {
+                                "type": "number",
+                                "default": 0,
+                                "description": "%yast.connections.minPoolSize%"
+                            },
+                            "loadBalanceTimeout": {
+                                "type": "number",
+                                "default": 0,
+                                "description": "%yast.connections.loadBalanceTimeout%"
+                            },
+                            "replication": {
+                                "type": "boolean",
+                                "default": true,
+                                "description": "%yast.connections.replication%"
+                            },
+                            "attachDbFilename": {
+                                "type": "string",
+                                "default": "",
+                                "description": "%yast.connections.attachDbFilename%"
+                            },
+                            "failoverPartner": {
+                                "type": "string",
+                                "default": "",
+                                "description": "%yast.connections.failoverPartner%"
+                            },
+                            "multiSubnetFailover": {
+                                "type": "boolean",
+                                "default": true,
+                                "description": "%yast.connections.multiSubnetFailover%"
+                            },
+                            "multipleActiveResultSets": {
+                                "type": "boolean",
+                                "default": false,
+                                "description": "%yast.connections.multipleActiveResultSets%"
+                            },
+                            "packetSize": {
+                                "type": "number",
+                                "default": 8192,
+                                "description": "%yast.connections.packetSize%"
+                            },
+                            "typeSystemVersion": {
+                                "type": "string",
+                                "enum": [
+                                    "Latest"
+                                ],
+                                "description": "%yast.connections.typeSystemVersion%"
+                            },
+                            "connectionString": {
+                                "type": "string",
+                                "default": "",
+                                "description": "%yast.connections.connectionString%"
+                            },
+                            "profileName": {
+                                "type": "string",
+                                "description": "%yast.connections.profileName%"
+                            },
+                            "savePassword": {
+                                "type": "boolean",
+                                "description": "%yast.connections.savePassword%"
+                            },
+                            "emptyPasswordInput": {
+                                "type": "boolean",
+                                "description": "%yast.connections.emptyPasswordInput%"
+                            },
+                            "order": {
+                                "type": "number",
+                                "minimum": 0,
+                                "description": "%yast.connections.order%"
+                            },
+                            "sslmode": {
+                                "type": "string",
+                                "enum": [
+                                    "disable",
+                                    "allow",
+                                    "prefer",
+                                    "require",
+                                    "verify-ca",
+                                    "verify-full"
+                                ],
+                                "description": "%yast.connections.sslmode%"
+                            },
+                            "sslrootcert": {
+                                "type": "string",
+                                "description": "%yast.connections.sslrootcert%"
+                            },
+                            "searchPath": {
+                                "type": "string",
+                                "description": "%yast.connections.searchPath%"
+                            }
+                        }
+                    },
+                    "scope": "resource"
+                },
+                "yast.connectionGroups": {
+                    "type": "array",
+                    "description": "%yast.connectionGroups%",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "%yast.connectionGroups.name%"
+                            },
+                            "id": {
+                                "type": "string",
+                                "description": "%yast.connectionGroups.id%"
+                            },
+                            "color": {
+                                "type": [
+                                    "string",
+                                    null
+                                ],
+                                "description": "%yast.connectionGroups.color%"
+                            },
+                            "description": {
+                                "type": [
+                                    "string",
+                                    null
+                                ],
+                                "description": "%yast.connectionGroups.description%"
+                            },
+                            "parentId": {
+                                "type": [
+                                    "string",
+                                    null
+                                ],
+                                "description": "%yast.connectionGroups.parentId%"
+                            },
+                            "order": {
+                                "type": "number",
+                                "minimum": 0,
+                                "description": "%yast.connectionGroups.order%"
+                            }
+                        }
+                    }
+                },
+                "yast.entraId.allowedServers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [],
+                    "markdownDescription": "%yast.entraId.allowedServers.markdown%",
+                    "scope": "application"
+                },
+                "yast.objectExplorer.collapseConnectionGroupsOnStartup": {
+                    "type": "boolean",
+                    "description": "%yast.objectExplorer.collapseConnectionGroupsOnStartup%",
+                    "default": false,
+                    "scope": "window"
+                },
+                "yast.maxRecentConnections": {
+                    "type": "number",
+                    "default": 5,
+                    "minimum": 0,
+                    "description": "%yast.maxRecentConnections%"
+                },
+                "yast.openQueryResultsInTabByDefault": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%yast.openQueryResultsInTabByDefault%",
+                    "scope": "application"
+                },
+                "yast.defaultQueryResultsViewMode": {
+                    "type": "string",
+                    "default": "Grid",
+                    "enum": [
+                        "Grid",
+                        "Text"
+                    ],
+                    "enumDescriptions": [
+                        "%yast.defaultQueryResultsViewMode.enumDescriptions.Grid%",
+                        "%yast.defaultQueryResultsViewMode.enumDescriptions.Text%"
+                    ],
+                    "description": "%yast.defaultQueryResultsViewMode%",
+                    "scope": "application"
+                },
+                "yast.shortcuts": {
+                    "type": "object",
+                    "description": "%yast.shortcuts%",
+                    "default": {
+                        "_comment": "Use 'ctrlcmd' to represent 'ctrl' on Windows/Linux and 'cmd' on macOS.",
+                        "event.queryResults.switchToResultsTab": "ctrl+alt+R",
+                        "event.queryResults.switchToMessagesTab": "ctrl+alt+Y",
+                        "event.queryResults.prevGrid": "ctrlcmd+up",
+                        "event.queryResults.nextGrid": "ctrlcmd+down",
+                        "event.queryResults.switchToTextView": "",
+                        "event.queryResults.maximizeGrid": "",
+                        "event.queryResults.saveAsJSON": "",
+                        "event.queryResults.saveAsCSV": "",
+                        "event.queryResults.saveAsExcel": "",
+                        "event.queryResults.saveAsInsert": "",
+                        "event.resultGrid.copySelection": "ctrlcmd+c",
+                        "event.resultGrid.copyWithHeaders": "",
+                        "event.resultGrid.copyAllHeaders": "",
+                        "event.resultGrid.selectAll": "ctrlcmd+a",
+                        "event.resultGrid.copyAsCSV": "",
+                        "event.resultGrid.copyAsJSON": "",
+                        "event.resultGrid.copyAsInsert": "",
+                        "event.resultGrid.copyAsInClause": "",
+                        "event.resultGrid.changeColumnWidth": "alt+shift+s",
+                        "event.resultGrid.expandSelectionLeft": "shift+left",
+                        "event.resultGrid.expandSelectionRight": "shift+right",
+                        "event.resultGrid.expandSelectionUp": "shift+up",
+                        "event.resultGrid.expandSelectionDown": "shift+down",
+                        "event.resultGrid.openColumnMenu": "f3",
+                        "event.resultGrid.openFilterMenu": "",
+                        "event.resultGrid.moveToRowStart": "ctrlcmd+left",
+                        "event.resultGrid.moveToRowEnd": "ctrlcmd+right",
+                        "event.resultGrid.selectColumn": "ctrl+space",
+                        "event.resultGrid.selectRow": "shift+space",
+                        "event.resultGrid.toggleSort": "alt+shift+o"
+                    },
+                    "scope": "resource"
+                },
+                "yast.messages.copyIncludeTimestamps": {
+                    "type": "boolean",
+                    "description": "%yast.messages.copyIncludeTimestamps%",
+                    "default": false,
+                    "scope": "resource"
+                },
+                "yast.resultsFontFamily": {
+                    "type": "string",
+                    "description": "%yast.resultsFontFamily%",
+                    "default": null,
+                    "scope": "resource"
+                },
+                "yast.resultsFontSize": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "maximum": 24,
+                    "description": "%yast.resultsFontSize%",
+                    "default": null,
+                    "scope": "resource"
+                },
+                "yast.results.openAfterSave": {
+                    "type": "boolean",
+                    "description": "%yast.results.openAfterSave%",
+                    "default": true,
+                    "scope": "resource"
+                },
+                "yast.saveAsCsv.includeHeaders": {
+                    "type": "boolean",
+                    "description": "%yast.saveAsCsv.includeHeaders%",
+                    "default": true,
+                    "scope": "resource"
+                },
+                "yast.saveAsCsv.delimiter": {
+                    "type": "string",
+                    "description": "%yast.saveAsCsv.delimiter%",
+                    "default": ",",
+                    "enum": [
+                        ",",
+                        "\t",
+                        ";",
+                        "|"
+                    ],
+                    "enumDescriptions": [
+                        "%yast.saveAsCsv.delimiter.enumDescriptions.,%",
+                        "%yast.saveAsCsv.delimiter.enumDescriptions.\t%",
+                        "%yast.saveAsCsv.delimiter.enumDescriptions.;%",
+                        "%yast.saveAsCsv.delimiter.enumDescriptions.|%"
+                    ],
+                    "scope": "resource"
+                },
+                "yast.saveAsCsv.lineSeparator": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "%yast.saveAsCsv.lineSeparator%",
+                    "default": null,
+                    "scope": "resource"
+                },
+                "yast.saveAsCsv.textIdentifier": {
+                    "type": "string",
+                    "description": "%yast.saveAsCsv.textIdentifier%",
+                    "default": "\"",
+                    "scope": "resource"
+                },
+                "yast.saveAsCsv.encoding": {
+                    "type": "string",
+                    "description": "%yast.saveAsCsv.encoding%",
+                    "default": "utf-8",
+                    "enum": [
+                        "utf-8",
+                        "utf-16le",
+                        "utf-16be",
+                        "ascii",
+                        "latin1",
+                        "iso-8859-1"
+                    ],
+                    "enumDescriptions": [
+                        "%yast.saveAsCsv.encoding.enumDescriptions.utf-8%",
+                        "%yast.saveAsCsv.encoding.enumDescriptions.utf-16le%",
+                        "%yast.saveAsCsv.encoding.enumDescriptions.utf-16be%",
+                        "%yast.saveAsCsv.encoding.enumDescriptions.ascii%",
+                        "%yast.saveAsCsv.encoding.enumDescriptions.latin1%",
+                        "%yast.saveAsCsv.encoding.enumDescriptions.iso-8859-1%"
+                    ],
+                    "scope": "resource"
+                },
+                "yast.saveAsExcel.includeHeaders": {
+                    "type": [
+                        "boolean",
+                        "null"
+                    ],
+                    "description": "%yast.saveAsExcel.includeHeaders%",
+                    "default": null,
+                    "scope": "resource"
+                },
+                "yast.saveAsExcel.freezeHeaderRow": {
+                    "type": "boolean",
+                    "markdownDescription": "%yast.saveAsExcel.freezeHeaderRow.markdown%",
+                    "default": false,
+                    "scope": "resource"
+                },
+                "yast.saveAsExcel.boldHeaderRow": {
+                    "type": "boolean",
+                    "markdownDescription": "%yast.saveAsExcel.boldHeaderRow.markdown%",
+                    "default": false,
+                    "scope": "resource"
+                },
+                "yast.saveAsExcel.autoFilterHeaderRow": {
+                    "type": "boolean",
+                    "markdownDescription": "%yast.saveAsExcel.autoFilterHeaderRow.markdown%",
+                    "default": false,
+                    "scope": "resource"
+                },
+                "yast.saveAsExcel.autoSizeColumns": {
+                    "type": "boolean",
+                    "description": "%yast.saveAsExcel.autoSizeColumns%",
+                    "default": false,
+                    "scope": "resource"
+                },
+                "yast.copyIncludeHeaders": {
+                    "type": "boolean",
+                    "description": "%yast.copyIncludeHeaders%",
+                    "default": false,
+                    "scope": "resource"
+                },
+                "yast.copyRemoveNewLine": {
+                    "type": "boolean",
+                    "description": "%yast.copyRemoveNewLine%",
+                    "default": true,
+                    "scope": "resource"
+                },
+                "yast.showBatchTime": {
+                    "type": "boolean",
+                    "description": "%yast.showBatchTime%",
+                    "default": false,
+                    "scope": "resource"
+                },
+                "yast.results.showBatchMessages": {
+                    "type": "boolean",
+                    "description": "%yast.results.showBatchMessages%",
+                    "default": true,
+                    "scope": "resource"
+                },
+                "yast.splitPaneSelection": {
+                    "type": "string",
+                    "description": "%yast.splitPaneSelection%",
+                    "default": "next",
+                    "enum": [
+                        "next",
+                        "current",
+                        "end"
+                    ],
+                    "scope": "resource"
+                },
+                "yast.statusBar.showQueryExecutionStatus": {
+                    "type": "boolean",
+                    "description": "%yast.statusBar.showQueryExecutionStatus%",
+                    "default": true,
+                    "scope": "window"
+                },
+                "yast.statusBar.connectionInfoMaxLength": {
+                    "type": "number",
+                    "default": -1,
+                    "description": "%yast.statusBar.connectionInfoMaxLength%"
+                },
+                "yast.resultsGrid.autoSizeColumnsMode": {
+                    "type": "string",
+                    "default": "headersAndData",
+                    "enum": [
+                        "headersAndData",
+                        "dataOnly",
+                        "headerOnly",
+                        "off"
+                    ],
+                    "enumDescriptions": [
+                        "%yast.resultsGrid.autoSizeColumnsMode.enumDescriptions.headersAndData%",
+                        "%yast.resultsGrid.autoSizeColumnsMode.enumDescriptions.dataOnly%",
+                        "%yast.resultsGrid.autoSizeColumnsMode.enumDescriptions.headerOnly%",
+                        "%yast.resultsGrid.autoSizeColumnsMode.enumDescriptions.off%"
+                    ],
+                    "description": "%yast.resultsGrid.autoSizeColumnsMode%"
+                },
+                "yast.resultsGrid.inMemoryDataProcessingThreshold": {
+                    "type": "number",
+                    "default": 5000,
+                    "description": "%yast.resultsGrid.inMemoryDataProcessingThreshold%",
+                    "minimum": 1
+                },
+                "yast.resultsGrid.alternatingRowColors": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%yast.resultsGrid.alternatingRowColors%"
+                },
+                "yast.resultsGrid.freezeFirstColumnByDefault": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%yast.resultsGrid.freezeFirstColumnByDefault%"
+                },
+                "yast.resultsGrid.showGridLines": {
+                    "type": "string",
+                    "default": "both",
+                    "enum": [
+                        "both",
+                        "horizontal",
+                        "vertical",
+                        "none"
+                    ],
+                    "enumDescriptions": [
+                        "%yast.resultsGrid.showGridLines.enumDescriptions.both%",
+                        "%yast.resultsGrid.showGridLines.enumDescriptions.horizontal%",
+                        "%yast.resultsGrid.showGridLines.enumDescriptions.vertical%",
+                        "%yast.resultsGrid.showGridLines.enumDescriptions.none%"
+                    ],
+                    "description": "%yast.resultsGrid.showGridLines%"
+                },
+                "yast.resultsGrid.rowPadding": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "default": null,
+                    "minimum": 0,
+                    "maximum": 10,
+                    "description": "%yast.resultsGrid.rowPadding%"
+                },
+                "yast.resultsGrid.rightAlignNumbers": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%yast.resultsGrid.rightAlignNumbers%"
+                },
+                "yast.autoRevealResultsPanel": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%yast.autoRevealResultsPanel%",
+                    "scope": "window"
+                },
+                "yast.query.showActiveConnectionAsCodeLensSuggestion": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%yast.query.showActiveConnectionAsCodeLensSuggestion%"
+                },
+                "yast.query.preventAutoExecuteScript": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%yast.query.preventAutoExecuteScript%",
+                    "scope": "resource"
+                },
+                "yast.syntaxHighlighting.engineSpecific": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%yast.syntaxHighlighting.engineSpecific%"
+                },
+                "yast.intelliSense.enableIntelliSense": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%yast.intelliSense.enableIntelliSense%",
+                    "scope": "window"
+                },
+                "yast.intelliSense.enableSuggestions": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%yast.intelliSense.enableSuggestions%",
+                    "scope": "window"
+                },
+                "yast.intelliSense.lowerCaseSuggestions": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%yast.intelliSense.lowerCaseSuggestions%",
+                    "scope": "window"
+                }
+            }
+        },
+        "semanticTokenTypes": [
+            {
+                "id": "yastKeyword",
+                "superType": "keyword",
+                "description": "%yast.semanticTokenTypes.yastKeyword%"
+            },
+            {
+                "id": "yastType",
+                "superType": "type",
+                "description": "%yast.semanticTokenTypes.yastType%"
+            },
+            {
+                "id": "yastVariable",
+                "superType": "variable",
+                "description": "%yast.semanticTokenTypes.yastVariable%"
+            },
+            {
+                "id": "yastIdentifier",
+                "description": "%yast.semanticTokenTypes.yastIdentifier%"
+            }
+        ],
+        "semanticTokenScopes": [
+            {
+                "scopes": {
+                    "yastKeyword": [
+                        "keyword.other.sql"
+                    ],
+                    "yastType": [
+                        "storage.type.sql"
+                    ],
+                    "yastVariable": [
+                        "meta.embedded"
+                    ],
+                    "yastIdentifier": [
+                        "meta.embedded"
+                    ]
+                }
+            }
+        ],
+        "configurationDefaults": {
+            "[sql]": {
+                "editor.semanticHighlighting.enabled": true
+            }
+        },
+        "keybindings": [
+            {
+                "command": "yast.runQuery",
+                "key": "ctrl+shift+e",
+                "mac": "cmd+shift+e",
+                "when": "editorTextFocus && editorLangId == 'sql'"
+            },
+            {
+                "command": "yast.showObjectInformation",
+                "key": "alt+f1",
+                "when": "editorTextFocus && editorLangId == 'sql'"
+            },
+            {
+                "command": "yast.connect",
+                "key": "ctrl+shift+c",
+                "mac": "cmd+shift+c",
+                "when": "editorTextFocus && editorLangId == 'sql'"
+            },
+            {
+                "command": "yast.disconnect",
+                "key": "ctrl+shift+d",
+                "mac": "cmd+shift+d",
+                "when": "editorTextFocus && editorLangId == 'sql'"
+            },
+            {
+                "command": "yast.runCurrentStatement",
+                "key": "ctrl+f5",
+                "mac": "cmd+f5",
+                "when": "editorTextFocus && editorLangId == 'sql'"
+            },
+            {
+                "command": "yast.cancelQuery",
+                "key": "alt+pausebreak",
+                "when": "editorLangId == 'sql'"
+            },
+            {
+                "command": "yast.toggleQueryResultPanel",
+                "key": "ctrl+r",
+                "when": "editorTextFocus && editorLangId == 'sql' || view.yastQueryResult.visible && !focusedView && !editorFocus && !inputFocus && !terminalFocus && !sideBarFocus && !panelFocus && !auxiliaryBarFocus && !notebookEditorFocused && !activeWebviewPanelId"
+            }
+        ]
+    },
+    "scripts": {
+        "build": "node scripts/build.mjs",
+        "watch": "node scripts/build.mjs --watch",
+        "typecheck": "tsc -p tsconfig.extension.json --noEmit && tsc -p tsconfig.webviews.json --noEmit",
+        "build:prod": "node scripts/build.mjs --prod",
+        "notices": "node scripts/notices.mjs",
+        "vscode:prepublish": "npm run build:prod && npm run notices",
+        "test": "vitest run --project unit",
+        "test:integration": "vitest run --project integration",
+        "test:vscode": "node scripts/test-vscode.mjs",
+        "screenshots": "node scripts/screenshots.mjs",
+        "dev:db": "node scripts/dev-db.mjs",
+        "lint": "eslint .",
+        "format": "prettier --write .",
+        "format:check": "prettier --check ."
+    },
+    "dependencies": {
+        "@azure/identity": "^4.13.3",
+        "@ctrl/tinycolor": "^4.2.1",
+        "@fluentui-contrib/react-data-grid-react-window": "^1.4.2",
+        "@fluentui/react-components": "^9.72.3",
+        "@fluentui/react-icons": "^2.0.300",
+        "@monaco-editor/react": "^4.7.0",
+        "@tanstack/react-virtual": "^3.14.14",
+        "@vscode/l10n": "^0.0.18",
+        "fflate": "0.8.3",
+        "lodash": "^4.18.1",
+        "monaco-editor": "^0.53.0",
+        "mssql": "^12.7.4",
+        "pg": "^8.23.1",
+        "pg-cursor": "^2.22.1",
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0",
+        "react-resizable": "^3.2.0",
+        "slickgrid-react": "^10.11.3",
+        "tedious": "20.3.3",
+        "vscode-jsonrpc": "^9.0.0",
+        "xml-formatter": "^3.6.7"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "@testcontainers/mssqlserver": "^12.2.1",
+        "@testcontainers/postgresql": "^12.2.1",
+        "@types/lodash": "^4.17.26",
+        "@types/mocha": "^10.0.10",
+        "@types/mssql": "^12.3.0",
+        "@types/node": "^22.13.14",
+        "@types/pg": "^8.23.1",
+        "@types/pg-cursor": "^2.7.2",
+        "@types/react": "^19.2.2",
+        "@types/react-dom": "^19.2.2",
+        "@types/react-resizable": "^3.0.8",
+        "@types/vscode": "1.101.0",
+        "@types/vscode-webview": "^1.57.5",
+        "@vscode/test-electron": "^3.1.0",
+        "@vscode/vsce": "^4.1.1",
+        "esbuild": "^0.28.1",
+        "eslint": "^10.14.0",
+        "eslint-config-prettier": "^10.1.8",
+        "globals": "^17.14.0",
+        "mocha": "^11.8.0",
+        "prettier": "^3.10.1",
+        "testcontainers": "^12.2.1",
+        "typescript": "^5.8.3",
+        "typescript-eslint": "^8.72.2",
+        "vitest": "^5.0.3"
+    }
+}

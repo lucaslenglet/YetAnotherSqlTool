@@ -1,0 +1,316 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+import {
+    makeStyles,
+    mergeClasses,
+    MessageBar,
+    MessageBarBody,
+    Spinner,
+    tokens,
+} from "@fluentui/react-components";
+import { cloneElement, isValidElement, ReactElement, ReactNode } from "react";
+import { ErrorMessageDetails } from "./errorMessageDetails";
+import { locConstants } from "./locConstants";
+
+const defaultHeaderIconSizePx = 32;
+
+const contentWidthPresets = {
+    medium: "720px",
+    wide: "800px",
+} as const;
+
+type DialogPageShellContentPreset = keyof typeof contentWidthPresets;
+
+export type DialogPageShellContentWidth = DialogPageShellContentPreset | number;
+
+function resolveContentWidth(
+    maxContentWidth: DialogPageShellContentWidth | undefined,
+): string | undefined {
+    if (maxContentWidth === undefined) {
+        return undefined;
+    }
+
+    if (typeof maxContentWidth === "number") {
+        return `${maxContentWidth}px`;
+    }
+
+    return contentWidthPresets[maxContentWidth];
+}
+
+const useStyles = makeStyles({
+    page: {
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        backgroundColor: "var(--vscode-editor-background)",
+        color: "var(--vscode-editor-foreground)",
+    },
+    scrollRegion: {
+        flex: "1 1 auto",
+        overflowY: "auto",
+        overflowX: "hidden",
+        scrollbarGutter: "stable",
+    },
+    container: {
+        width: "100%",
+        margin: 0,
+        padding: "16px 10px 32px",
+        boxSizing: "border-box",
+    },
+    headerOuter: {
+        borderBottom: "1px solid var(--vscode-editorGroup-border)",
+        paddingBottom: "16px",
+    },
+    header: {
+        display: "grid",
+        gridTemplateColumns: "auto 1fr",
+        gap: "16px",
+        alignItems: "center",
+    },
+    compactHeader: {
+        gap: "10px",
+        alignItems: "start",
+    },
+    iconContainer: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "var(--vscode-foreground)",
+        overflow: "visible",
+        flexShrink: 0,
+    },
+    compactIconContainer: {
+        marginTop: "2px",
+    },
+    headerText: {
+        minWidth: 0,
+        display: "flex",
+        flexDirection: "column",
+        gap: "2px",
+    },
+    title: {
+        fontSize: tokens.fontSizeBase500,
+        lineHeight: tokens.lineHeightBase500,
+        fontWeight: tokens.fontWeightSemibold,
+        color: "var(--vscode-foreground)",
+    },
+    compactTitle: {
+        fontSize: tokens.fontSizeBase300,
+        lineHeight: tokens.lineHeightBase300,
+    },
+    subtitle: {
+        fontSize: tokens.fontSizeBase200,
+        lineHeight: tokens.lineHeightBase300,
+        wordBreak: "break-word",
+    },
+    messageStack: {
+        display: "flex",
+        flexDirection: "column",
+        gap: "12px",
+        paddingTop: "16px",
+        minWidth: 0,
+    },
+    messageBar: {
+        width: "100%",
+        maxWidth: "100%",
+        minWidth: 0,
+        boxSizing: "border-box",
+    },
+    messageBody: {
+        minWidth: 0,
+    },
+    loadingMessageBody: {
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+    },
+    content: {
+        display: "flex",
+        flexDirection: "column",
+        gap: "20px",
+        paddingTop: "20px",
+    },
+    footer: {
+        flexShrink: 0,
+        borderTop: "1px solid var(--vscode-editorGroup-border)",
+        backgroundColor: "var(--vscode-editorWidget-background, var(--vscode-editor-background))",
+        padding: "12px 16px",
+    },
+    footerInner: {
+        width: "100%",
+        margin: 0,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: "12px",
+        boxSizing: "border-box",
+    },
+    footerGroup: {
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        flexWrap: "wrap",
+    },
+});
+
+export interface DialogPageShellProps {
+    icon?: ReactNode;
+    title?: string;
+    subtitle?: ReactNode;
+    headerEnd?: ReactNode;
+    headerBottom?: ReactNode;
+    showHeaderDivider?: boolean;
+    errorMessage?: string;
+    loadingMessage?: string;
+    maxContentWidth?: DialogPageShellContentWidth;
+    iconSize?: number;
+    compactHeader?: boolean;
+    footerStart?: ReactNode;
+    footerEnd?: ReactNode;
+    children?: ReactNode;
+}
+
+export const DialogPageShell = ({
+    icon,
+    title,
+    subtitle,
+    headerEnd,
+    headerBottom,
+    showHeaderDivider = true,
+    errorMessage,
+    loadingMessage,
+    maxContentWidth,
+    iconSize = defaultHeaderIconSizePx,
+    compactHeader = false,
+    footerStart,
+    footerEnd,
+    children,
+}: DialogPageShellProps) => {
+    const styles = useStyles();
+    const resolvedMaxContentWidth = resolveContentWidth(maxContentWidth);
+    const contentWidthStyle = resolvedMaxContentWidth
+        ? {
+              width: "100%",
+              maxWidth: resolvedMaxContentWidth,
+              margin: "0 auto",
+          }
+        : { width: "100%" };
+    const footerWidthStyle = resolvedMaxContentWidth
+        ? {
+              width: "100%",
+              maxWidth: `calc(${resolvedMaxContentWidth} + 48px)`,
+              margin: "0 auto",
+          }
+        : { width: "100%" };
+
+    const headerIcon =
+        icon && isValidElement(icon)
+            ? cloneElement(icon as ReactElement<{ width?: number; height?: number }>, {
+                  width: iconSize,
+                  height: iconSize,
+              })
+            : icon;
+    const hasHeaderIcon = headerIcon !== undefined && headerIcon !== null && headerIcon !== false;
+    const hasHeaderContent = !!icon || !!title || !!subtitle || !!headerEnd;
+
+    return (
+        <div className={styles.page} aria-label={title}>
+            <div className={styles.scrollRegion}>
+                <div className={styles.container}>
+                    {hasHeaderContent && (
+                        <div
+                            className={styles.headerOuter}
+                            style={
+                                showHeaderDivider
+                                    ? undefined
+                                    : {
+                                          borderBottom: "none",
+                                          paddingBottom: "16px",
+                                      }
+                            }>
+                            <div
+                                className={mergeClasses(
+                                    styles.header,
+                                    compactHeader && styles.compactHeader,
+                                )}
+                                style={{
+                                    ...contentWidthStyle,
+                                    gridTemplateColumns:
+                                        hasHeaderIcon && headerEnd
+                                            ? "auto minmax(0, 1fr) auto"
+                                            : hasHeaderIcon
+                                              ? "auto 1fr"
+                                              : headerEnd
+                                                ? "minmax(0, 1fr) auto"
+                                                : "1fr",
+                                }}>
+                                {hasHeaderIcon && (
+                                    <div
+                                        className={mergeClasses(
+                                            styles.iconContainer,
+                                            compactHeader && styles.compactIconContainer,
+                                        )}
+                                        style={{
+                                            width: `${iconSize}px`,
+                                            height: `${iconSize}px`,
+                                        }}>
+                                        {headerIcon}
+                                    </div>
+                                )}
+                                <div className={styles.headerText}>
+                                    {title && (
+                                        <div
+                                            className={mergeClasses(
+                                                styles.title,
+                                                compactHeader && styles.compactTitle,
+                                            )}>
+                                            {title}
+                                        </div>
+                                    )}
+                                    {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
+                                </div>
+                                {headerEnd}
+                            </div>
+                        </div>
+                    )}
+                    {headerBottom && <div style={contentWidthStyle}>{headerBottom}</div>}
+                    {(errorMessage || loadingMessage) && (
+                        <div className={styles.messageStack} style={contentWidthStyle}>
+                            {errorMessage && (
+                                <ErrorMessageDetails
+                                    message={errorMessage}
+                                    title={locConstants.common.error}
+                                />
+                            )}
+                            {loadingMessage && (
+                                <MessageBar intent="info" className={styles.messageBar}>
+                                    <MessageBarBody className={styles.messageBody}>
+                                        <div className={styles.loadingMessageBody}>
+                                            <Spinner size="tiny" />
+                                            <span>{loadingMessage}</span>
+                                        </div>
+                                    </MessageBarBody>
+                                </MessageBar>
+                            )}
+                        </div>
+                    )}
+                    <div className={styles.content} style={contentWidthStyle}>
+                        {children}
+                    </div>
+                </div>
+            </div>
+            {(footerStart || footerEnd) && (
+                <div className={styles.footer}>
+                    <div className={styles.footerInner} style={footerWidthStyle}>
+                        <div className={styles.footerGroup}>{footerStart}</div>
+                        <div className={styles.footerGroup}>{footerEnd}</div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};

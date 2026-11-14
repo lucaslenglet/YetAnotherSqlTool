@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pr-title:
+    name: PR title
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Conventional Commits format
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          pattern='^(feat|fix|docs|test|chore|refactor|perf|build|ci|style|revert)(\([a-z0-9._/-]+\))?!?: .+'
+          if ! printf '%s' "$PR_TITLE" | grep -Eq "$pattern"; then
+            echo "::error::PR title must follow Conventional Commits, e.g. 'feat(pg): add COPY support'. Got: $PR_TITLE"
+            exit 1
+          fi
+
+  checks:
+    name: Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm test
+      - name: Build production bundle and package
+        run: npx vsce package --no-dependencies
+      # Installs that .vsix in a blank VS Code, starts SQL Server and PostgreSQL in Docker and uses
+      # the extension end to end: the package uploaded below is the one that was tested.
+      - name: End-to-end test of the packaged extension (VS Code stable)
+        run: xvfb-run -a npm run test:vscode -- --vsix yet-another-sql-tool-*.vsix
+      - name: End-to-end test of the packaged extension (oldest VS Code supported, engines.vscode)
+        run: xvfb-run -a npm run test:vscode -- --vsix yet-another-sql-tool-*.vsix --version minimum
+      - name: Upload what was on screen when the end-to-end test failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-vscode-failure
+          path: |
+            .vscode-test/run/artifacts
+            .vscode-test/run/user-data/logs
+          include-hidden-files: true
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vsix
+          path: "*.vsix"
+          if-no-files-found: error
+
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run test:integration

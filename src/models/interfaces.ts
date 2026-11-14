@@ -1,0 +1,313 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+import * as vscode from "vscode";
+import * as Constants from "../constants/constants";
+import * as vscodeMssql from "vscode-mssql";
+import { AzureAuthType } from "./contracts/azure";
+import { ConfigTarget } from "../connectionconfig/connectionconfig";
+import type { DriverId } from "../drivers/types";
+
+// interfaces
+export enum ContentType {
+    Root = 0,
+    Messages = 1,
+    ResultsetsMeta = 2,
+    Columns = 3,
+    Rows = 4,
+    SaveResults = 5,
+    Copy = 6,
+    EditorSelection = 7,
+    OpenLink = 8,
+    ShowError = 9,
+    ShowWarning = 10,
+    Config = 11,
+    LocalizedTexts = 12,
+}
+
+export enum AuthenticationTypes {
+    Integrated = 1,
+    SqlLogin = 2,
+    AzureMFA = 3,
+    ActiveDirectoryDefault = 4,
+    ActiveDirectoryServicePrincipal = 5,
+}
+
+export enum EncryptOptions {
+    Optional = "Optional",
+    Mandatory = "Mandatory",
+    Strict = "Strict",
+}
+
+export const contentTypes = [
+    Constants.outputContentTypeRoot,
+    Constants.outputContentTypeMessages,
+    Constants.outputContentTypeResultsetMeta,
+    Constants.outputContentTypeColumns,
+    Constants.outputContentTypeRows,
+    Constants.outputContentTypeSaveResults,
+    Constants.outputContentTypeCopy,
+    Constants.outputContentTypeEditorSelection,
+    Constants.outputContentTypeOpenLink,
+    Constants.outputContentTypeShowError,
+    Constants.outputContentTypeShowWarning,
+    Constants.outputContentTypeConfig,
+    Constants.localizedTexts,
+];
+
+/**
+ * Extension of IConnectionInfo that adds metadata relevant to the MSSQL extension's handling of connection profiles,
+ * such as the profile name, connection ID, connection group ID, and whether the password should be saved.
+ */
+export interface IConnectionProfile extends vscodeMssql.IConnectionInfo {
+    /** Database engine of this connection. Profiles without it are SQL Server ones. */
+    provider?: DriverId;
+    profileName: string;
+    id: string;
+    groupId: string;
+    savePassword: boolean;
+    emptyPasswordInput: boolean;
+    azureAuthType: AzureAuthType;
+    configSource: ConfigTarget;
+    /**
+     * Optional sort order for display in the Object Explorer. Set manually in config JSON.
+     */
+    order?: number;
+    isValidProfile(): boolean;
+    isAzureActiveDirectory(): boolean;
+}
+
+export interface IConnectionGroup {
+    id: string;
+    name: string;
+    configSource: ConfigTarget;
+    parentId?: string;
+    color?: string;
+    description?: string;
+    /**
+     * Optional sort order for display in the Object Explorer. Set manually in config JSON.
+     */
+    order?: number;
+}
+
+export enum CredentialsQuickPickItemType {
+    Profile,
+    Mru,
+    NewConnection,
+}
+
+export interface IConnectionProfileWithSource extends IConnectionProfile {
+    profileSource: CredentialsQuickPickItemType;
+}
+
+export interface IConnectionCredentialsQuickPickItem extends vscode.QuickPickItem {
+    connectionCreds: vscodeMssql.IConnectionInfo;
+    quickPickItemType: CredentialsQuickPickItemType;
+}
+
+// Obtained from an active connection to show in the status bar
+export interface IConnectionProperties {
+    serverVersion: string;
+    currentUser: string;
+    currentDatabase: string;
+}
+
+export interface IDbColumn {
+    allowDBNull?: boolean;
+    baseCatalogName: string;
+    baseColumnName: string;
+    baseSchemaName: string;
+    baseServerName: string;
+    baseTableName: string;
+    columnName: string;
+    columnOrdinal?: number;
+    columnSize?: number;
+    isAliased?: boolean;
+    isAutoIncrement?: boolean;
+    isExpression?: boolean;
+    isHidden?: boolean;
+    isIdentity?: boolean;
+    isKey?: boolean;
+    isBytes?: boolean;
+    isChars?: boolean;
+    isSqlVariant?: boolean;
+    isUdt?: boolean;
+    dataType: string;
+    isXml?: boolean;
+    isJson?: boolean;
+    isVector?: boolean;
+    isLong?: boolean;
+    isReadOnly?: boolean;
+    isUnique?: boolean;
+    numericPrecision?: number;
+    numericScale?: number;
+    udtAssemblyQualifiedName: string;
+    dataTypeName: string;
+}
+
+export interface IGridResultSet {
+    columns: IDbColumn[];
+    rowsUri: string;
+    numberOfRows: number;
+}
+
+export interface ISelectionData {
+    startLine: number;
+    startColumn: number;
+    endLine: number;
+    endColumn: number;
+}
+
+export interface IResultMessage {
+    batchId?: number;
+    isError: boolean;
+    time: string;
+    message: string;
+    errorSelection?: ISelectionData;
+    rowsAffected?: number;
+}
+
+export interface IGridBatchMetaData {
+    resultSets: IGridResultSet[];
+    hasError: boolean;
+    selection: ISelectionData;
+    startTime: string;
+    endTime: string;
+    totalTime: string;
+}
+
+export interface IResultsConfig {
+    shortcuts: { [key: string]: string };
+    messagesDefaultOpen: boolean;
+    resultsFontSize: number;
+    resultsFontFamily: string;
+}
+
+export interface IAzureSignInQuickPickItem extends vscode.QuickPickItem {
+    command: string;
+}
+
+export class ResultSetSubset {
+    rowCount: number;
+    rows: vscodeMssql.DbCellValue[][];
+}
+
+export class ResultSetSummary {
+    id: number;
+    batchId: number;
+    rowCount: number;
+    columnInfo: vscodeMssql.IDbColumn[];
+}
+
+export class BatchSummary {
+    id: number;
+    selection: ISelectionData;
+    resultSetSummaries: ResultSetSummary[];
+    executionElapsed: string;
+    executionEnd: string;
+    executionStart: string;
+}
+
+export interface IGridResultSet {
+    columns: IDbColumn[];
+    rowsUri: string;
+    numberOfRows: number;
+}
+
+export interface ISelectionData {
+    startLine: number;
+    startColumn: number;
+    endLine: number;
+    endColumn: number;
+}
+
+export interface IMessageLink {
+    uri: string;
+    text: string;
+}
+
+export interface IMessage {
+    batchId?: number;
+    time: string;
+    message: string;
+    isError: boolean;
+    link?: IMessageLink;
+}
+
+export interface IGridIcon {
+    showCondition: () => boolean;
+    icon: () => string;
+    hoverText: () => string;
+    functionality: (batchId: number, resultId: number, index: number) => void;
+}
+
+export interface IResultsConfig {
+    shortcuts: { [key: string]: string };
+    messagesDefaultOpen: boolean;
+}
+
+export class QueryEvent {
+    type: string;
+    data: any;
+}
+
+export interface ISlickRange {
+    fromCell: number;
+    fromRow: number;
+    toCell: number;
+    toRow: number;
+}
+
+export interface IResultsConfig {
+    shortcuts: { [key: string]: string };
+    messagesDefaultOpen: boolean;
+}
+
+export interface ISelectionData {
+    startLine: number;
+    startColumn: number;
+    endLine: number;
+    endColumn: number;
+}
+
+export enum FieldType {
+    String = 0,
+    Boolean = 1,
+    Integer = 2,
+    Decimal = 3,
+    Date = 4,
+    Unknown = 5,
+}
+
+export interface IColumnDefinition {
+    id?: string;
+    field?: string;
+    name: string;
+    type: FieldType;
+    width?: number;
+    cssClass?: string;
+    focusable?: boolean;
+    selectable?: boolean;
+    asyncPostRender?: (cellRef: string, row: number, dataContext: JSON, colDef: any) => void;
+    formatter?: (row: number, cell: any, value: any, columnDef: any, dataContext: any) => string;
+}
+
+export interface IGridDataRow {
+    row?: number;
+    values: any[];
+}
+
+/** Azure Account Interfaces */
+export interface IAzureSession {
+    readonly environment: any;
+    readonly userId: string;
+    readonly tenantId: string;
+    readonly credentials: any;
+}
+
+export interface IDeferred<T, E extends Error = Error> {
+    resolve: (result: T | Promise<T>) => void;
+    reject: (reason: E) => void;
+}

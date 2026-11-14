@@ -1,0 +1,33 @@
+name: Feature request
+description: Suggest an idea or improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What are you trying to do?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: mssql
+    attributes:
+      label: Reference behavior
+      description: If the SQL Server extension (vscode-mssql) already does this, describe or link it.
+  - type: dropdown
+    id: engine
+    attributes:
+      label: Database engine
+      options: [All engines, SQL Server, PostgreSQL, SQLite (planned), MySQL (planned)]
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

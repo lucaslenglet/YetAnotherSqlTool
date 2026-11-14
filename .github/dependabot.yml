@@ -1,0 +1,29 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # tedious is pinned to an exact version on purpose: src/drivers/mssql/tediousRawValues.ts
+      # wraps its internal value parser. Upgrade it by hand and run
+      # test/drivers/mssql/cellFormats.test.ts. Patch updates (and security advisories)
+      # still produce PRs.
+      - dependency-name: tedious
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions:
+        update-types: [minor, patch]

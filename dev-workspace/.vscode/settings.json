@@ -1,0 +1,40 @@
+{
+    // Connections to the development databases started by `npm run dev:db`, for the window F5 opens.
+    // The password is the fixed, development-only one of scripts/dev-db.mjs: these databases are
+    // throwaway containers that listen on 127.0.0.1 only.
+    "yast.connectionGroups": [
+        {
+            "id": "docker",
+            "name": "Docker",
+            "parentId": "ROOT",
+            "color": "#2496ED"
+        }
+    ],
+    "yast.connections": [
+        {
+            "id": "docker-mssql",
+            "groupId": "docker",
+            "profileName": "SQL Server (Docker)",
+            "provider": "mssql",
+            "server": "localhost,11433",
+            "database": "yast",
+            "authenticationType": "SqlLogin",
+            "user": "sa",
+            "password": "YastDevOnly_1",
+            "encrypt": "Mandatory",
+            "trustServerCertificate": true
+        },
+        {
+            "id": "docker-pg",
+            "groupId": "docker",
+            "profileName": "PostgreSQL (Docker)",
+            "provider": "pg",
+            "server": "localhost",
+            "port": 15432,
+            "database": "yast",
+            "authenticationType": "SqlLogin",
+            "user": "yast",
+            "password": "YastDevOnly_1"
+        }
+    ]
+}

@@ -1,0 +1,25 @@
+# Build outputs and tooling
+node_modules/
+dist/
+out/
+.vscode-test/
+.claude/
+*.vsix
+
+# Generated or captured files (source of truth, never reformat)
+*.generated.ts
+docs/reference/
+test/fixtures/
+ThirdPartyNotices.txt
+THIRD_PARTY_LICENSE_vscode-mssql.txt
+
+# Third-party / declaration files copied from vscode-mssql
+typings/
+
+# Assets, docs, manifests and CI config are not code
+media/
+*.md
+*.svg
+package.json
+package-lock.json
+.github/

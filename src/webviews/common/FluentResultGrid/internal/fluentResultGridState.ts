@@ -1,0 +1,265 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+import type { Column, SlickGrid } from "slickgrid-react";
+import type {
+    GridViewState,
+    IDbColumn,
+    ResultSetSummary,
+} from "../../../../sharedInterfaces/queryResult";
+import type {
+    FluentResultGridScrollPosition,
+    FluentResultGridState,
+} from "../types/fluentResultGridState";
+import {
+    FLUENT_RESULT_GRID_DEFAULT_COLUMN_WIDTH,
+    FLUENT_RESULT_GRID_DEFAULT_FONT_SIZE,
+    FLUENT_RESULT_GRID_FIRST_DATA_CELL_INDEX,
+    FLUENT_RESULT_GRID_ROW_NUMBER_COLUMN_ID,
+} from "./fluentResultGridConstants";
+import type { FluentResultGridDataRow } from "./fluentResultGridDataView";
+import { getFluentResultGridDataSelectionsFromRanges } from "./fluentResultGridSelection";
+
+export const FLUENT_RESULT_GRID_DEFAULT_FROZEN_COLUMN_INDEX = 0;
+
+export function getFluentResultGridScrollTopOffset(grid: SlickGrid, topRow: number): number {
+    const rowHeight = grid.getOptions().rowHeight;
+    const viewportNode = grid.getViewportNode(0, topRow);
+    const rowBox = grid.getCellNodeBox(topRow, 0);
+    if (
+        typeof rowHeight !== "number" ||
+        rowHeight <= 0 ||
+        !viewportNode ||
+        !rowBox ||
+        !Number.isFinite(viewportNode.scrollTop) ||
+        !Number.isFinite(rowBox.top)
+    ) {
+        return 0;
+    }
+
+    return Math.min(rowHeight, Math.max(0, viewportNode.scrollTop - rowBox.top));
+}
+
+export function restoreFluentResultGridVerticalScrollPosition(
+    grid: SlickGrid,
+    scrollPosition: FluentResultGridScrollPosition,
+): void {
+    const rowHeight = grid.getOptions().rowHeight;
+    if (
+        typeof rowHeight !== "number" ||
+        rowHeight <= 0 ||
+        typeof scrollPosition.scrollTopOffset !== "number" ||
+        !Number.isFinite(scrollPosition.scrollTopOffset)
+    ) {
+        grid.scrollRowToTop(scrollPosition.scrollTop);
+        return;
+    }
+
+    const offset = Math.min(rowHeight, Math.max(0, scrollPosition.scrollTopOffset));
+    grid.scrollTo(scrollPosition.scrollTop * rowHeight + offset);
+    grid.render();
+}
+
+export function getFluentResultGridInitialFrozenColumnIndex(
+    savedFrozenColumnIndex: number | undefined,
+    freezeFirstColumnByDefault: boolean,
+): number {
+    return (
+        savedFrozenColumnIndex ??
+        (freezeFirstColumnByDefault
+            ? FLUENT_RESULT_GRID_FIRST_DATA_CELL_INDEX
+            : FLUENT_RESULT_GRID_DEFAULT_FROZEN_COLUMN_INDEX)
+    );
+}
+
+export function normalizeFluentResultGridRowPadding(rowPadding: number | null | undefined): number {
+    return typeof rowPadding === "number" && Number.isFinite(rowPadding)
+        ? Math.max(0, rowPadding)
+        : 0;
+}
+
+export function getFluentResultGridRowHeight(
+    rowHeight: number | undefined,
+    rowPadding: number,
+): number {
+    return rowHeight ?? FLUENT_RESULT_GRID_DEFAULT_FONT_SIZE + 12 + rowPadding * 2;
+}
+
+export function normalizeFluentResultGridFrozenColumnIndex(
+    value: number | undefined,
+    columnCount: number,
+): number {
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+        return FLUENT_RESULT_GRID_DEFAULT_FROZEN_COLUMN_INDEX;
+    }
+
+    return Math.min(
+        Math.max(FLUENT_RESULT_GRID_DEFAULT_FROZEN_COLUMN_INDEX, Math.trunc(value)),
+        Math.max(FLUENT_RESULT_GRID_DEFAULT_FROZEN_COLUMN_INDEX, columnCount - 1),
+    );
+}
+
+export function createFluentResultGridColumnSignature(columnInfo: readonly IDbColumn[]): string {
+    return columnInfo
+        .map((column) =>
+            [
+                column.columnName,
+                column.dataType,
+                column.isXml ? "xml" : "",
+                column.isJson ? "json" : "",
+                column.isVector ? "vector" : "",
+            ].join(","),
+        )
+        .join("|");
+}
+
+export interface FluentResultGridColumnInfoSnapshot {
+    signature: string;
+    value: IDbColumn[];
+}
+
+export function stabilizeFluentResultGridColumnInfo(
+    current: FluentResultGridColumnInfoSnapshot | undefined,
+    columnInfo: IDbColumn[],
+): FluentResultGridColumnInfoSnapshot {
+    const signature = createFluentResultGridColumnSignature(columnInfo);
+    return current?.signature === signature ? current : { signature, value: columnInfo };
+}
+
+export function createFluentResultGridIdentitySignature({
+    gridId,
+    resultSetSummary,
+    columnSignature,
+}: {
+    gridId: string;
+    resultSetSummary: ResultSetSummary;
+    columnSignature: string;
+}): string {
+    return [gridId, resultSetSummary.batchId, resultSetSummary.id, columnSignature].join("|");
+}
+
+export function getFluentResultGridCurrentColumnWidths(
+    grid: SlickGrid,
+    columnCount: number,
+): number[] {
+    const columnWidths = new Array<number>(columnCount);
+    grid.getColumns().forEach((column) => {
+        if (column.id === FLUENT_RESULT_GRID_ROW_NUMBER_COLUMN_ID) {
+            return;
+        }
+
+        const columnIndex = Number(column.field);
+        if (Number.isInteger(columnIndex)) {
+            columnWidths[columnIndex] = column.width ?? FLUENT_RESULT_GRID_DEFAULT_COLUMN_WIDTH;
+        }
+    });
+
+    return columnWidths.map((width) => width ?? FLUENT_RESULT_GRID_DEFAULT_COLUMN_WIDTH);
+}
+
+export function restoreFluentResultGridColumnWidths(
+    columns: Column<FluentResultGridDataRow>[],
+    state: Pick<FluentResultGridState, "columnWidths" | "rowNumberColumnWidth"> | undefined,
+): Column<FluentResultGridDataRow>[] {
+    return columns.map((column) => {
+        if (column.id === FLUENT_RESULT_GRID_ROW_NUMBER_COLUMN_ID) {
+            const width = state?.rowNumberColumnWidth;
+            return typeof width === "number" ? { ...column, width } : column;
+        }
+
+        const columnIndex = Number(column.field);
+        const width = state?.columnWidths?.[columnIndex];
+        return typeof width === "number" ? { ...column, width } : column;
+    });
+}
+
+export function areFluentResultGridColumnLayoutsEqual(
+    currentColumns: readonly Column<FluentResultGridDataRow>[],
+    nextColumns: readonly Column<FluentResultGridDataRow>[],
+): boolean {
+    return (
+        currentColumns.length === nextColumns.length &&
+        currentColumns.every((column, index) => {
+            const nextColumn = nextColumns[index];
+            return (
+                nextColumn !== undefined &&
+                column.id === nextColumn.id &&
+                column.width === nextColumn.width &&
+                Boolean(column.hidden) === Boolean(nextColumn.hidden)
+            );
+        })
+    );
+}
+
+function isFluentResultGridStateDataColumn(column: Column<FluentResultGridDataRow>): boolean {
+    return column.id !== FLUENT_RESULT_GRID_ROW_NUMBER_COLUMN_ID && !column.excludeFromGridMenu;
+}
+
+export function getFluentResultGridCurrentViewState({
+    grid,
+    allColumns,
+    frozenColumnIndex,
+}: {
+    grid: SlickGrid;
+    allColumns?: Column<FluentResultGridDataRow>[];
+    frozenColumnIndex: number;
+}): GridViewState {
+    const columnsForState = allColumns?.length
+        ? allColumns
+        : (grid.getColumns() as Column<FluentResultGridDataRow>[]);
+    const selectedRanges = grid.getSelectionModel()?.getSelectedRanges() ?? [];
+    const rowNumberColumnWidth = grid
+        .getColumns()
+        .find((column) => column.id === FLUENT_RESULT_GRID_ROW_NUMBER_COLUMN_ID)?.width;
+
+    return {
+        hiddenColumnIds: columnsForState
+            .filter(isFluentResultGridStateDataColumn)
+            .filter((column) => !!column.hidden)
+            .map((column) => column.id.toString()),
+        frozenColumnIndex: normalizeFluentResultGridFrozenColumnIndex(
+            grid.getOptions().frozenColumn ?? frozenColumnIndex,
+            columnsForState.length,
+        ),
+        selection: getFluentResultGridDataSelectionsFromRanges(selectedRanges, grid.getColumns()),
+        rowNumberColumnWidth,
+    };
+}
+
+export function getFluentResultGridStateForEmit({
+    grid,
+    allColumns,
+    columnCount,
+    frozenColumnIndex,
+    initialState,
+    filters,
+    sort,
+}: {
+    grid: SlickGrid;
+    allColumns?: Column<FluentResultGridDataRow>[];
+    columnCount: number;
+    frozenColumnIndex: number;
+    initialState?: FluentResultGridState;
+    filters: FluentResultGridState["filters"];
+    sort: FluentResultGridState["sort"];
+}): FluentResultGridState {
+    const viewport = grid.getViewport();
+    return {
+        ...(initialState ?? {}),
+        ...getFluentResultGridCurrentViewState({
+            grid,
+            allColumns,
+            frozenColumnIndex,
+        }),
+        columnWidths: getFluentResultGridCurrentColumnWidths(grid, columnCount),
+        filters,
+        sort,
+        scrollPosition: {
+            scrollLeft: viewport.leftPx,
+            scrollTop: viewport.top,
+            scrollTopOffset: getFluentResultGridScrollTopOffset(grid, viewport.top),
+        },
+    };
+}

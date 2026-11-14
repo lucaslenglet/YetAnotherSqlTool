@@ -1,0 +1,137 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+import * as qr from "../../../sharedInterfaces/queryResult";
+import { ColorThemeKind } from "../../../sharedInterfaces/webview";
+
+export const saveAsCsvIcon = (theme: ColorThemeKind) => {
+    return theme === ColorThemeKind.Light
+        ? require("../../media/saveCsv.svg")
+        : require("../../media/saveCsv_inverse.svg");
+};
+
+export const saveAsJsonIcon = (theme: ColorThemeKind) => {
+    return theme === ColorThemeKind.Light
+        ? require("../../media/saveJson.svg")
+        : require("../../media/saveJson_inverse.svg");
+};
+
+export const saveAsExcelIcon = (theme: ColorThemeKind) => {
+    return theme === ColorThemeKind.Light
+        ? require("../../media/saveExcel.svg")
+        : require("../../media/saveExcel_inverse.svg");
+};
+
+export const saveAsInsertIcon = (theme: ColorThemeKind) => {
+    return theme === ColorThemeKind.Light
+        ? require("../../media/saveInsert.svg")
+        : require("../../media/saveInsert_inverse.svg");
+};
+
+export function hasResultsOrMessages(
+    resultSetSummaries: Record<number, Record<number, qr.ResultSetSummary>>,
+    messages: qr.IMessage[],
+): boolean {
+    return Object.keys(resultSetSummaries).length > 0 || messages.length > 0;
+}
+
+/**
+ * Splits messages containing newline characters into separate messages while preserving original properties.
+ * @param messages - Array messages to process
+ * @returns Array of messages with newline characters split into separate messages
+ */
+export const splitMessages = (messages: qr.IMessage[] | undefined | null): qr.IMessage[] => {
+    if (!messages || messages.length === 0) {
+        return [];
+    }
+    return messages.flatMap((message) => {
+        // Match both Windows CRLF and Unix LF line endings before rendering each display row.
+        const lines = message.message.split(/\r?\n/);
+        // A link points at one place in the message, so once the message is split it belongs to
+        // the line it was taken from. Errors span two lines and would otherwise repeat the link.
+        const linkText = message.link?.text;
+        const linkedLine = linkText ? lines.findIndex((line) => line.includes(linkText)) : 0;
+        return lines.map((line, index) => {
+            let newMessage = { ...message };
+            newMessage.message = line;
+            if (index !== (linkedLine === -1 ? 0 : linkedLine)) {
+                newMessage.link = undefined;
+                newMessage.selection = undefined;
+            }
+            return newMessage;
+        });
+    });
+};
+
+export function getTotalResultSetRowCount(
+    summaries: Record<number, Record<number, qr.ResultSetSummary>>,
+): number | undefined {
+    let total = 0;
+    let hasRowCount = false;
+
+    for (const batch of Object.values(summaries ?? {})) {
+        for (const result of Object.values(batch ?? {})) {
+            if (typeof result?.rowCount === "number") {
+                total += result.rowCount;
+                hasRowCount = true;
+            }
+        }
+    }
+
+    return hasRowCount ? total : undefined;
+}
+
+function getActiveResultSetRowCount(
+    summaries: Record<number, Record<number, qr.ResultSetSummary>>,
+    selectionSummary?: qr.SelectionSummary,
+): number | undefined {
+    if (
+        selectionSummary?.batchId !== undefined &&
+        selectionSummary?.resultId !== undefined &&
+        typeof summaries?.[selectionSummary.batchId]?.[selectionSummary.resultId]?.rowCount ===
+            "number"
+    ) {
+        return summaries[selectionSummary.batchId][selectionSummary.resultId].rowCount;
+    }
+
+    return undefined;
+}
+
+export function getDisplayedRowsCount(
+    summaries: Record<number, Record<number, qr.ResultSetSummary>>,
+    selectionSummary: qr.SelectionSummary | undefined,
+    rowsAffected: number | undefined,
+): number | undefined {
+    const activeResultRowCount = getActiveResultSetRowCount(summaries, selectionSummary);
+    if (typeof activeResultRowCount === "number") {
+        return activeResultRowCount;
+    }
+
+    const totalResultRowCount = getTotalResultSetRowCount(summaries);
+    if (typeof totalResultRowCount === "number") {
+        return totalResultRowCount;
+    }
+
+    return rowsAffected;
+}
+
+/**
+ * Gets the total count of grid result sets.
+ * @param summaries The result set summaries.
+ * @returns The total count of grid result sets.
+ */
+export function getGridCount(
+    summaries: Record<number, Record<number, qr.ResultSetSummary>>,
+): number {
+    let count = 0;
+    const batchIds = Object.keys(summaries ?? {});
+    for (const batchId of batchIds) {
+        const summary = summaries[parseInt(batchId)];
+        if (summary) {
+            count += Object.keys(summary).length;
+        }
+    }
+    return count;
+}

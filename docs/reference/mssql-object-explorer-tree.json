@@ -1,0 +1,3387 @@
+{
+  "nodePath": "localhost,11433",
+  "parentNodePath": "",
+  "nodeType": "Server",
+  "label": "localhost,11433 (SQL Server 16.0.4295.3 - sa)",
+  "nodeSubType": null,
+  "nodeStatus": null,
+  "isLeaf": false,
+  "metadata": null,
+  "errorMessage": null,
+  "objectType": "Server",
+  "filterableProperties": null,
+  "children": [
+    {
+      "nodePath": "localhost,11433/Databases",
+      "parentNodePath": "localhost,11433",
+      "nodeType": "Folder",
+      "label": "Databases",
+      "nodeSubType": null,
+      "nodeStatus": null,
+      "isLeaf": false,
+      "metadata": null,
+      "errorMessage": null,
+      "objectType": "Databases",
+      "filterableProperties": [
+        {
+          "name": "Name",
+          "displayName": "Name",
+          "description": "Include or exclude objects based on the name or part of a name.",
+          "type": 0,
+          "choices": null
+        },
+        {
+          "name": "Owner",
+          "displayName": "Owner",
+          "description": "Include or exclude objects based on the owner or part of an owner name.",
+          "type": 0,
+          "choices": null
+        },
+        {
+          "name": "CreateDate",
+          "displayName": "Create Date",
+          "description": "Include or exclude objects based on their creation date.",
+          "type": 3,
+          "choices": null
+        }
+      ],
+      "children": [
+        {
+          "nodePath": "localhost,11433/Databases/System Databases",
+          "parentNodePath": "localhost,11433/Databases",
+          "nodeType": "Folder",
+          "label": "System Databases",
+          "nodeSubType": null,
+          "nodeStatus": null,
+          "isLeaf": false,
+          "metadata": null,
+          "errorMessage": null,
+          "objectType": "SystemDatabases",
+          "filterableProperties": [],
+          "children": [
+            {
+              "nodePath": "localhost,11433/Databases/System Databases/master",
+              "parentNodePath": "localhost,11433/Databases/System Databases",
+              "nodeType": "Database",
+              "label": "master",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": false,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Database",
+                "schema": null,
+                "name": "master",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Database[@Name='master']"
+              },
+              "errorMessage": null,
+              "objectType": "Database",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Databases/System Databases/model",
+              "parentNodePath": "localhost,11433/Databases/System Databases",
+              "nodeType": "Database",
+              "label": "model",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": false,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Database",
+                "schema": null,
+                "name": "model",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Database[@Name='model']"
+              },
+              "errorMessage": null,
+              "objectType": "Database",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Databases/System Databases/msdb",
+              "parentNodePath": "localhost,11433/Databases/System Databases",
+              "nodeType": "Database",
+              "label": "msdb",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": false,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Database",
+                "schema": null,
+                "name": "msdb",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Database[@Name='msdb']"
+              },
+              "errorMessage": null,
+              "objectType": "Database",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Databases/System Databases/tempdb",
+              "parentNodePath": "localhost,11433/Databases/System Databases",
+              "nodeType": "Database",
+              "label": "tempdb",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": false,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Database",
+                "schema": null,
+                "name": "tempdb",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Database[@Name='tempdb']"
+              },
+              "errorMessage": null,
+              "objectType": "Database",
+              "filterableProperties": []
+            }
+          ]
+        },
+        {
+          "nodePath": "localhost,11433/Databases/yast",
+          "parentNodePath": "localhost,11433/Databases",
+          "nodeType": "Database",
+          "label": "yast",
+          "nodeSubType": "",
+          "nodeStatus": "",
+          "isLeaf": false,
+          "metadata": {
+            "metadataType": 0,
+            "metadataTypeName": "Database",
+            "schema": null,
+            "name": "yast",
+            "parentName": null,
+            "parentTypeName": null,
+            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']"
+          },
+          "errorMessage": null,
+          "objectType": "Database",
+          "filterableProperties": [],
+          "children": [
+            {
+              "nodePath": "localhost,11433/Databases/yast/Tables",
+              "parentNodePath": "localhost,11433/Databases/yast",
+              "nodeType": "Folder",
+              "label": "Tables",
+              "nodeSubType": null,
+              "nodeStatus": null,
+              "isLeaf": false,
+              "metadata": null,
+              "errorMessage": null,
+              "objectType": "Tables",
+              "filterableProperties": [
+                {
+                  "name": "Name",
+                  "displayName": "Name",
+                  "description": "Include or exclude objects based on the name or part of a name.",
+                  "type": 0,
+                  "choices": null
+                },
+                {
+                  "name": "Schema",
+                  "displayName": "Schema",
+                  "description": " Include or exclude objects based on the schema or part of a schema name.",
+                  "type": 0,
+                  "choices": null
+                },
+                {
+                  "name": "CreateDate",
+                  "displayName": "Create Date",
+                  "description": "Include or exclude objects based on their creation date.",
+                  "type": 3,
+                  "choices": null
+                },
+                {
+                  "name": "Owner",
+                  "displayName": "Owner",
+                  "description": "Include or exclude objects based on the owner or part of an owner name.",
+                  "type": 0,
+                  "choices": null
+                }
+              ],
+              "children": [
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Tables/dbo.customers",
+                  "parentNodePath": "localhost,11433/Databases/yast/Tables",
+                  "nodeType": "Table",
+                  "label": "dbo.customers",
+                  "nodeSubType": "",
+                  "nodeStatus": "",
+                  "isLeaf": false,
+                  "metadata": {
+                    "metadataType": 0,
+                    "metadataTypeName": "Table",
+                    "schema": "dbo",
+                    "name": "customers",
+                    "parentName": null,
+                    "parentTypeName": null,
+                    "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='customers' and @Schema='dbo']"
+                  },
+                  "errorMessage": null,
+                  "objectType": "Table",
+                  "filterableProperties": [],
+                  "children": [
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Columns",
+                      "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.customers",
+                      "nodeType": "Folder",
+                      "label": "Columns",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "Columns",
+                      "filterableProperties": [
+                        {
+                          "name": "Name",
+                          "displayName": "Name",
+                          "description": "Include or exclude objects based on the name or part of a name.",
+                          "type": 0,
+                          "choices": null
+                        },
+                        {
+                          "name": "InPrimaryKey",
+                          "displayName": "In Primary Key",
+                          "description": "Include or exclude objects based on whether the column is in a primary key.",
+                          "type": 2,
+                          "choices": null
+                        }
+                      ],
+                      "children": [
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Columns/id",
+                          "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Columns",
+                          "nodeType": "Column",
+                          "label": "id (PK, int, not null)",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Column",
+                            "schema": "dbo",
+                            "name": "id",
+                            "parentName": "customers",
+                            "parentTypeName": "Table",
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='customers' and @Schema='dbo']/Column[@Name='id']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        },
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Columns/name",
+                          "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Columns",
+                          "nodeType": "Column",
+                          "label": "name (nvarchar(100), null)",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Column",
+                            "schema": "dbo",
+                            "name": "name",
+                            "parentName": "customers",
+                            "parentTypeName": "Table",
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='customers' and @Schema='dbo']/Column[@Name='name']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        },
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Columns/email",
+                          "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Columns",
+                          "nodeType": "Column",
+                          "label": "email (nvarchar(255), not null)",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Column",
+                            "schema": "dbo",
+                            "name": "email",
+                            "parentName": "customers",
+                            "parentTypeName": "Table",
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='customers' and @Schema='dbo']/Column[@Name='email']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        },
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Columns/created_at",
+                          "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Columns",
+                          "nodeType": "Column",
+                          "label": "created_at (datetime2(7), not null)",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Column",
+                            "schema": "dbo",
+                            "name": "created_at",
+                            "parentName": "customers",
+                            "parentTypeName": "Table",
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='customers' and @Schema='dbo']/Column[@Name='created_at']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        }
+                      ]
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Keys",
+                      "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.customers",
+                      "nodeType": "Folder",
+                      "label": "Keys",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "Keys",
+                      "filterableProperties": [],
+                      "children": [
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Keys/PK__customer__3213E83F430F8142",
+                          "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Keys",
+                          "nodeType": "Key",
+                          "label": "PK__customer__3213E83F430F8142",
+                          "nodeSubType": "PrimaryKey",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Index",
+                            "schema": "dbo",
+                            "name": "PK__customer__3213E83F430F8142",
+                            "parentName": "customers",
+                            "parentTypeName": "Table",
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='customers' and @Schema='dbo']/Index[@Name='PK__customer__3213E83F430F8142']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        },
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Keys/UQ__customer__AB6E6164F0FA3198",
+                          "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Keys",
+                          "nodeType": "Key",
+                          "label": "UQ__customer__AB6E6164F0FA3198",
+                          "nodeSubType": "UniqueKey",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Index",
+                            "schema": "dbo",
+                            "name": "UQ__customer__AB6E6164F0FA3198",
+                            "parentName": "customers",
+                            "parentTypeName": "Table",
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='customers' and @Schema='dbo']/Index[@Name='UQ__customer__AB6E6164F0FA3198']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        }
+                      ]
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Constraints",
+                      "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.customers",
+                      "nodeType": "Folder",
+                      "label": "Constraints",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "Constraints",
+                      "filterableProperties": [],
+                      "children": [
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Constraints/DF__customers__creat__38996AB5",
+                          "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Constraints",
+                          "nodeType": "Constraint",
+                          "label": "DF__customers__creat__38996AB5",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Default",
+                            "schema": null,
+                            "name": "DF__customers__creat__38996AB5",
+                            "parentName": null,
+                            "parentTypeName": null,
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='customers' and @Schema='dbo']/Column[@Name='created_at']/Default[@Name='DF__customers__creat__38996AB5']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        }
+                      ]
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Triggers",
+                      "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.customers",
+                      "nodeType": "Folder",
+                      "label": "Triggers",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "Triggers",
+                      "filterableProperties": [],
+                      "children": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Indexes",
+                      "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.customers",
+                      "nodeType": "Folder",
+                      "label": "Indexes",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "Indexes",
+                      "filterableProperties": [
+                        {
+                          "name": "Name",
+                          "displayName": "Name",
+                          "description": "Include or exclude objects based on the name or part of a name.",
+                          "type": 0,
+                          "choices": null
+                        },
+                        {
+                          "name": "IsMemoryOptimized",
+                          "displayName": "Is Memory Optimized",
+                          "description": "Include or exclude objects based on whether the object is memory optimized.",
+                          "type": 2,
+                          "choices": null
+                        }
+                      ],
+                      "children": [
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Indexes/PK__customer__3213E83F430F8142",
+                          "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Indexes",
+                          "nodeType": "Index",
+                          "label": "PK__customer__3213E83F430F8142 (Unique, Clustered)",
+                          "nodeSubType": "PrimaryKey",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Index",
+                            "schema": "dbo",
+                            "name": "PK__customer__3213E83F430F8142",
+                            "parentName": "customers",
+                            "parentTypeName": "Table",
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='customers' and @Schema='dbo']/Index[@Name='PK__customer__3213E83F430F8142']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        },
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Indexes/UQ__customer__AB6E6164F0FA3198",
+                          "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Indexes",
+                          "nodeType": "Index",
+                          "label": "UQ__customer__AB6E6164F0FA3198 (Unique, Non-Clustered)",
+                          "nodeSubType": "UniqueKey",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Index",
+                            "schema": "dbo",
+                            "name": "UQ__customer__AB6E6164F0FA3198",
+                            "parentName": "customers",
+                            "parentTypeName": "Table",
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='customers' and @Schema='dbo']/Index[@Name='UQ__customer__AB6E6164F0FA3198']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        }
+                      ]
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Statistics",
+                      "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.customers",
+                      "nodeType": "Folder",
+                      "label": "Statistics",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "Statistics",
+                      "filterableProperties": [],
+                      "children": [
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Statistics/PK__customer__3213E83F430F8142",
+                          "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Statistics",
+                          "nodeType": "Statistic",
+                          "label": "PK__customer__3213E83F430F8142",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Statistic",
+                            "schema": "dbo",
+                            "name": "PK__customer__3213E83F430F8142",
+                            "parentName": "customers",
+                            "parentTypeName": "Table",
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='customers' and @Schema='dbo']/Statistic[@Name='PK__customer__3213E83F430F8142']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        },
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Statistics/UQ__customer__AB6E6164F0FA3198",
+                          "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.customers/Statistics",
+                          "nodeType": "Statistic",
+                          "label": "UQ__customer__AB6E6164F0FA3198",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Statistic",
+                            "schema": "dbo",
+                            "name": "UQ__customer__AB6E6164F0FA3198",
+                            "parentName": "customers",
+                            "parentTypeName": "Table",
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='customers' and @Schema='dbo']/Statistic[@Name='UQ__customer__AB6E6164F0FA3198']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Tables/dbo.orders",
+                  "parentNodePath": "localhost,11433/Databases/yast/Tables",
+                  "nodeType": "Table",
+                  "label": "dbo.orders",
+                  "nodeSubType": "",
+                  "nodeStatus": "",
+                  "isLeaf": false,
+                  "metadata": {
+                    "metadataType": 0,
+                    "metadataTypeName": "Table",
+                    "schema": "dbo",
+                    "name": "orders",
+                    "parentName": null,
+                    "parentTypeName": null,
+                    "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='orders' and @Schema='dbo']"
+                  },
+                  "errorMessage": null,
+                  "objectType": "Table",
+                  "filterableProperties": [],
+                  "children": [
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Columns",
+                      "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.orders",
+                      "nodeType": "Folder",
+                      "label": "Columns",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "Columns",
+                      "filterableProperties": [
+                        {
+                          "name": "Name",
+                          "displayName": "Name",
+                          "description": "Include or exclude objects based on the name or part of a name.",
+                          "type": 0,
+                          "choices": null
+                        },
+                        {
+                          "name": "InPrimaryKey",
+                          "displayName": "In Primary Key",
+                          "description": "Include or exclude objects based on whether the column is in a primary key.",
+                          "type": 2,
+                          "choices": null
+                        }
+                      ],
+                      "children": [
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Columns/id",
+                          "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Columns",
+                          "nodeType": "Column",
+                          "label": "id (PK, int, not null)",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Column",
+                            "schema": "dbo",
+                            "name": "id",
+                            "parentName": "orders",
+                            "parentTypeName": "Table",
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='orders' and @Schema='dbo']/Column[@Name='id']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        },
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Columns/customer_id",
+                          "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Columns",
+                          "nodeType": "Column",
+                          "label": "customer_id (FK, int, not null)",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Column",
+                            "schema": "dbo",
+                            "name": "customer_id",
+                            "parentName": "orders",
+                            "parentTypeName": "Table",
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='orders' and @Schema='dbo']/Column[@Name='customer_id']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        },
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Columns/amount",
+                          "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Columns",
+                          "nodeType": "Column",
+                          "label": "amount (decimal(10,2), not null)",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Column",
+                            "schema": "dbo",
+                            "name": "amount",
+                            "parentName": "orders",
+                            "parentTypeName": "Table",
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='orders' and @Schema='dbo']/Column[@Name='amount']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        },
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Columns/status",
+                          "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Columns",
+                          "nodeType": "Column",
+                          "label": "status (nvarchar(20), not null)",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Column",
+                            "schema": "dbo",
+                            "name": "status",
+                            "parentName": "orders",
+                            "parentTypeName": "Table",
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='orders' and @Schema='dbo']/Column[@Name='status']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        }
+                      ]
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Keys",
+                      "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.orders",
+                      "nodeType": "Folder",
+                      "label": "Keys",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "Keys",
+                      "filterableProperties": [],
+                      "children": [
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Keys/PK__orders__3213E83F14D1C88F",
+                          "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Keys",
+                          "nodeType": "Key",
+                          "label": "PK__orders__3213E83F14D1C88F",
+                          "nodeSubType": "PrimaryKey",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Index",
+                            "schema": "dbo",
+                            "name": "PK__orders__3213E83F14D1C88F",
+                            "parentName": "orders",
+                            "parentTypeName": "Table",
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='orders' and @Schema='dbo']/Index[@Name='PK__orders__3213E83F14D1C88F']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        },
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Keys/FK__orders__customer__3B75D760",
+                          "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Keys",
+                          "nodeType": "Key",
+                          "label": "FK__orders__customer__3B75D760",
+                          "nodeSubType": "ForeignKey",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "ForeignKey",
+                            "schema": "dbo",
+                            "name": "FK__orders__customer__3B75D760",
+                            "parentName": "orders",
+                            "parentTypeName": "Table",
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='orders' and @Schema='dbo']/ForeignKey[@Name='FK__orders__customer__3B75D760']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        }
+                      ]
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Constraints",
+                      "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.orders",
+                      "nodeType": "Folder",
+                      "label": "Constraints",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "Constraints",
+                      "filterableProperties": [],
+                      "children": [
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Constraints/DF__orders__status__3C69FB99",
+                          "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Constraints",
+                          "nodeType": "Constraint",
+                          "label": "DF__orders__status__3C69FB99",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Default",
+                            "schema": null,
+                            "name": "DF__orders__status__3C69FB99",
+                            "parentName": null,
+                            "parentTypeName": null,
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='orders' and @Schema='dbo']/Column[@Name='status']/Default[@Name='DF__orders__status__3C69FB99']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        }
+                      ]
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Triggers",
+                      "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.orders",
+                      "nodeType": "Folder",
+                      "label": "Triggers",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "Triggers",
+                      "filterableProperties": [],
+                      "children": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Indexes",
+                      "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.orders",
+                      "nodeType": "Folder",
+                      "label": "Indexes",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "Indexes",
+                      "filterableProperties": [
+                        {
+                          "name": "Name",
+                          "displayName": "Name",
+                          "description": "Include or exclude objects based on the name or part of a name.",
+                          "type": 0,
+                          "choices": null
+                        },
+                        {
+                          "name": "IsMemoryOptimized",
+                          "displayName": "Is Memory Optimized",
+                          "description": "Include or exclude objects based on whether the object is memory optimized.",
+                          "type": 2,
+                          "choices": null
+                        }
+                      ],
+                      "children": [
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Indexes/PK__orders__3213E83F14D1C88F",
+                          "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Indexes",
+                          "nodeType": "Index",
+                          "label": "PK__orders__3213E83F14D1C88F (Unique, Clustered)",
+                          "nodeSubType": "PrimaryKey",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Index",
+                            "schema": "dbo",
+                            "name": "PK__orders__3213E83F14D1C88F",
+                            "parentName": "orders",
+                            "parentTypeName": "Table",
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='orders' and @Schema='dbo']/Index[@Name='PK__orders__3213E83F14D1C88F']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        }
+                      ]
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Statistics",
+                      "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.orders",
+                      "nodeType": "Folder",
+                      "label": "Statistics",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "Statistics",
+                      "filterableProperties": [],
+                      "children": [
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Statistics/PK__orders__3213E83F14D1C88F",
+                          "parentNodePath": "localhost,11433/Databases/yast/Tables/dbo.orders/Statistics",
+                          "nodeType": "Statistic",
+                          "label": "PK__orders__3213E83F14D1C88F",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Statistic",
+                            "schema": "dbo",
+                            "name": "PK__orders__3213E83F14D1C88F",
+                            "parentName": "orders",
+                            "parentTypeName": "Table",
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Table[@Name='orders' and @Schema='dbo']/Statistic[@Name='PK__orders__3213E83F14D1C88F']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Tables/Dropped Ledger Tables",
+                  "parentNodePath": "localhost,11433/Databases/yast/Tables",
+                  "nodeType": "Folder",
+                  "label": "Dropped Ledger Tables",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "DroppedLedgerTables",
+                  "filterableProperties": [
+                    {
+                      "name": "Name",
+                      "displayName": "Name",
+                      "description": "Include or exclude objects based on the name or part of a name.",
+                      "type": 0,
+                      "choices": null
+                    },
+                    {
+                      "name": "Schema",
+                      "displayName": "Schema",
+                      "description": " Include or exclude objects based on the schema or part of a schema name.",
+                      "type": 0,
+                      "choices": null
+                    },
+                    {
+                      "name": "CreateDate",
+                      "displayName": "Create Date",
+                      "description": "Include or exclude objects based on their creation date.",
+                      "type": 3,
+                      "choices": null
+                    },
+                    {
+                      "name": "Owner",
+                      "displayName": "Owner",
+                      "description": "Include or exclude objects based on the owner or part of an owner name.",
+                      "type": 0,
+                      "choices": null
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Tables/External Tables",
+                  "parentNodePath": "localhost,11433/Databases/yast/Tables",
+                  "nodeType": "Folder",
+                  "label": "External Tables",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "ExternalTables",
+                  "filterableProperties": [],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "nodePath": "localhost,11433/Databases/yast/Views",
+              "parentNodePath": "localhost,11433/Databases/yast",
+              "nodeType": "Folder",
+              "label": "Views",
+              "nodeSubType": null,
+              "nodeStatus": null,
+              "isLeaf": false,
+              "metadata": null,
+              "errorMessage": null,
+              "objectType": "Views",
+              "filterableProperties": [
+                {
+                  "name": "Name",
+                  "displayName": "Name",
+                  "description": "Include or exclude objects based on the name or part of a name.",
+                  "type": 0,
+                  "choices": null
+                },
+                {
+                  "name": "Schema",
+                  "displayName": "Schema",
+                  "description": " Include or exclude objects based on the schema or part of a schema name.",
+                  "type": 0,
+                  "choices": null
+                },
+                {
+                  "name": "CreateDate",
+                  "displayName": "Create Date",
+                  "description": "Include or exclude objects based on their creation date.",
+                  "type": 3,
+                  "choices": null
+                },
+                {
+                  "name": "Owner",
+                  "displayName": "Owner",
+                  "description": "Include or exclude objects based on the owner or part of an owner name.",
+                  "type": 0,
+                  "choices": null
+                }
+              ],
+              "children": [
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Views/Dropped Ledger Views",
+                  "parentNodePath": "localhost,11433/Databases/yast/Views",
+                  "nodeType": "Folder",
+                  "label": "Dropped Ledger Views",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "DroppedLedgerViews",
+                  "filterableProperties": [
+                    {
+                      "name": "Name",
+                      "displayName": "Name",
+                      "description": "Include or exclude objects based on the name or part of a name.",
+                      "type": 0,
+                      "choices": null
+                    },
+                    {
+                      "name": "Schema",
+                      "displayName": "Schema",
+                      "description": " Include or exclude objects based on the schema or part of a schema name.",
+                      "type": 0,
+                      "choices": null
+                    },
+                    {
+                      "name": "CreateDate",
+                      "displayName": "Create Date",
+                      "description": "Include or exclude objects based on their creation date.",
+                      "type": 3,
+                      "choices": null
+                    },
+                    {
+                      "name": "Owner",
+                      "displayName": "Owner",
+                      "description": "Include or exclude objects based on the owner or part of an owner name.",
+                      "type": 0,
+                      "choices": null
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "nodePath": "localhost,11433/Databases/yast/Synonyms",
+              "parentNodePath": "localhost,11433/Databases/yast",
+              "nodeType": "Folder",
+              "label": "Synonyms",
+              "nodeSubType": null,
+              "nodeStatus": null,
+              "isLeaf": false,
+              "metadata": null,
+              "errorMessage": null,
+              "objectType": "Synonyms",
+              "filterableProperties": [],
+              "children": []
+            },
+            {
+              "nodePath": "localhost,11433/Databases/yast/Programmability",
+              "parentNodePath": "localhost,11433/Databases/yast",
+              "nodeType": "Folder",
+              "label": "Programmability",
+              "nodeSubType": null,
+              "nodeStatus": null,
+              "isLeaf": false,
+              "metadata": null,
+              "errorMessage": null,
+              "objectType": "Programmability",
+              "filterableProperties": [],
+              "children": [
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Programmability/Stored Procedures",
+                  "parentNodePath": "localhost,11433/Databases/yast/Programmability",
+                  "nodeType": "Folder",
+                  "label": "Stored Procedures",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "StoredProcedures",
+                  "filterableProperties": [
+                    {
+                      "name": "Name",
+                      "displayName": "Name",
+                      "description": "Include or exclude objects based on the name or part of a name.",
+                      "type": 0,
+                      "choices": null
+                    },
+                    {
+                      "name": "Schema",
+                      "displayName": "Schema",
+                      "description": " Include or exclude objects based on the schema or part of a schema name.",
+                      "type": 0,
+                      "choices": null
+                    },
+                    {
+                      "name": "CreateDate",
+                      "displayName": "Create Date",
+                      "description": "Include or exclude objects based on their creation date.",
+                      "type": 3,
+                      "choices": null
+                    },
+                    {
+                      "name": "Owner",
+                      "displayName": "Owner",
+                      "description": "Include or exclude objects based on the owner or part of an owner name.",
+                      "type": 0,
+                      "choices": null
+                    },
+                    {
+                      "name": "IsNativelyCompiled",
+                      "displayName": "Is Natively Compiled",
+                      "description": "Include or exclude objects based on whether the object is natively compiled.",
+                      "type": 2,
+                      "choices": null
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Programmability/Functions",
+                  "parentNodePath": "localhost,11433/Databases/yast/Programmability",
+                  "nodeType": "Folder",
+                  "label": "Functions",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "Functions",
+                  "filterableProperties": [],
+                  "children": [
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Programmability/Functions/Table-valued Functions",
+                      "parentNodePath": "localhost,11433/Databases/yast/Programmability/Functions",
+                      "nodeType": "Folder",
+                      "label": "Table-valued Functions",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "TableValuedFunctions",
+                      "filterableProperties": [
+                        {
+                          "name": "Name",
+                          "displayName": "Name",
+                          "description": "Include or exclude objects based on the name or part of a name.",
+                          "type": 0,
+                          "choices": null
+                        },
+                        {
+                          "name": "Schema",
+                          "displayName": "Schema",
+                          "description": " Include or exclude objects based on the schema or part of a schema name.",
+                          "type": 0,
+                          "choices": null
+                        },
+                        {
+                          "name": "CreateDate",
+                          "displayName": "Create Date",
+                          "description": "Include or exclude objects based on their creation date.",
+                          "type": 3,
+                          "choices": null
+                        },
+                        {
+                          "name": "Owner",
+                          "displayName": "Owner",
+                          "description": "Include or exclude objects based on the owner or part of an owner name.",
+                          "type": 0,
+                          "choices": null
+                        },
+                        {
+                          "name": "IsNativelyCompiled",
+                          "displayName": "Is Natively Compiled",
+                          "description": "Include or exclude objects based on whether the object is natively compiled.",
+                          "type": 2,
+                          "choices": null
+                        }
+                      ],
+                      "children": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Programmability/Functions/Scalar-valued Functions",
+                      "parentNodePath": "localhost,11433/Databases/yast/Programmability/Functions",
+                      "nodeType": "Folder",
+                      "label": "Scalar-valued Functions",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "ScalarValuedFunctions",
+                      "filterableProperties": [
+                        {
+                          "name": "Name",
+                          "displayName": "Name",
+                          "description": "Include or exclude objects based on the name or part of a name.",
+                          "type": 0,
+                          "choices": null
+                        },
+                        {
+                          "name": "Schema",
+                          "displayName": "Schema",
+                          "description": " Include or exclude objects based on the schema or part of a schema name.",
+                          "type": 0,
+                          "choices": null
+                        },
+                        {
+                          "name": "CreateDate",
+                          "displayName": "Create Date",
+                          "description": "Include or exclude objects based on their creation date.",
+                          "type": 3,
+                          "choices": null
+                        },
+                        {
+                          "name": "Owner",
+                          "displayName": "Owner",
+                          "description": "Include or exclude objects based on the owner or part of an owner name.",
+                          "type": 0,
+                          "choices": null
+                        },
+                        {
+                          "name": "IsNativelyCompiled",
+                          "displayName": "Is Natively Compiled",
+                          "description": "Include or exclude objects based on whether the object is natively compiled.",
+                          "type": 2,
+                          "choices": null
+                        }
+                      ],
+                      "children": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Programmability/Functions/Aggregate Functions",
+                      "parentNodePath": "localhost,11433/Databases/yast/Programmability/Functions",
+                      "nodeType": "Folder",
+                      "label": "Aggregate Functions",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "AggregateFunctions",
+                      "filterableProperties": [
+                        {
+                          "name": "Name",
+                          "displayName": "Name",
+                          "description": "Include or exclude objects based on the name or part of a name.",
+                          "type": 0,
+                          "choices": null
+                        },
+                        {
+                          "name": "Schema",
+                          "displayName": "Schema",
+                          "description": " Include or exclude objects based on the schema or part of a schema name.",
+                          "type": 0,
+                          "choices": null
+                        },
+                        {
+                          "name": "CreateDate",
+                          "displayName": "Create Date",
+                          "description": "Include or exclude objects based on their creation date.",
+                          "type": 3,
+                          "choices": null
+                        },
+                        {
+                          "name": "Owner",
+                          "displayName": "Owner",
+                          "description": "Include or exclude objects based on the owner or part of an owner name.",
+                          "type": 0,
+                          "choices": null
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Programmability/Database Triggers",
+                  "parentNodePath": "localhost,11433/Databases/yast/Programmability",
+                  "nodeType": "Folder",
+                  "label": "Database Triggers",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "DatabaseTriggers",
+                  "filterableProperties": [],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Programmability/Assemblies",
+                  "parentNodePath": "localhost,11433/Databases/yast/Programmability",
+                  "nodeType": "Folder",
+                  "label": "Assemblies",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "Assemblies",
+                  "filterableProperties": [],
+                  "children": [
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Programmability/Assemblies/Microsoft.SqlServer.Types",
+                      "parentNodePath": "localhost,11433/Databases/yast/Programmability/Assemblies",
+                      "nodeType": "Assembly",
+                      "label": "Microsoft.SqlServer.Types",
+                      "nodeSubType": "",
+                      "nodeStatus": "",
+                      "isLeaf": true,
+                      "metadata": {
+                        "metadataType": 0,
+                        "metadataTypeName": "SqlAssembly",
+                        "schema": null,
+                        "name": "Microsoft.SqlServer.Types",
+                        "parentName": null,
+                        "parentTypeName": null,
+                        "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/SqlAssembly[@Name='Microsoft.SqlServer.Types']"
+                      },
+                      "errorMessage": null,
+                      "objectType": "",
+                      "filterableProperties": []
+                    }
+                  ]
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Programmability/Types",
+                  "parentNodePath": "localhost,11433/Databases/yast/Programmability",
+                  "nodeType": "Folder",
+                  "label": "Types",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "Types",
+                  "filterableProperties": [],
+                  "children": [
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Programmability/Types/User-Defined Data Types",
+                      "parentNodePath": "localhost,11433/Databases/yast/Programmability/Types",
+                      "nodeType": "Folder",
+                      "label": "User-Defined Data Types",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "UserDefinedDataTypes",
+                      "filterableProperties": [],
+                      "children": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Programmability/Types/User-Defined Table Types",
+                      "parentNodePath": "localhost,11433/Databases/yast/Programmability/Types",
+                      "nodeType": "Folder",
+                      "label": "User-Defined Table Types",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "UserDefinedTableTypes",
+                      "filterableProperties": [],
+                      "children": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Programmability/Types/User-Defined Types (CLR)",
+                      "parentNodePath": "localhost,11433/Databases/yast/Programmability/Types",
+                      "nodeType": "Folder",
+                      "label": "User-Defined Types (CLR)",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "UserDefinedTypes",
+                      "filterableProperties": [],
+                      "children": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Programmability/Types/XML Schema Collections",
+                      "parentNodePath": "localhost,11433/Databases/yast/Programmability/Types",
+                      "nodeType": "Folder",
+                      "label": "XML Schema Collections",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "XmlSchemaCollections",
+                      "filterableProperties": [],
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Programmability/Sequences",
+                  "parentNodePath": "localhost,11433/Databases/yast/Programmability",
+                  "nodeType": "Folder",
+                  "label": "Sequences",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "Sequences",
+                  "filterableProperties": [
+                    {
+                      "name": "Name",
+                      "displayName": "Name",
+                      "description": "Include or exclude objects based on the name or part of a name.",
+                      "type": 0,
+                      "choices": null
+                    },
+                    {
+                      "name": "Schema",
+                      "displayName": "Schema",
+                      "description": " Include or exclude objects based on the schema or part of a schema name.",
+                      "type": 0,
+                      "choices": null
+                    },
+                    {
+                      "name": "CreateDate",
+                      "displayName": "Create Date",
+                      "description": "Include or exclude objects based on their creation date.",
+                      "type": 3,
+                      "choices": null
+                    },
+                    {
+                      "name": "Owner",
+                      "displayName": "Owner",
+                      "description": "Include or exclude objects based on the owner or part of an owner name.",
+                      "type": 0,
+                      "choices": null
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "nodePath": "localhost,11433/Databases/yast/External Resources",
+              "parentNodePath": "localhost,11433/Databases/yast",
+              "nodeType": "Folder",
+              "label": "External Resources",
+              "nodeSubType": null,
+              "nodeStatus": null,
+              "isLeaf": false,
+              "metadata": null,
+              "errorMessage": null,
+              "objectType": "ExternalResources",
+              "filterableProperties": [],
+              "children": [
+                {
+                  "nodePath": "localhost,11433/Databases/yast/External Resources/External Data Sources",
+                  "parentNodePath": "localhost,11433/Databases/yast/External Resources",
+                  "nodeType": "Folder",
+                  "label": "External Data Sources",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "ExternalDataSources",
+                  "filterableProperties": [],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/External Resources/External File Formats",
+                  "parentNodePath": "localhost,11433/Databases/yast/External Resources",
+                  "nodeType": "Folder",
+                  "label": "External File Formats",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "ExternalFileFormats",
+                  "filterableProperties": [],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "nodePath": "localhost,11433/Databases/yast/Service Broker",
+              "parentNodePath": "localhost,11433/Databases/yast",
+              "nodeType": "Folder",
+              "label": "Service Broker",
+              "nodeSubType": null,
+              "nodeStatus": null,
+              "isLeaf": false,
+              "metadata": null,
+              "errorMessage": null,
+              "objectType": "ServiceBroker",
+              "filterableProperties": [],
+              "children": [
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Service Broker/Message Types",
+                  "parentNodePath": "localhost,11433/Databases/yast/Service Broker",
+                  "nodeType": "Folder",
+                  "label": "Message Types",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "MessageTypes",
+                  "filterableProperties": [],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Service Broker/Contracts",
+                  "parentNodePath": "localhost,11433/Databases/yast/Service Broker",
+                  "nodeType": "Folder",
+                  "label": "Contracts",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "Contracts",
+                  "filterableProperties": [],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Service Broker/Queues",
+                  "parentNodePath": "localhost,11433/Databases/yast/Service Broker",
+                  "nodeType": "Folder",
+                  "label": "Queues",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "Queues",
+                  "filterableProperties": [],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Service Broker/Services",
+                  "parentNodePath": "localhost,11433/Databases/yast/Service Broker",
+                  "nodeType": "Folder",
+                  "label": "Services",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "Services",
+                  "filterableProperties": [],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Service Broker/Remote Service Bindings",
+                  "parentNodePath": "localhost,11433/Databases/yast/Service Broker",
+                  "nodeType": "Folder",
+                  "label": "Remote Service Bindings",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "RemoteServiceBindings",
+                  "filterableProperties": [],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Service Broker/Broker Priorities",
+                  "parentNodePath": "localhost,11433/Databases/yast/Service Broker",
+                  "nodeType": "Folder",
+                  "label": "Broker Priorities",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "BrokerPriorities",
+                  "filterableProperties": [],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "nodePath": "localhost,11433/Databases/yast/Storage",
+              "parentNodePath": "localhost,11433/Databases/yast",
+              "nodeType": "Folder",
+              "label": "Storage",
+              "nodeSubType": null,
+              "nodeStatus": null,
+              "isLeaf": false,
+              "metadata": null,
+              "errorMessage": null,
+              "objectType": "Storage",
+              "filterableProperties": [],
+              "children": [
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Storage/Filegroups",
+                  "parentNodePath": "localhost,11433/Databases/yast/Storage",
+                  "nodeType": "Folder",
+                  "label": "Filegroups",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "FileGroups",
+                  "filterableProperties": [],
+                  "children": [
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Storage/Filegroups/PRIMARY",
+                      "parentNodePath": "localhost,11433/Databases/yast/Storage/Filegroups",
+                      "nodeType": "FileGroup",
+                      "label": "PRIMARY",
+                      "nodeSubType": "",
+                      "nodeStatus": "",
+                      "isLeaf": false,
+                      "metadata": {
+                        "metadataType": 0,
+                        "metadataTypeName": "FileGroup",
+                        "schema": null,
+                        "name": "PRIMARY",
+                        "parentName": null,
+                        "parentTypeName": null,
+                        "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/FileGroup[@Name='PRIMARY']"
+                      },
+                      "errorMessage": null,
+                      "objectType": "FileGroup",
+                      "filterableProperties": [],
+                      "children": [
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Storage/Filegroups/PRIMARY/Files",
+                          "parentNodePath": "localhost,11433/Databases/yast/Storage/Filegroups/PRIMARY",
+                          "nodeType": "Folder",
+                          "label": "Files",
+                          "nodeSubType": null,
+                          "nodeStatus": null,
+                          "isLeaf": false,
+                          "metadata": null,
+                          "errorMessage": null,
+                          "objectType": "FileGroupFiles",
+                          "filterableProperties": []
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Storage/Full-Text Catalogs",
+                  "parentNodePath": "localhost,11433/Databases/yast/Storage",
+                  "nodeType": "Folder",
+                  "label": "Full-Text Catalogs",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "FullTextCatalogs",
+                  "filterableProperties": [],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Storage/Full Text Stoplists",
+                  "parentNodePath": "localhost,11433/Databases/yast/Storage",
+                  "nodeType": "Folder",
+                  "label": "Full Text Stoplists",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "FullTextStopLists",
+                  "filterableProperties": [],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Storage/Log Files",
+                  "parentNodePath": "localhost,11433/Databases/yast/Storage",
+                  "nodeType": "Folder",
+                  "label": "Log Files",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "SqlLogFiles",
+                  "filterableProperties": [],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Storage/Partition Functions",
+                  "parentNodePath": "localhost,11433/Databases/yast/Storage",
+                  "nodeType": "Folder",
+                  "label": "Partition Functions",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "PartitionFunctions",
+                  "filterableProperties": [],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Storage/Partition Schemes",
+                  "parentNodePath": "localhost,11433/Databases/yast/Storage",
+                  "nodeType": "Folder",
+                  "label": "Partition Schemes",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "PartitionSchemes",
+                  "filterableProperties": [],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Storage/Search Property Lists",
+                  "parentNodePath": "localhost,11433/Databases/yast/Storage",
+                  "nodeType": "Folder",
+                  "label": "Search Property Lists",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "SearchPropertyLists",
+                  "filterableProperties": [],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "nodePath": "localhost,11433/Databases/yast/Security",
+              "parentNodePath": "localhost,11433/Databases/yast",
+              "nodeType": "Folder",
+              "label": "Security",
+              "nodeSubType": null,
+              "nodeStatus": null,
+              "isLeaf": false,
+              "metadata": null,
+              "errorMessage": null,
+              "objectType": "Security",
+              "filterableProperties": [],
+              "children": [
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Security/Users",
+                  "parentNodePath": "localhost,11433/Databases/yast/Security",
+                  "nodeType": "Folder",
+                  "label": "Users",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "Users",
+                  "filterableProperties": [],
+                  "children": [
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Users/dbo",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Users",
+                      "nodeType": "User",
+                      "label": "dbo",
+                      "nodeSubType": "",
+                      "nodeStatus": "",
+                      "isLeaf": true,
+                      "metadata": {
+                        "metadataType": 0,
+                        "metadataTypeName": "User",
+                        "schema": null,
+                        "name": "dbo",
+                        "parentName": null,
+                        "parentTypeName": null,
+                        "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/User[@Name='dbo']"
+                      },
+                      "errorMessage": null,
+                      "objectType": "",
+                      "filterableProperties": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Users/guest",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Users",
+                      "nodeType": "User",
+                      "label": "guest",
+                      "nodeSubType": "",
+                      "nodeStatus": "Disabled",
+                      "isLeaf": true,
+                      "metadata": {
+                        "metadataType": 0,
+                        "metadataTypeName": "User",
+                        "schema": null,
+                        "name": "guest",
+                        "parentName": null,
+                        "parentTypeName": null,
+                        "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/User[@Name='guest']"
+                      },
+                      "errorMessage": null,
+                      "objectType": "",
+                      "filterableProperties": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Users/INFORMATION_SCHEMA",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Users",
+                      "nodeType": "User",
+                      "label": "INFORMATION_SCHEMA",
+                      "nodeSubType": "",
+                      "nodeStatus": "Disabled",
+                      "isLeaf": true,
+                      "metadata": {
+                        "metadataType": 0,
+                        "metadataTypeName": "User",
+                        "schema": null,
+                        "name": "INFORMATION_SCHEMA",
+                        "parentName": null,
+                        "parentTypeName": null,
+                        "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/User[@Name='INFORMATION_SCHEMA']"
+                      },
+                      "errorMessage": null,
+                      "objectType": "",
+                      "filterableProperties": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Users/sys",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Users",
+                      "nodeType": "User",
+                      "label": "sys",
+                      "nodeSubType": "",
+                      "nodeStatus": "Disabled",
+                      "isLeaf": true,
+                      "metadata": {
+                        "metadataType": 0,
+                        "metadataTypeName": "User",
+                        "schema": null,
+                        "name": "sys",
+                        "parentName": null,
+                        "parentTypeName": null,
+                        "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/User[@Name='sys']"
+                      },
+                      "errorMessage": null,
+                      "objectType": "",
+                      "filterableProperties": []
+                    }
+                  ]
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Security/Roles",
+                  "parentNodePath": "localhost,11433/Databases/yast/Security",
+                  "nodeType": "Folder",
+                  "label": "Roles",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "Roles",
+                  "filterableProperties": [],
+                  "children": [
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Roles",
+                      "nodeType": "Folder",
+                      "label": "Database Roles",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "DatabaseRoles",
+                      "filterableProperties": [],
+                      "children": [
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles/db_accessadmin",
+                          "parentNodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles",
+                          "nodeType": "DatabaseRole",
+                          "label": "db_accessadmin",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Role",
+                            "schema": null,
+                            "name": "db_accessadmin",
+                            "parentName": null,
+                            "parentTypeName": null,
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Role[@Name='db_accessadmin']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        },
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles/db_backupoperator",
+                          "parentNodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles",
+                          "nodeType": "DatabaseRole",
+                          "label": "db_backupoperator",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Role",
+                            "schema": null,
+                            "name": "db_backupoperator",
+                            "parentName": null,
+                            "parentTypeName": null,
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Role[@Name='db_backupoperator']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        },
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles/db_datareader",
+                          "parentNodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles",
+                          "nodeType": "DatabaseRole",
+                          "label": "db_datareader",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Role",
+                            "schema": null,
+                            "name": "db_datareader",
+                            "parentName": null,
+                            "parentTypeName": null,
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Role[@Name='db_datareader']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        },
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles/db_datawriter",
+                          "parentNodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles",
+                          "nodeType": "DatabaseRole",
+                          "label": "db_datawriter",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Role",
+                            "schema": null,
+                            "name": "db_datawriter",
+                            "parentName": null,
+                            "parentTypeName": null,
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Role[@Name='db_datawriter']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        },
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles/db_ddladmin",
+                          "parentNodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles",
+                          "nodeType": "DatabaseRole",
+                          "label": "db_ddladmin",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Role",
+                            "schema": null,
+                            "name": "db_ddladmin",
+                            "parentName": null,
+                            "parentTypeName": null,
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Role[@Name='db_ddladmin']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        },
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles/db_denydatareader",
+                          "parentNodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles",
+                          "nodeType": "DatabaseRole",
+                          "label": "db_denydatareader",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Role",
+                            "schema": null,
+                            "name": "db_denydatareader",
+                            "parentName": null,
+                            "parentTypeName": null,
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Role[@Name='db_denydatareader']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        },
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles/db_denydatawriter",
+                          "parentNodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles",
+                          "nodeType": "DatabaseRole",
+                          "label": "db_denydatawriter",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Role",
+                            "schema": null,
+                            "name": "db_denydatawriter",
+                            "parentName": null,
+                            "parentTypeName": null,
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Role[@Name='db_denydatawriter']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        },
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles/db_owner",
+                          "parentNodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles",
+                          "nodeType": "DatabaseRole",
+                          "label": "db_owner",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Role",
+                            "schema": null,
+                            "name": "db_owner",
+                            "parentName": null,
+                            "parentTypeName": null,
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Role[@Name='db_owner']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        },
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles/db_securityadmin",
+                          "parentNodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles",
+                          "nodeType": "DatabaseRole",
+                          "label": "db_securityadmin",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Role",
+                            "schema": null,
+                            "name": "db_securityadmin",
+                            "parentName": null,
+                            "parentTypeName": null,
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Role[@Name='db_securityadmin']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        },
+                        {
+                          "nodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles/public",
+                          "parentNodePath": "localhost,11433/Databases/yast/Security/Roles/Database Roles",
+                          "nodeType": "DatabaseRole",
+                          "label": "public",
+                          "nodeSubType": "",
+                          "nodeStatus": "",
+                          "isLeaf": true,
+                          "metadata": {
+                            "metadataType": 0,
+                            "metadataTypeName": "Role",
+                            "schema": null,
+                            "name": "public",
+                            "parentName": null,
+                            "parentTypeName": null,
+                            "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Role[@Name='public']"
+                          },
+                          "errorMessage": null,
+                          "objectType": "",
+                          "filterableProperties": []
+                        }
+                      ]
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Roles/Application Roles",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Roles",
+                      "nodeType": "Folder",
+                      "label": "Application Roles",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "ApplicationRoles",
+                      "filterableProperties": [],
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Security/Schemas",
+                  "parentNodePath": "localhost,11433/Databases/yast/Security",
+                  "nodeType": "Folder",
+                  "label": "Schemas",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "Schemas",
+                  "filterableProperties": [],
+                  "children": [
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Schemas/db_accessadmin",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Schemas",
+                      "nodeType": "Schema",
+                      "label": "db_accessadmin",
+                      "nodeSubType": "",
+                      "nodeStatus": "",
+                      "isLeaf": true,
+                      "metadata": {
+                        "metadataType": 0,
+                        "metadataTypeName": "Schema",
+                        "schema": null,
+                        "name": "db_accessadmin",
+                        "parentName": null,
+                        "parentTypeName": null,
+                        "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Schema[@Name='db_accessadmin']"
+                      },
+                      "errorMessage": null,
+                      "objectType": "",
+                      "filterableProperties": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Schemas/db_backupoperator",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Schemas",
+                      "nodeType": "Schema",
+                      "label": "db_backupoperator",
+                      "nodeSubType": "",
+                      "nodeStatus": "",
+                      "isLeaf": true,
+                      "metadata": {
+                        "metadataType": 0,
+                        "metadataTypeName": "Schema",
+                        "schema": null,
+                        "name": "db_backupoperator",
+                        "parentName": null,
+                        "parentTypeName": null,
+                        "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Schema[@Name='db_backupoperator']"
+                      },
+                      "errorMessage": null,
+                      "objectType": "",
+                      "filterableProperties": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Schemas/db_datareader",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Schemas",
+                      "nodeType": "Schema",
+                      "label": "db_datareader",
+                      "nodeSubType": "",
+                      "nodeStatus": "",
+                      "isLeaf": true,
+                      "metadata": {
+                        "metadataType": 0,
+                        "metadataTypeName": "Schema",
+                        "schema": null,
+                        "name": "db_datareader",
+                        "parentName": null,
+                        "parentTypeName": null,
+                        "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Schema[@Name='db_datareader']"
+                      },
+                      "errorMessage": null,
+                      "objectType": "",
+                      "filterableProperties": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Schemas/db_datawriter",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Schemas",
+                      "nodeType": "Schema",
+                      "label": "db_datawriter",
+                      "nodeSubType": "",
+                      "nodeStatus": "",
+                      "isLeaf": true,
+                      "metadata": {
+                        "metadataType": 0,
+                        "metadataTypeName": "Schema",
+                        "schema": null,
+                        "name": "db_datawriter",
+                        "parentName": null,
+                        "parentTypeName": null,
+                        "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Schema[@Name='db_datawriter']"
+                      },
+                      "errorMessage": null,
+                      "objectType": "",
+                      "filterableProperties": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Schemas/db_ddladmin",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Schemas",
+                      "nodeType": "Schema",
+                      "label": "db_ddladmin",
+                      "nodeSubType": "",
+                      "nodeStatus": "",
+                      "isLeaf": true,
+                      "metadata": {
+                        "metadataType": 0,
+                        "metadataTypeName": "Schema",
+                        "schema": null,
+                        "name": "db_ddladmin",
+                        "parentName": null,
+                        "parentTypeName": null,
+                        "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Schema[@Name='db_ddladmin']"
+                      },
+                      "errorMessage": null,
+                      "objectType": "",
+                      "filterableProperties": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Schemas/db_denydatareader",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Schemas",
+                      "nodeType": "Schema",
+                      "label": "db_denydatareader",
+                      "nodeSubType": "",
+                      "nodeStatus": "",
+                      "isLeaf": true,
+                      "metadata": {
+                        "metadataType": 0,
+                        "metadataTypeName": "Schema",
+                        "schema": null,
+                        "name": "db_denydatareader",
+                        "parentName": null,
+                        "parentTypeName": null,
+                        "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Schema[@Name='db_denydatareader']"
+                      },
+                      "errorMessage": null,
+                      "objectType": "",
+                      "filterableProperties": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Schemas/db_denydatawriter",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Schemas",
+                      "nodeType": "Schema",
+                      "label": "db_denydatawriter",
+                      "nodeSubType": "",
+                      "nodeStatus": "",
+                      "isLeaf": true,
+                      "metadata": {
+                        "metadataType": 0,
+                        "metadataTypeName": "Schema",
+                        "schema": null,
+                        "name": "db_denydatawriter",
+                        "parentName": null,
+                        "parentTypeName": null,
+                        "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Schema[@Name='db_denydatawriter']"
+                      },
+                      "errorMessage": null,
+                      "objectType": "",
+                      "filterableProperties": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Schemas/db_owner",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Schemas",
+                      "nodeType": "Schema",
+                      "label": "db_owner",
+                      "nodeSubType": "",
+                      "nodeStatus": "",
+                      "isLeaf": true,
+                      "metadata": {
+                        "metadataType": 0,
+                        "metadataTypeName": "Schema",
+                        "schema": null,
+                        "name": "db_owner",
+                        "parentName": null,
+                        "parentTypeName": null,
+                        "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Schema[@Name='db_owner']"
+                      },
+                      "errorMessage": null,
+                      "objectType": "",
+                      "filterableProperties": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Schemas/db_securityadmin",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Schemas",
+                      "nodeType": "Schema",
+                      "label": "db_securityadmin",
+                      "nodeSubType": "",
+                      "nodeStatus": "",
+                      "isLeaf": true,
+                      "metadata": {
+                        "metadataType": 0,
+                        "metadataTypeName": "Schema",
+                        "schema": null,
+                        "name": "db_securityadmin",
+                        "parentName": null,
+                        "parentTypeName": null,
+                        "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Schema[@Name='db_securityadmin']"
+                      },
+                      "errorMessage": null,
+                      "objectType": "",
+                      "filterableProperties": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Schemas/dbo",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Schemas",
+                      "nodeType": "Schema",
+                      "label": "dbo",
+                      "nodeSubType": "",
+                      "nodeStatus": "",
+                      "isLeaf": true,
+                      "metadata": {
+                        "metadataType": 0,
+                        "metadataTypeName": "Schema",
+                        "schema": null,
+                        "name": "dbo",
+                        "parentName": null,
+                        "parentTypeName": null,
+                        "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Schema[@Name='dbo']"
+                      },
+                      "errorMessage": null,
+                      "objectType": "",
+                      "filterableProperties": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Schemas/guest",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Schemas",
+                      "nodeType": "Schema",
+                      "label": "guest",
+                      "nodeSubType": "",
+                      "nodeStatus": "",
+                      "isLeaf": true,
+                      "metadata": {
+                        "metadataType": 0,
+                        "metadataTypeName": "Schema",
+                        "schema": null,
+                        "name": "guest",
+                        "parentName": null,
+                        "parentTypeName": null,
+                        "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Schema[@Name='guest']"
+                      },
+                      "errorMessage": null,
+                      "objectType": "",
+                      "filterableProperties": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Schemas/INFORMATION_SCHEMA",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Schemas",
+                      "nodeType": "Schema",
+                      "label": "INFORMATION_SCHEMA",
+                      "nodeSubType": "",
+                      "nodeStatus": "",
+                      "isLeaf": true,
+                      "metadata": {
+                        "metadataType": 0,
+                        "metadataTypeName": "Schema",
+                        "schema": null,
+                        "name": "INFORMATION_SCHEMA",
+                        "parentName": null,
+                        "parentTypeName": null,
+                        "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Schema[@Name='INFORMATION_SCHEMA']"
+                      },
+                      "errorMessage": null,
+                      "objectType": "",
+                      "filterableProperties": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Schemas/sys",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Schemas",
+                      "nodeType": "Schema",
+                      "label": "sys",
+                      "nodeSubType": "",
+                      "nodeStatus": "",
+                      "isLeaf": true,
+                      "metadata": {
+                        "metadataType": 0,
+                        "metadataTypeName": "Schema",
+                        "schema": null,
+                        "name": "sys",
+                        "parentName": null,
+                        "parentTypeName": null,
+                        "urn": "Server[@Name='b43cb92952fb']/Database[@Name='yast']/Schema[@Name='sys']"
+                      },
+                      "errorMessage": null,
+                      "objectType": "",
+                      "filterableProperties": []
+                    }
+                  ]
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Security/Asymmetric Keys",
+                  "parentNodePath": "localhost,11433/Databases/yast/Security",
+                  "nodeType": "Folder",
+                  "label": "Asymmetric Keys",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "AsymmetricKeys",
+                  "filterableProperties": [],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Security/Certificates",
+                  "parentNodePath": "localhost,11433/Databases/yast/Security",
+                  "nodeType": "Folder",
+                  "label": "Certificates",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "Certificates",
+                  "filterableProperties": [],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Security/Symmetric Keys",
+                  "parentNodePath": "localhost,11433/Databases/yast/Security",
+                  "nodeType": "Folder",
+                  "label": "Symmetric Keys",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "SymmetricKeys",
+                  "filterableProperties": [],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Security/Database Scoped Credentials",
+                  "parentNodePath": "localhost,11433/Databases/yast/Security",
+                  "nodeType": "Folder",
+                  "label": "Database Scoped Credentials",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "DatabaseScopedCredentials",
+                  "filterableProperties": [],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Security/Database Encryption Keys",
+                  "parentNodePath": "localhost,11433/Databases/yast/Security",
+                  "nodeType": "Folder",
+                  "label": "Database Encryption Keys",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "DatabaseEncryptionKeys",
+                  "filterableProperties": [],
+                  "children": [
+                    {
+                      "nodePath": "",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Database Encryption Keys",
+                      "nodeType": "DatabaseEncryptionKey",
+                      "label": null,
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": true,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "",
+                      "filterableProperties": []
+                    }
+                  ]
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Security/Master Keys",
+                  "parentNodePath": "localhost,11433/Databases/yast/Security",
+                  "nodeType": "Folder",
+                  "label": "Master Keys",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "MasterKeys",
+                  "filterableProperties": [],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Security/Database Audit Specifications",
+                  "parentNodePath": "localhost,11433/Databases/yast/Security",
+                  "nodeType": "Folder",
+                  "label": "Database Audit Specifications",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "DatabaseAuditSpecifications",
+                  "filterableProperties": [],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Security/Security Policies",
+                  "parentNodePath": "localhost,11433/Databases/yast/Security",
+                  "nodeType": "Folder",
+                  "label": "Security Policies",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "SecurityPolicies",
+                  "filterableProperties": [],
+                  "children": []
+                },
+                {
+                  "nodePath": "localhost,11433/Databases/yast/Security/Always Encrypted Keys",
+                  "parentNodePath": "localhost,11433/Databases/yast/Security",
+                  "nodeType": "Folder",
+                  "label": "Always Encrypted Keys",
+                  "nodeSubType": null,
+                  "nodeStatus": null,
+                  "isLeaf": false,
+                  "metadata": null,
+                  "errorMessage": null,
+                  "objectType": "AlwaysEncryptedKeys",
+                  "filterableProperties": [],
+                  "children": [
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Always Encrypted Keys/Column Master Keys",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Always Encrypted Keys",
+                      "nodeType": "Folder",
+                      "label": "Column Master Keys",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "ColumnMasterKeys",
+                      "filterableProperties": [],
+                      "children": []
+                    },
+                    {
+                      "nodePath": "localhost,11433/Databases/yast/Security/Always Encrypted Keys/Column Encryption Keys",
+                      "parentNodePath": "localhost,11433/Databases/yast/Security/Always Encrypted Keys",
+                      "nodeType": "Folder",
+                      "label": "Column Encryption Keys",
+                      "nodeSubType": null,
+                      "nodeStatus": null,
+                      "isLeaf": false,
+                      "metadata": null,
+                      "errorMessage": null,
+                      "objectType": "ColumnEncryptionKeys",
+                      "filterableProperties": [],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodePath": "localhost,11433/Security",
+      "parentNodePath": "localhost,11433",
+      "nodeType": "Folder",
+      "label": "Security",
+      "nodeSubType": null,
+      "nodeStatus": null,
+      "isLeaf": false,
+      "metadata": null,
+      "errorMessage": null,
+      "objectType": "ServerLevelSecurity",
+      "filterableProperties": [],
+      "children": [
+        {
+          "nodePath": "localhost,11433/Security/Logins",
+          "parentNodePath": "localhost,11433/Security",
+          "nodeType": "Folder",
+          "label": "Logins",
+          "nodeSubType": null,
+          "nodeStatus": null,
+          "isLeaf": false,
+          "metadata": null,
+          "errorMessage": null,
+          "objectType": "ServerLevelLogins",
+          "filterableProperties": [],
+          "children": [
+            {
+              "nodePath": "localhost,11433/Security/Logins/##MS_PolicyEventProcessingLogin##",
+              "parentNodePath": "localhost,11433/Security/Logins",
+              "nodeType": "ServerLevelLogin",
+              "label": "##MS_PolicyEventProcessingLogin##",
+              "nodeSubType": "",
+              "nodeStatus": "Disabled",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Login",
+                "schema": null,
+                "name": "##MS_PolicyEventProcessingLogin##",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Login[@Name='##MS_PolicyEventProcessingLogin##']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Logins/##MS_PolicyTsqlExecutionLogin##",
+              "parentNodePath": "localhost,11433/Security/Logins",
+              "nodeType": "ServerLevelLogin",
+              "label": "##MS_PolicyTsqlExecutionLogin##",
+              "nodeSubType": "",
+              "nodeStatus": "Disabled",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Login",
+                "schema": null,
+                "name": "##MS_PolicyTsqlExecutionLogin##",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Login[@Name='##MS_PolicyTsqlExecutionLogin##']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Logins/BUILTIN\\Administrators",
+              "parentNodePath": "localhost,11433/Security/Logins",
+              "nodeType": "ServerLevelLogin",
+              "label": "BUILTIN\\Administrators",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Login",
+                "schema": null,
+                "name": "BUILTIN\\Administrators",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Login[@Name='BUILTIN\\Administrators']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Logins/NT AUTHORITY\\NETWORK SERVICE",
+              "parentNodePath": "localhost,11433/Security/Logins",
+              "nodeType": "ServerLevelLogin",
+              "label": "NT AUTHORITY\\NETWORK SERVICE",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Login",
+                "schema": null,
+                "name": "NT AUTHORITY\\NETWORK SERVICE",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Login[@Name='NT AUTHORITY\\NETWORK SERVICE']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Logins/NT AUTHORITY\\SYSTEM",
+              "parentNodePath": "localhost,11433/Security/Logins",
+              "nodeType": "ServerLevelLogin",
+              "label": "NT AUTHORITY\\SYSTEM",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Login",
+                "schema": null,
+                "name": "NT AUTHORITY\\SYSTEM",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Login[@Name='NT AUTHORITY\\SYSTEM']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Logins/sa",
+              "parentNodePath": "localhost,11433/Security/Logins",
+              "nodeType": "ServerLevelLogin",
+              "label": "sa",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Login",
+                "schema": null,
+                "name": "sa",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Login[@Name='sa']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            }
+          ]
+        },
+        {
+          "nodePath": "localhost,11433/Security/Server Roles",
+          "parentNodePath": "localhost,11433/Security",
+          "nodeType": "Folder",
+          "label": "Server Roles",
+          "nodeSubType": null,
+          "nodeStatus": null,
+          "isLeaf": false,
+          "metadata": null,
+          "errorMessage": null,
+          "objectType": "ServerLevelServerRoles",
+          "filterableProperties": [],
+          "children": [
+            {
+              "nodePath": "localhost,11433/Security/Server Roles/##MS_DatabaseConnector##",
+              "parentNodePath": "localhost,11433/Security/Server Roles",
+              "nodeType": "ServerLevelServerRole",
+              "label": "##MS_DatabaseConnector##",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Role",
+                "schema": null,
+                "name": "##MS_DatabaseConnector##",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Role[@Name='##MS_DatabaseConnector##']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Server Roles/##MS_DatabaseManager##",
+              "parentNodePath": "localhost,11433/Security/Server Roles",
+              "nodeType": "ServerLevelServerRole",
+              "label": "##MS_DatabaseManager##",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Role",
+                "schema": null,
+                "name": "##MS_DatabaseManager##",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Role[@Name='##MS_DatabaseManager##']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Server Roles/##MS_DefinitionReader##",
+              "parentNodePath": "localhost,11433/Security/Server Roles",
+              "nodeType": "ServerLevelServerRole",
+              "label": "##MS_DefinitionReader##",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Role",
+                "schema": null,
+                "name": "##MS_DefinitionReader##",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Role[@Name='##MS_DefinitionReader##']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Server Roles/##MS_LoginManager##",
+              "parentNodePath": "localhost,11433/Security/Server Roles",
+              "nodeType": "ServerLevelServerRole",
+              "label": "##MS_LoginManager##",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Role",
+                "schema": null,
+                "name": "##MS_LoginManager##",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Role[@Name='##MS_LoginManager##']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Server Roles/##MS_PerformanceDefinitionReader##",
+              "parentNodePath": "localhost,11433/Security/Server Roles",
+              "nodeType": "ServerLevelServerRole",
+              "label": "##MS_PerformanceDefinitionReader##",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Role",
+                "schema": null,
+                "name": "##MS_PerformanceDefinitionReader##",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Role[@Name='##MS_PerformanceDefinitionReader##']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Server Roles/##MS_SecurityDefinitionReader##",
+              "parentNodePath": "localhost,11433/Security/Server Roles",
+              "nodeType": "ServerLevelServerRole",
+              "label": "##MS_SecurityDefinitionReader##",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Role",
+                "schema": null,
+                "name": "##MS_SecurityDefinitionReader##",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Role[@Name='##MS_SecurityDefinitionReader##']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Server Roles/##MS_ServerPerformanceStateReader##",
+              "parentNodePath": "localhost,11433/Security/Server Roles",
+              "nodeType": "ServerLevelServerRole",
+              "label": "##MS_ServerPerformanceStateReader##",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Role",
+                "schema": null,
+                "name": "##MS_ServerPerformanceStateReader##",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Role[@Name='##MS_ServerPerformanceStateReader##']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Server Roles/##MS_ServerSecurityStateReader##",
+              "parentNodePath": "localhost,11433/Security/Server Roles",
+              "nodeType": "ServerLevelServerRole",
+              "label": "##MS_ServerSecurityStateReader##",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Role",
+                "schema": null,
+                "name": "##MS_ServerSecurityStateReader##",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Role[@Name='##MS_ServerSecurityStateReader##']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Server Roles/##MS_ServerStateManager##",
+              "parentNodePath": "localhost,11433/Security/Server Roles",
+              "nodeType": "ServerLevelServerRole",
+              "label": "##MS_ServerStateManager##",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Role",
+                "schema": null,
+                "name": "##MS_ServerStateManager##",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Role[@Name='##MS_ServerStateManager##']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Server Roles/##MS_ServerStateReader##",
+              "parentNodePath": "localhost,11433/Security/Server Roles",
+              "nodeType": "ServerLevelServerRole",
+              "label": "##MS_ServerStateReader##",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Role",
+                "schema": null,
+                "name": "##MS_ServerStateReader##",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Role[@Name='##MS_ServerStateReader##']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Server Roles/bulkadmin",
+              "parentNodePath": "localhost,11433/Security/Server Roles",
+              "nodeType": "ServerLevelServerRole",
+              "label": "bulkadmin",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Role",
+                "schema": null,
+                "name": "bulkadmin",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Role[@Name='bulkadmin']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Server Roles/dbcreator",
+              "parentNodePath": "localhost,11433/Security/Server Roles",
+              "nodeType": "ServerLevelServerRole",
+              "label": "dbcreator",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Role",
+                "schema": null,
+                "name": "dbcreator",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Role[@Name='dbcreator']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Server Roles/diskadmin",
+              "parentNodePath": "localhost,11433/Security/Server Roles",
+              "nodeType": "ServerLevelServerRole",
+              "label": "diskadmin",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Role",
+                "schema": null,
+                "name": "diskadmin",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Role[@Name='diskadmin']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Server Roles/processadmin",
+              "parentNodePath": "localhost,11433/Security/Server Roles",
+              "nodeType": "ServerLevelServerRole",
+              "label": "processadmin",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Role",
+                "schema": null,
+                "name": "processadmin",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Role[@Name='processadmin']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Server Roles/public",
+              "parentNodePath": "localhost,11433/Security/Server Roles",
+              "nodeType": "ServerLevelServerRole",
+              "label": "public",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Role",
+                "schema": null,
+                "name": "public",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Role[@Name='public']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Server Roles/securityadmin",
+              "parentNodePath": "localhost,11433/Security/Server Roles",
+              "nodeType": "ServerLevelServerRole",
+              "label": "securityadmin",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Role",
+                "schema": null,
+                "name": "securityadmin",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Role[@Name='securityadmin']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Server Roles/serveradmin",
+              "parentNodePath": "localhost,11433/Security/Server Roles",
+              "nodeType": "ServerLevelServerRole",
+              "label": "serveradmin",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Role",
+                "schema": null,
+                "name": "serveradmin",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Role[@Name='serveradmin']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Server Roles/setupadmin",
+              "parentNodePath": "localhost,11433/Security/Server Roles",
+              "nodeType": "ServerLevelServerRole",
+              "label": "setupadmin",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Role",
+                "schema": null,
+                "name": "setupadmin",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Role[@Name='setupadmin']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Security/Server Roles/sysadmin",
+              "parentNodePath": "localhost,11433/Security/Server Roles",
+              "nodeType": "ServerLevelServerRole",
+              "label": "sysadmin",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Role",
+                "schema": null,
+                "name": "sysadmin",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Role[@Name='sysadmin']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            }
+          ]
+        },
+        {
+          "nodePath": "localhost,11433/Security/Credentials",
+          "parentNodePath": "localhost,11433/Security",
+          "nodeType": "Folder",
+          "label": "Credentials",
+          "nodeSubType": null,
+          "nodeStatus": null,
+          "isLeaf": false,
+          "metadata": null,
+          "errorMessage": null,
+          "objectType": "ServerLevelCredentials",
+          "filterableProperties": [],
+          "children": []
+        },
+        {
+          "nodePath": "localhost,11433/Security/Cryptographic Providers",
+          "parentNodePath": "localhost,11433/Security",
+          "nodeType": "Folder",
+          "label": "Cryptographic Providers",
+          "nodeSubType": null,
+          "nodeStatus": null,
+          "isLeaf": false,
+          "metadata": null,
+          "errorMessage": null,
+          "objectType": "ServerLevelCryptographicProviders",
+          "filterableProperties": [],
+          "children": []
+        },
+        {
+          "nodePath": "localhost,11433/Security/Audits",
+          "parentNodePath": "localhost,11433/Security",
+          "nodeType": "Folder",
+          "label": "Audits",
+          "nodeSubType": null,
+          "nodeStatus": null,
+          "isLeaf": false,
+          "metadata": null,
+          "errorMessage": null,
+          "objectType": "ServerLevelServerAudits",
+          "filterableProperties": [],
+          "children": []
+        },
+        {
+          "nodePath": "localhost,11433/Security/Server Audit Specifications",
+          "parentNodePath": "localhost,11433/Security",
+          "nodeType": "Folder",
+          "label": "Server Audit Specifications",
+          "nodeSubType": null,
+          "nodeStatus": null,
+          "isLeaf": false,
+          "metadata": null,
+          "errorMessage": null,
+          "objectType": "ServerLevelServerAuditSpecifications",
+          "filterableProperties": [],
+          "children": []
+        }
+      ]
+    },
+    {
+      "nodePath": "localhost,11433/Server Objects",
+      "parentNodePath": "localhost,11433",
+      "nodeType": "Folder",
+      "label": "Server Objects",
+      "nodeSubType": null,
+      "nodeStatus": null,
+      "isLeaf": false,
+      "metadata": null,
+      "errorMessage": null,
+      "objectType": "ServerLevelServerObjects",
+      "filterableProperties": [],
+      "children": [
+        {
+          "nodePath": "localhost,11433/Server Objects/Endpoints",
+          "parentNodePath": "localhost,11433/Server Objects",
+          "nodeType": "Folder",
+          "label": "Endpoints",
+          "nodeSubType": null,
+          "nodeStatus": null,
+          "isLeaf": false,
+          "metadata": null,
+          "errorMessage": null,
+          "objectType": "ServerLevelEndpoints",
+          "filterableProperties": [],
+          "children": [
+            {
+              "nodePath": "localhost,11433/Server Objects/Endpoints/Dedicated Admin Connection",
+              "parentNodePath": "localhost,11433/Server Objects/Endpoints",
+              "nodeType": "ServerLevelEndpoint",
+              "label": "Dedicated Admin Connection",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Endpoint",
+                "schema": null,
+                "name": "Dedicated Admin Connection",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Endpoint[@Name='Dedicated Admin Connection']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Server Objects/Endpoints/TSQL Default TCP",
+              "parentNodePath": "localhost,11433/Server Objects/Endpoints",
+              "nodeType": "ServerLevelEndpoint",
+              "label": "TSQL Default TCP",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Endpoint",
+                "schema": null,
+                "name": "TSQL Default TCP",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Endpoint[@Name='TSQL Default TCP']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Server Objects/Endpoints/TSQL Default VIA",
+              "parentNodePath": "localhost,11433/Server Objects/Endpoints",
+              "nodeType": "ServerLevelEndpoint",
+              "label": "TSQL Default VIA",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Endpoint",
+                "schema": null,
+                "name": "TSQL Default VIA",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Endpoint[@Name='TSQL Default VIA']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Server Objects/Endpoints/TSQL Local Machine",
+              "parentNodePath": "localhost,11433/Server Objects/Endpoints",
+              "nodeType": "ServerLevelEndpoint",
+              "label": "TSQL Local Machine",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Endpoint",
+                "schema": null,
+                "name": "TSQL Local Machine",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Endpoint[@Name='TSQL Local Machine']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            },
+            {
+              "nodePath": "localhost,11433/Server Objects/Endpoints/TSQL Named Pipes",
+              "parentNodePath": "localhost,11433/Server Objects/Endpoints",
+              "nodeType": "ServerLevelEndpoint",
+              "label": "TSQL Named Pipes",
+              "nodeSubType": "",
+              "nodeStatus": "",
+              "isLeaf": true,
+              "metadata": {
+                "metadataType": 0,
+                "metadataTypeName": "Endpoint",
+                "schema": null,
+                "name": "TSQL Named Pipes",
+                "parentName": null,
+                "parentTypeName": null,
+                "urn": "Server[@Name='b43cb92952fb']/Endpoint[@Name='TSQL Named Pipes']"
+              },
+              "errorMessage": null,
+              "objectType": "",
+              "filterableProperties": []
+            }
+          ]
+        },
+        {
+          "nodePath": "localhost,11433/Server Objects/Linked Servers",
+          "parentNodePath": "localhost,11433/Server Objects",
+          "nodeType": "Folder",
+          "label": "Linked Servers",
+          "nodeSubType": null,
+          "nodeStatus": null,
+          "isLeaf": false,
+          "metadata": null,
+          "errorMessage": null,
+          "objectType": "ServerLevelLinkedServers",
+          "filterableProperties": [],
+          "children": []
+        },
+        {
+          "nodePath": "localhost,11433/Server Objects/Triggers",
+          "parentNodePath": "localhost,11433/Server Objects",
+          "nodeType": "Folder",
+          "label": "Triggers",
+          "nodeSubType": null,
+          "nodeStatus": null,
+          "isLeaf": false,
+          "metadata": null,
+          "errorMessage": null,
+          "objectType": "ServerLevelServerTriggers",
+          "filterableProperties": [],
+          "children": []
+        },
+        {
+          "nodePath": "localhost,11433/Server Objects/Error Messages",
+          "parentNodePath": "localhost,11433/Server Objects",
+          "nodeType": "Folder",
+          "label": "Error Messages",
+          "nodeSubType": null,
+          "nodeStatus": null,
+          "isLeaf": false,
+          "metadata": null,
+          "errorMessage": null,
+          "objectType": "ServerLevelErrorMessages",
+          "filterableProperties": [],
+          "children": []
+        }
+      ]
+    }
+  ]
+}

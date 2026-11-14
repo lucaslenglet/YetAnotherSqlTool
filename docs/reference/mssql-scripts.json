@@ -1,0 +1,685 @@
+{
+  "serverVersion": "16.0.4295.3",
+  "scripts": {
+    "dbo.customers": {
+      "type": "Table",
+      "select": "SELECT TOP (1000) [id]\n      ,[name]\n      ,[email]\n      ,[created_at]\n  FROM [yast_probe].[dbo].[customers]",
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE TABLE [dbo].[customers](\n\t[id] [int] IDENTITY(1,1) NOT NULL,\n\t[name] [nvarchar](100) NULL,\n\t[email] [nvarchar](255) NOT NULL,\n\t[created_at] [datetime2](7) NOT NULL\n) ON [PRIMARY]\nGO\nALTER TABLE [dbo].[customers] ADD PRIMARY KEY CLUSTERED \n(\n\t[id] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\nSET ANSI_PADDING ON\nGO\nALTER TABLE [dbo].[customers] ADD UNIQUE NONCLUSTERED \n(\n\t[email] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\nALTER TABLE [dbo].[customers] ADD  DEFAULT (sysutcdatetime()) FOR [created_at]\nGO\n",
+      "delete": "IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[customers]') AND type in (N'U'))\nDROP TABLE [dbo].[customers]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "\nGO\n"
+    },
+    "dbo.orders": {
+      "type": "Table",
+      "select": "SELECT TOP (1000) [id]\n      ,[customer_id]\n      ,[amount]\n      ,[status]\n  FROM [yast_probe].[dbo].[orders]",
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE TABLE [dbo].[orders](\n\t[id] [int] IDENTITY(1,1) NOT NULL,\n\t[customer_id] [int] NOT NULL,\n\t[amount] [decimal](10, 2) NOT NULL,\n\t[status] [nvarchar](20) NOT NULL\n) ON [PRIMARY]\nGO\nALTER TABLE [dbo].[orders] ADD PRIMARY KEY CLUSTERED \n(\n\t[id] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\nALTER TABLE [dbo].[orders] ADD  DEFAULT ('pending') FOR [status]\nGO\nALTER TABLE [dbo].[orders]  WITH CHECK ADD FOREIGN KEY([customer_id])\nREFERENCES [dbo].[customers] ([id])\nGO\n",
+      "delete": "IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[orders]') AND type in (N'U'))\nDROP TABLE [dbo].[orders]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "\nGO\n"
+    },
+    "probe.odd ] table": {
+      "type": "Table",
+      "select": "SELECT TOP (1000) [col ]] one]\n      ,[select]\n      ,[Mixed Case]\n  FROM [yast_probe].[probe].[odd ]] table]",
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE TABLE [probe].[odd ]] table](\n\t[col ]] one] [int] NOT NULL,\n\t[select] [int] NULL,\n\t[Mixed Case] [nvarchar](20) NULL\n) ON [PRIMARY]\nGO\n",
+      "delete": "IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[probe].[odd ]] table]') AND type in (N'U'))\nDROP TABLE [probe].[odd ]] table]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "\nGO\n"
+    },
+    "probe.special": {
+      "type": "Table",
+      "select": "SELECT TOP (1000) [id]\n      ,[version]\n      ,[doubled]\n      ,[area]\n      ,[note]\n  FROM [yast_probe].[probe].[special]",
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE TABLE [probe].[special](\n\t[id] [int] NOT NULL,\n\t[version] [timestamp] NOT NULL,\n\t[doubled]  AS ([id]*(2)),\n\t[area] [geography] NULL,\n\t[note] [nvarchar](max) NULL\n) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]\nGO\n",
+      "delete": "IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[probe].[special]') AND type in (N'U'))\nDROP TABLE [probe].[special]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "\nGO\n"
+    },
+    "probe.temporal": {
+      "type": "Table",
+      "select": "SELECT TOP (1000) [id]\n      ,[v]\n  FROM [yast_probe].[probe].[temporal]",
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE TABLE [probe].[temporal](\n\t[id] [int] NOT NULL,\n\t[v] [int] NULL,\n\t[valid_from] [datetime2](7) GENERATED ALWAYS AS ROW START HIDDEN NOT NULL,\n\t[valid_to] [datetime2](7) GENERATED ALWAYS AS ROW END HIDDEN NOT NULL,\n\tPERIOD FOR SYSTEM_TIME ([valid_from], [valid_to])\n) ON [PRIMARY]\nWITH\n(\nSYSTEM_VERSIONING = ON (HISTORY_TABLE = [probe].[temporal_history])\n)\nGO\nALTER TABLE [probe].[temporal] ADD PRIMARY KEY CLUSTERED \n(\n\t[id] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\n",
+      "delete": "ALTER TABLE [probe].[temporal] SET ( SYSTEM_VERSIONING = OFF  )\nGO\nIF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[probe].[temporal]') AND type in (N'U'))\nDROP TABLE [probe].[temporal]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "\nGO\n"
+    },
+    "probe.temporal_visible": {
+      "type": "Table",
+      "select": "SELECT TOP (1000) [id]\n      ,[v]\n  FROM [yast_probe].[probe].[temporal_visible]",
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE TABLE [probe].[temporal_visible](\n\t[id] [int] NOT NULL,\n\t[v] [int] NULL,\n\t[valid_from] [datetime2](7) GENERATED ALWAYS AS ROW START NOT NULL,\n\t[valid_to] [datetime2](7) GENERATED ALWAYS AS ROW END NOT NULL,\n\tPERIOD FOR SYSTEM_TIME ([valid_from], [valid_to])\n) ON [PRIMARY]\nWITH\n(\nSYSTEM_VERSIONING = ON (HISTORY_TABLE = [probe].[temporal_visible_history])\n)\nGO\nALTER TABLE [probe].[temporal_visible] ADD PRIMARY KEY CLUSTERED \n(\n\t[id] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\n",
+      "delete": "ALTER TABLE [probe].[temporal_visible] SET ( SYSTEM_VERSIONING = OFF  )\nGO\nIF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[probe].[temporal_visible]') AND type in (N'U'))\nDROP TABLE [probe].[temporal_visible]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "\nGO\n"
+    },
+    "probe.v_customers": {
+      "type": "View",
+      "select": "SELECT TOP (1000) [id]\n      ,[name]\n  FROM [yast_probe].[probe].[v_customers]",
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE VIEW [probe].[v_customers] AS SELECT id, name FROM dbo.customers\nGO\n",
+      "delete": "DROP VIEW [probe].[v_customers]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nALTER VIEW [probe].[v_customers] AS SELECT id, name FROM dbo.customers\nGO\n"
+    },
+    "probe.odd ] view": {
+      "type": "View",
+      "select": "SELECT TOP (1000) [col ]] one]\n  FROM [yast_probe].[probe].[odd ]] view]",
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE VIEW [probe].[odd ]] view] AS SELECT [col ]] one] FROM [probe].[odd ]] table]\nGO\n",
+      "delete": "DROP VIEW [probe].[odd ]] view]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nALTER VIEW [probe].[odd ]] view] AS SELECT [col ]] one] FROM [probe].[odd ]] table]\nGO\n"
+    },
+    "probe.p_hello": {
+      "type": "StoredProcedure",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE PROCEDURE [probe].[p_hello] @name nvarchar(20) = N'x' AS SELECT @name AS name\nGO\n",
+      "delete": "DROP PROCEDURE [probe].[p_hello]\nGO\n",
+      "execute": "DECLARE @RC int\nDECLARE @name nvarchar(20)\n\n-- TODO: Set parameter values here.\n\nEXECUTE @RC = [probe].[p_hello] \n   @name\nGO",
+      "alter": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nALTER PROCEDURE [probe].[p_hello] @name nvarchar(20) = N'x' AS SELECT @name AS name\nGO\n"
+    },
+    "probe.f_scalar": {
+      "type": "UserDefinedFunction",
+      "select": "SELECT TOP (1000) *   FROM [yast_probe].[probe].[f_scalar]",
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE FUNCTION [probe].[f_scalar] (@a int) RETURNS int AS BEGIN RETURN @a + 1 END\nGO\n",
+      "delete": "DROP FUNCTION [probe].[f_scalar]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nALTER FUNCTION [probe].[f_scalar] (@a int) RETURNS int AS BEGIN RETURN @a + 1 END\nGO\n"
+    },
+    "probe.f_table": {
+      "type": "UserDefinedFunction",
+      "select": "SELECT TOP (1000) [a]\n  FROM [yast_probe].[probe].[f_table]",
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE FUNCTION [probe].[f_table] (@a int) RETURNS TABLE AS RETURN SELECT @a AS a\nGO\n",
+      "delete": "DROP FUNCTION [probe].[f_table]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nALTER FUNCTION [probe].[f_table] (@a int) RETURNS TABLE AS RETURN SELECT @a AS a\nGO\n"
+    },
+    "probe.all_types": {
+      "type": "Table",
+      "select": "SELECT TOP (1000) [c_bigint]\n      ,[c_int]\n      ,[c_smallint]\n      ,[c_tinyint]\n      ,[c_bit]\n      ,[c_decimal]\n      ,[c_numeric]\n      ,[c_money]\n      ,[c_smallmoney]\n      ,[c_float]\n      ,[c_float24]\n      ,[c_real]\n      ,[c_date]\n      ,[c_time]\n      ,[c_datetime]\n      ,[c_datetime2]\n      ,[c_dto]\n      ,[c_smalldatetime]\n      ,[c_char]\n      ,[c_varchar]\n      ,[c_varcharmax]\n      ,[c_nchar]\n      ,[c_nvarchar]\n      ,[c_nvarcharmax]\n      ,[c_text]\n      ,[c_ntext]\n      ,[c_binary]\n      ,[c_varbinary]\n      ,[c_varbinarymax]\n      ,[c_image]\n      ,[c_guid]\n      ,[c_xml]\n      ,[c_variant]\n      ,[c_hierarchy]\n      ,[c_geometry]\n      ,[c_geography]\n      ,[c_collated]\n      ,[c_phone]\n      ,[c_amount]\n      ,[c_rowguid]\n  FROM [yast_probe].[probe].[all_types]",
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE TABLE [probe].[all_types](\n\t[c_bigint] [bigint] NULL,\n\t[c_int] [int] NULL,\n\t[c_smallint] [smallint] NULL,\n\t[c_tinyint] [tinyint] NULL,\n\t[c_bit] [bit] NULL,\n\t[c_decimal] [decimal](18, 4) NULL,\n\t[c_numeric] [numeric](5, 0) NULL,\n\t[c_money] [money] NULL,\n\t[c_smallmoney] [smallmoney] NULL,\n\t[c_float] [float] NULL,\n\t[c_float24] [real] NULL,\n\t[c_real] [real] NULL,\n\t[c_date] [date] NULL,\n\t[c_time] [time](3) NULL,\n\t[c_datetime] [datetime] NULL,\n\t[c_datetime2] [datetime2](3) NULL,\n\t[c_dto] [datetimeoffset](7) NULL,\n\t[c_smalldatetime] [smalldatetime] NULL,\n\t[c_char] [char](10) NULL,\n\t[c_varchar] [varchar](50) NULL,\n\t[c_varcharmax] [varchar](max) NULL,\n\t[c_nchar] [nchar](5) NULL,\n\t[c_nvarchar] [nvarchar](40) NULL,\n\t[c_nvarcharmax] [nvarchar](max) NULL,\n\t[c_text] [text] NULL,\n\t[c_ntext] [ntext] NULL,\n\t[c_binary] [binary](16) NULL,\n\t[c_varbinary] [varbinary](100) NULL,\n\t[c_varbinarymax] [varbinary](max) NULL,\n\t[c_image] [image] NULL,\n\t[c_guid] [uniqueidentifier] NULL,\n\t[c_xml] [xml] NULL,\n\t[c_variant] [sql_variant] NULL,\n\t[c_hierarchy] [hierarchyid] NULL,\n\t[c_geometry] [geometry] NULL,\n\t[c_geography] [geography] NULL,\n\t[c_collated] [varchar](20) NULL,\n\t[c_phone] [probe].[phone] NULL,\n\t[c_amount] [probe].[amount] NULL,\n\t[c_sparse] [int] SPARSE  NULL,\n\t[c_rowguid] [uniqueidentifier] ROWGUIDCOL  NOT NULL\n) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]\nGO\nALTER TABLE [probe].[all_types] ADD  DEFAULT (newsequentialid()) FOR [c_rowguid]\nGO\n",
+      "delete": "IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[probe].[all_types]') AND type in (N'U'))\nDROP TABLE [probe].[all_types]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "\nGO\n"
+    },
+    "probe.parent": {
+      "type": "Table",
+      "select": "SELECT TOP (1000) [id]\n      ,[code]\n      ,[qty]\n      ,[price]\n      ,[total]\n      ,[label]\n      ,[created]\n  FROM [yast_probe].[probe].[parent]",
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE TABLE [probe].[parent](\n\t[id] [bigint] IDENTITY(100,5) NOT NULL,\n\t[code] [char](3) NOT NULL,\n\t[qty] [int] NOT NULL,\n\t[price] [decimal](10, 2) NULL,\n\t[total]  AS ([qty]*[price]) PERSISTED,\n\t[label]  AS (([code]+N'-')+CONVERT([nvarchar](20),[id])),\n\t[created] [datetime2](0) NOT NULL\n) ON [PRIMARY]\nGO\nCREATE CLUSTERED INDEX [CIX_parent_created] ON [probe].[parent]\n(\n\t[created] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\nSET ANSI_PADDING ON\nGO\nALTER TABLE [probe].[parent] ADD  CONSTRAINT [PK_parent] PRIMARY KEY NONCLUSTERED \n(\n\t[id] DESC,\n\t[code] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\nSET ANSI_PADDING ON\nGO\nALTER TABLE [probe].[parent] ADD  CONSTRAINT [UQ_parent_code] UNIQUE NONCLUSTERED \n(\n\t[code] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\nALTER TABLE [probe].[parent] ADD  CONSTRAINT [DF_parent_qty]  DEFAULT ((1)) FOR [qty]\nGO\nALTER TABLE [probe].[parent] ADD  DEFAULT ((0)) FOR [price]\nGO\nALTER TABLE [probe].[parent] ADD  DEFAULT (getdate()) FOR [created]\nGO\nALTER TABLE [probe].[parent]  WITH CHECK ADD CHECK  (([price] IS NULL OR [price]>=(0)))\nGO\nALTER TABLE [probe].[parent]  WITH CHECK ADD  CONSTRAINT [CK_parent_qty] CHECK  (([qty]>=(0)))\nGO\nALTER TABLE [probe].[parent] CHECK CONSTRAINT [CK_parent_qty]\nGO\n",
+      "delete": "IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[probe].[parent]') AND type in (N'U'))\nDROP TABLE [probe].[parent]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "\nGO\n"
+    },
+    "probe.child": {
+      "type": "Table",
+      "select": "SELECT TOP (1000) [child_id]\n      ,[parent_id]\n      ,[parent_code]\n      ,[note]\n      ,[status]\n  FROM [yast_probe].[probe].[child]",
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE TABLE [probe].[child](\n\t[child_id] [int] NOT NULL,\n\t[parent_id] [bigint] NULL,\n\t[parent_code] [char](3) NULL,\n\t[note] [nvarchar](200) NULL,\n\t[status] [tinyint] NOT NULL\n) ON [PRIMARY]\nGO\nALTER TABLE [probe].[child] ADD  CONSTRAINT [PK_child] PRIMARY KEY CLUSTERED \n(\n\t[child_id] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\nSET ANSI_PADDING ON\nGO\nCREATE UNIQUE NONCLUSTERED INDEX [IX_child_note] ON [probe].[child]\n(\n\t[note] DESC\n)\nINCLUDE([status]) \nWHERE ([note] IS NOT NULL)\nWITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\nCREATE NONCLUSTERED INDEX [IX_child_status] ON [probe].[child]\n(\n\t[status] ASC,\n\t[parent_id] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, FILLFACTOR = 80, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\nALTER TABLE [probe].[child]  WITH CHECK ADD  CONSTRAINT [FK_child_parent] FOREIGN KEY([parent_id], [parent_code])\nREFERENCES [probe].[parent] ([id], [code])\nON UPDATE SET NULL\nON DELETE CASCADE\nGO\nALTER TABLE [probe].[child] CHECK CONSTRAINT [FK_child_parent]\nGO\nALTER TABLE [probe].[child]  WITH NOCHECK ADD  CONSTRAINT [FK_child_parent_nocheck] FOREIGN KEY([parent_id], [parent_code])\nREFERENCES [probe].[parent] ([id], [code])\nGO\nALTER TABLE [probe].[child] NOCHECK CONSTRAINT [FK_child_parent_nocheck]\nGO\nALTER TABLE [probe].[child]  WITH NOCHECK ADD  CONSTRAINT [CK_child_status] CHECK  (([status]<(10)))\nGO\nALTER TABLE [probe].[child] CHECK CONSTRAINT [CK_child_status]\nGO\nSET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE TRIGGER [probe].[trg_child_disabled] ON [probe].[child] FOR DELETE AS SET NOCOUNT ON\nGO\nALTER TABLE [probe].[child] DISABLE TRIGGER [trg_child_disabled]\nGO\nSET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE TRIGGER [probe].[trg_child_ins] ON [probe].[child] AFTER INSERT, UPDATE AS BEGIN SET NOCOUNT ON; END\nGO\nALTER TABLE [probe].[child] ENABLE TRIGGER [trg_child_ins]\nGO\n",
+      "delete": "IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[probe].[child]') AND type in (N'U'))\nDROP TABLE [probe].[child]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "\nGO\n"
+    },
+    "probe.temporal_history": {
+      "type": "Table",
+      "select": "SELECT TOP (1000) [id]\n      ,[v]\n      ,[valid_from]\n      ,[valid_to]\n  FROM [yast_probe].[probe].[temporal_history]",
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE TABLE [probe].[temporal_history](\n\t[id] [int] NOT NULL,\n\t[v] [int] NULL,\n\t[valid_from] [datetime2](7) NOT NULL,\n\t[valid_to] [datetime2](7) NOT NULL\n) ON [PRIMARY]\nGO\nCREATE CLUSTERED INDEX [ix_temporal_history] ON [probe].[temporal_history]\n(\n\t[valid_to] ASC,\n\t[valid_from] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\n",
+      "delete": "IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[probe].[temporal_history]') AND type in (N'U'))\nDROP TABLE [probe].[temporal_history]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "\nGO\n"
+    },
+    "probe.v_child": {
+      "type": "View",
+      "select": "SELECT TOP (1000) [child_id]\n      ,[note]\n  FROM [yast_probe].[probe].[v_child]",
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE VIEW [probe].[v_child]\nWITH SCHEMABINDING\nAS\nSELECT child_id, note FROM [probe].[child]\nGO\nSET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE TRIGGER [probe].[trg_v_child] ON [probe].[v_child] INSTEAD OF INSERT AS SET NOCOUNT ON\nGO\n",
+      "delete": "DROP VIEW [probe].[v_child]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nALTER VIEW [probe].[v_child]\nWITH SCHEMABINDING\nAS\nSELECT child_id, note FROM [probe].[child]\nGO\n"
+    },
+    "probe.p_params": {
+      "type": "StoredProcedure",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE PROCEDURE [probe].[p_params]\n    @id int,\n    @name nvarchar(50) = N'none',\n    @amount decimal(10, 2) = 1.5,\n    @result int OUTPUT,\n    @items [probe].[line_items] READONLY\nAS\nBEGIN\n    SET NOCOUNT ON;\n    SELECT @result = @id;\nEND\nGO\n",
+      "delete": "DROP PROCEDURE [probe].[p_params]\nGO\n",
+      "execute": "DECLARE @RC int\nDECLARE @id int\nDECLARE @name nvarchar(50)\nDECLARE @amount decimal(10,2)\nDECLARE @result int\nDECLARE @items [probe].[line_items]\n\n-- TODO: Set parameter values here.\n\nEXECUTE @RC = [probe].[p_params] \n   @id\n  ,@name\n  ,@amount\n  ,@result OUTPUT\n  ,@items\nGO",
+      "alter": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nALTER PROCEDURE [probe].[p_params]\n    @id int,\n    @name nvarchar(50) = N'none',\n    @amount decimal(10, 2) = 1.5,\n    @result int OUTPUT,\n    @items [probe].[line_items] READONLY\nAS\nBEGIN\n    SET NOCOUNT ON;\n    SELECT @result = @id;\nEND\nGO\n"
+    },
+    "probe.p_noparams": {
+      "type": "StoredProcedure",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\n-- A comment before the definition.\nCREATE   PROCEDURE [probe].[p_noparams] AS SELECT 1 AS one\nGO\n",
+      "delete": "DROP PROCEDURE [probe].[p_noparams]\nGO\n",
+      "execute": "DECLARE @RC int\n\n-- TODO: Set parameter values here.\n\nEXECUTE @RC = [probe].[p_noparams] \nGO",
+      "alter": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\n-- A comment before the definition.\nALTER   PROCEDURE [probe].[p_noparams] AS SELECT 1 AS one\nGO\n"
+    },
+    "probe.p_quoted_off": {
+      "type": "StoredProcedure",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER OFF\nGO\nCREATE PROCEDURE [probe].[p_quoted_off] AS SELECT \"text\" AS t\nGO\n",
+      "delete": "DROP PROCEDURE [probe].[p_quoted_off]\nGO\n",
+      "execute": "DECLARE @RC int\n\n-- TODO: Set parameter values here.\n\nEXECUTE @RC = [probe].[p_quoted_off] \nGO",
+      "alter": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER OFF\nGO\nALTER PROCEDURE [probe].[p_quoted_off] AS SELECT \"text\" AS t\nGO\n"
+    },
+    "probe.f_multi": {
+      "type": "UserDefinedFunction",
+      "select": "SELECT TOP (1000) [n]\n  FROM [yast_probe].[probe].[f_multi]",
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE FUNCTION [probe].[f_multi] (@from int, @to int = 10)\nRETURNS @t TABLE (n int NOT NULL)\nAS\nBEGIN\n    INSERT @t VALUES (@from);\n    RETURN;\nEND\nGO\n",
+      "delete": "DROP FUNCTION [probe].[f_multi]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nALTER FUNCTION [probe].[f_multi] (@from int, @to int = 10)\nRETURNS @t TABLE (n int NOT NULL)\nAS\nBEGIN\n    INSERT @t VALUES (@from);\n    RETURN;\nEND\nGO\n"
+    },
+    "probe.phone": {
+      "type": "UserDefinedDataType",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "CREATE TYPE [probe].[phone] FROM [varchar](20) NOT NULL\nGO\n",
+      "delete": "DROP TYPE [probe].[phone]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe.amount": {
+      "type": "UserDefinedDataType",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "CREATE TYPE [probe].[amount] FROM [decimal](12, 3) NULL\nGO\n",
+      "delete": "DROP TYPE [probe].[amount]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe.line_items": {
+      "type": "UserDefinedTableType",
+      "select": "SELECT TOP (1000) [id]\n      ,[label]\n      ,[qty]\n      ,[price]\n  FROM [yast_probe].[probe].[line_items]",
+      "create": "CREATE TYPE [probe].[line_items] AS TABLE(\n\t[id] [int] NOT NULL,\n\t[label] [nvarchar](50) NULL DEFAULT (N'x'),\n\t[qty] [int] NOT NULL,\n\t[price] [probe].[amount] NULL,\n\tINDEX [ix_label] NONCLUSTERED \n(\n\t[label] DESC\n),\n\tPRIMARY KEY CLUSTERED \n(\n\t[id] ASC\n)WITH (IGNORE_DUP_KEY = OFF),\n\tCHECK (([qty]>(0)))\n)\nGO\n",
+      "delete": "DROP TYPE [probe].[line_items]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe.seq_full": {
+      "type": "Sequence",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "CREATE SEQUENCE [probe].[seq_full] \n AS [bigint]\n START WITH 10\n INCREMENT BY 5\n MINVALUE 1\n MAXVALUE 1000\n CYCLE \n CACHE  20 \nGO\n",
+      "delete": "DROP SEQUENCE [probe].[seq_full]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe.seq_default": {
+      "type": "Sequence",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "CREATE SEQUENCE [probe].[seq_default] \n AS [bigint]\n START WITH -9223372036854775808\n INCREMENT BY 1\n MINVALUE -9223372036854775808\n MAXVALUE 9223372036854775807\n CACHE \nGO\n",
+      "delete": "DROP SEQUENCE [probe].[seq_default]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe.seq_small": {
+      "type": "Sequence",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "CREATE SEQUENCE [probe].[seq_small] \n AS [smallint]\n START WITH -5\n INCREMENT BY -1\n MINVALUE -32768\n MAXVALUE 32767\n NO CACHE \nGO\n",
+      "delete": "DROP SEQUENCE [probe].[seq_small]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe.syn_child": {
+      "type": "Synonym",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "CREATE SYNONYM [probe].[syn_child] FOR [probe].[child]\nGO\n",
+      "delete": "DROP SYNONYM [probe].[syn_child]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe": {
+      "type": "Schema",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "CREATE SCHEMA [probe]\nGO\n",
+      "delete": "DROP SCHEMA [probe]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "odd ] schema": {
+      "type": "Schema",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "CREATE SCHEMA [odd ]] schema]\nGO\n",
+      "delete": "DROP SCHEMA [odd ]] schema]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe_user": {
+      "type": "User",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "CREATE USER [probe_user] WITHOUT LOGIN WITH DEFAULT_SCHEMA=[probe]\nGO\nALTER ROLE [probe_role] ADD MEMBER [probe_user]\nGO\n",
+      "delete": "DROP USER [probe_user]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe_role": {
+      "type": "Role",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "CREATE ROLE [probe_role]\nGO\n",
+      "delete": "\r\nDECLARE @RoleName sysname\r\nset @RoleName = N'probe_role'\r\n\r\nIF @RoleName <> N'public' and (select is_fixed_role from sys.database_principals where name = @RoleName) = 0\r\nBEGIN\r\n    DECLARE @RoleMemberName sysname\r\n    DECLARE Member_Cursor CURSOR FOR\r\n    select [name]\r\n    from sys.database_principals \r\n    where principal_id in ( \r\n        select member_principal_id\r\n        from sys.database_role_members\r\n        where role_principal_id in (\r\n            select principal_id\r\n            FROM sys.database_principals where [name] = @RoleName AND type = 'R'))\r\n\r\n    OPEN Member_Cursor;\r\n\r\n    FETCH NEXT FROM Member_Cursor\r\n    into @RoleMemberName\r\n    \r\n    DECLARE @SQL NVARCHAR(4000)\r\n\r\n    WHILE @@FETCH_STATUS = 0\r\n    BEGIN\r\n        \r\n        SET @SQL = 'ALTER ROLE '+ QUOTENAME(@RoleName,'[') +' DROP MEMBER '+ QUOTENAME(@RoleMemberName,'[')\r\n        EXEC(@SQL)\r\n        \r\n        FETCH NEXT FROM Member_Cursor\r\n        into @RoleMemberName\r\n    END;\r\n\r\n    CLOSE Member_Cursor;\r\n    DEALLOCATE Member_Cursor;\r\nEND\r\nDROP ROLE [probe_role]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe_app": {
+      "type": "ApplicationRole",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "/* To avoid disclosure of passwords, the password is generated in script. */\ndeclare @idx as int\ndeclare @placeholderPwd as nvarchar(64)\ndeclare @rnd as float\nselect @idx = 0\nselect @placeholderPwd = N''\nselect @rnd = rand((@@CPU_BUSY % 100) + ((@@IDLE % 100) * 100) + \n       (DATEPART(ss, GETDATE()) * 10000) + ((cast(DATEPART(ms, GETDATE()) as int) % 100) * 1000000))\nwhile @idx < 64\nbegin\n   select @placeholderPwd = @placeholderPwd + char((cast((@rnd * 83) as int) + 43))\n   select @idx = @idx + 1\nselect @rnd = rand()\nend\ndeclare @statement nvarchar(4000)\nselect @statement = N'CREATE APPLICATION ROLE [probe_app] WITH DEFAULT_SCHEMA = [probe], ' + N'PASSWORD = N' + QUOTENAME(@placeholderPwd,'''')\nEXEC dbo.sp_executesql @statement\nGO\n",
+      "delete": "DROP APPLICATION ROLE  [probe_app]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "ALTER APPLICATION ROLE [probe_app] WITH DEFAULT_SCHEMA = [probe]\nGO\n"
+    },
+    "trg_ddl_probe": {
+      "type": "Trigger",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": {
+        "error": "An error occurred while scripting the objects. Script failed for Server 'localhost,11433'. "
+      },
+      "delete": {
+        "error": "Attempt to retrieve data for object failed for Server 'localhost,11433'. "
+      },
+      "execute": {
+        "error": "An error occurred while scripting the objects. Attempt to retrieve data for object failed for Server 'localhost,11433'. "
+      },
+      "alter": {
+        "error": "An error occurred while scripting the objects. Attempt to retrieve data for object failed for Server 'localhost,11433'. "
+      }
+    },
+    "probe.child/trg_child_ins": {
+      "type": "Trigger",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE TRIGGER [probe].[trg_child_ins] ON [probe].[child] AFTER INSERT, UPDATE AS BEGIN SET NOCOUNT ON; END\nGO\nALTER TABLE [probe].[child] ENABLE TRIGGER [trg_child_ins]\nGO\n",
+      "delete": "DROP TRIGGER [probe].[trg_child_ins]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nALTER TRIGGER [probe].[trg_child_ins] ON [probe].[child] AFTER INSERT, UPDATE AS BEGIN SET NOCOUNT ON; END\nGO\n"
+    },
+    "probe.child/trg_child_disabled": {
+      "type": "Trigger",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE TRIGGER [probe].[trg_child_disabled] ON [probe].[child] FOR DELETE AS SET NOCOUNT ON\nGO\nALTER TABLE [probe].[child] DISABLE TRIGGER [trg_child_disabled]\nGO\n",
+      "delete": "DROP TRIGGER [probe].[trg_child_disabled]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nALTER TRIGGER [probe].[trg_child_disabled] ON [probe].[child] FOR DELETE AS SET NOCOUNT ON\nGO\n"
+    },
+    "probe.v_child/trg_v_child": {
+      "type": "Trigger",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE TRIGGER [probe].[trg_v_child] ON [probe].[v_child] INSTEAD OF INSERT AS SET NOCOUNT ON\nGO\n",
+      "delete": "DROP TRIGGER [probe].[trg_v_child]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nALTER TRIGGER [probe].[trg_v_child] ON [probe].[v_child] INSTEAD OF INSERT AS SET NOCOUNT ON\nGO\n"
+    },
+    "probe.parent/PK_parent": {
+      "type": "Index",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "SET ANSI_PADDING ON\nGO\nALTER TABLE [probe].[parent] ADD  CONSTRAINT [PK_parent] PRIMARY KEY NONCLUSTERED \n(\n\t[id] DESC,\n\t[code] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\n",
+      "delete": "ALTER TABLE [probe].[parent] DROP CONSTRAINT [PK_parent]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe.parent/UQ_parent_code": {
+      "type": "Index",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "SET ANSI_PADDING ON\nGO\nALTER TABLE [probe].[parent] ADD  CONSTRAINT [UQ_parent_code] UNIQUE NONCLUSTERED \n(\n\t[code] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\n",
+      "delete": "ALTER TABLE [probe].[parent] DROP CONSTRAINT [UQ_parent_code]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe.parent/CIX_parent_created": {
+      "type": "Index",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "CREATE CLUSTERED INDEX [CIX_parent_created] ON [probe].[parent]\n(\n\t[created] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\n",
+      "delete": "DROP INDEX [CIX_parent_created] ON [probe].[parent] WITH ( ONLINE = OFF )\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe.child/PK_child": {
+      "type": "Index",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "ALTER TABLE [probe].[child] ADD  CONSTRAINT [PK_child] PRIMARY KEY CLUSTERED \n(\n\t[child_id] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\n",
+      "delete": "ALTER TABLE [probe].[child] DROP CONSTRAINT [PK_child] WITH ( ONLINE = OFF )\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe.child/IX_child_note": {
+      "type": "Index",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "SET ANSI_PADDING ON\nGO\nCREATE UNIQUE NONCLUSTERED INDEX [IX_child_note] ON [probe].[child]\n(\n\t[note] DESC\n)\nINCLUDE([status]) \nWHERE ([note] IS NOT NULL)\nWITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\n",
+      "delete": "DROP INDEX [IX_child_note] ON [probe].[child]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe.child/IX_child_status": {
+      "type": "Index",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "CREATE NONCLUSTERED INDEX [IX_child_status] ON [probe].[child]\n(\n\t[status] ASC,\n\t[parent_id] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, FILLFACTOR = 80, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\n",
+      "delete": "DROP INDEX [IX_child_status] ON [probe].[child]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe.child/FK_child_parent": {
+      "type": "ForeignKey",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "ALTER TABLE [probe].[child]  WITH CHECK ADD  CONSTRAINT [FK_child_parent] FOREIGN KEY([parent_id], [parent_code])\nREFERENCES [probe].[parent] ([id], [code])\nON UPDATE SET NULL\nON DELETE CASCADE\nGO\nALTER TABLE [probe].[child] CHECK CONSTRAINT [FK_child_parent]\nGO\n",
+      "delete": "ALTER TABLE [probe].[child] DROP CONSTRAINT [FK_child_parent]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe.child/FK_child_parent_nocheck": {
+      "type": "ForeignKey",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "ALTER TABLE [probe].[child]  WITH NOCHECK ADD  CONSTRAINT [FK_child_parent_nocheck] FOREIGN KEY([parent_id], [parent_code])\nREFERENCES [probe].[parent] ([id], [code])\nGO\nALTER TABLE [probe].[child] NOCHECK CONSTRAINT [FK_child_parent_nocheck]\nGO\n",
+      "delete": "ALTER TABLE [probe].[child] DROP CONSTRAINT [FK_child_parent_nocheck]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe.idx_more": {
+      "type": "Table",
+      "select": "SELECT TOP (1000) [id]\n      ,[a]\n      ,[b]\n      ,[pcode]\n      ,[twice]\n  FROM [yast_probe].[probe].[idx_more]",
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE TABLE [probe].[idx_more](\n\t[id] [int] NOT NULL,\n\t[a] [varchar](10) NULL,\n\t[b] [int] NULL,\n\t[pcode] [char](3) NULL,\n\t[twice]  AS ([id]*(2)) PERSISTED NOT NULL\n) ON [PRIMARY]\nGO\nALTER TABLE [probe].[idx_more] ADD  CONSTRAINT [PK_idx_more] PRIMARY KEY CLUSTERED \n(\n\t[id] ASC\n)WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, FILLFACTOR = 90, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\nSET ANSI_PADDING ON\nGO\nCREATE NONCLUSTERED INDEX [IX_comp] ON [probe].[idx_more]\n(\n\t[a] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\nCREATE NONCLUSTERED INDEX [IX_filter] ON [probe].[idx_more]\n(\n\t[b] ASC\n)\nWHERE ([b]>(0))\nWITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\nCREATE NONCLUSTERED INDEX [IX_inc] ON [probe].[idx_more]\n(\n\t[b] ASC\n)\nINCLUDE([a]) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\nCREATE UNIQUE NONCLUSTERED INDEX [UX_b] ON [probe].[idx_more]\n(\n\t[b] DESC,\n\t[id] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = ON, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = ON, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\nALTER TABLE [probe].[idx_more]  WITH CHECK ADD FOREIGN KEY([pcode])\nREFERENCES [probe].[parent] ([code])\nON DELETE SET NULL\nGO\nALTER TABLE [probe].[idx_more]  WITH NOCHECK ADD  CONSTRAINT [CK_idx_more_b] CHECK  (([b]<>(13)))\nGO\nALTER TABLE [probe].[idx_more] NOCHECK CONSTRAINT [CK_idx_more_b]\nGO\n",
+      "delete": "IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[probe].[idx_more]') AND type in (N'U'))\nDROP TABLE [probe].[idx_more]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "\nGO\n"
+    },
+    "probe.idx_more/PK_idx_more": {
+      "type": "Index",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "ALTER TABLE [probe].[idx_more] ADD  CONSTRAINT [PK_idx_more] PRIMARY KEY CLUSTERED \n(\n\t[id] ASC\n)WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, FILLFACTOR = 90, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\n",
+      "delete": "ALTER TABLE [probe].[idx_more] DROP CONSTRAINT [PK_idx_more] WITH ( ONLINE = OFF )\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe.idx_more/IX_inc": {
+      "type": "Index",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "CREATE NONCLUSTERED INDEX [IX_inc] ON [probe].[idx_more]\n(\n\t[b] ASC\n)\nINCLUDE([a]) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\n",
+      "delete": "DROP INDEX [IX_inc] ON [probe].[idx_more]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe.idx_more/IX_filter": {
+      "type": "Index",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "CREATE NONCLUSTERED INDEX [IX_filter] ON [probe].[idx_more]\n(\n\t[b] ASC\n)\nWHERE ([b]>(0))\nWITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\n",
+      "delete": "DROP INDEX [IX_filter] ON [probe].[idx_more]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe.idx_more/UX_b": {
+      "type": "Index",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "CREATE UNIQUE NONCLUSTERED INDEX [UX_b] ON [probe].[idx_more]\n(\n\t[b] DESC,\n\t[id] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = ON, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = ON, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\n",
+      "delete": "DROP INDEX [UX_b] ON [probe].[idx_more]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe.idx_more/IX_comp": {
+      "type": "Index",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "SET ANSI_PADDING ON\nGO\nCREATE NONCLUSTERED INDEX [IX_comp] ON [probe].[idx_more]\n(\n\t[a] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\n",
+      "delete": "DROP INDEX [IX_comp] ON [probe].[idx_more]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe.v_indexed": {
+      "type": "View",
+      "select": "SELECT TOP (1000) [id]\n      ,[b]\n  FROM [yast_probe].[probe].[v_indexed]",
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE VIEW [probe].[v_indexed] WITH SCHEMABINDING AS SELECT id, b FROM [probe].[idx_more]\nGO\nSET ARITHABORT ON\nSET CONCAT_NULL_YIELDS_NULL ON\nSET QUOTED_IDENTIFIER ON\nSET ANSI_NULLS ON\nSET ANSI_PADDING ON\nSET ANSI_WARNINGS ON\nSET NUMERIC_ROUNDABORT OFF\nGO\nCREATE UNIQUE CLUSTERED INDEX [UCX_v_indexed] ON [probe].[v_indexed]\n(\n\t[id] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\n",
+      "delete": "DROP VIEW [probe].[v_indexed]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nALTER VIEW [probe].[v_indexed] WITH SCHEMABINDING AS SELECT id, b FROM [probe].[idx_more]\nGO\n"
+    },
+    "probe.v_indexed/UCX_v_indexed": {
+      "type": "Index",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "SET ARITHABORT ON\nSET CONCAT_NULL_YIELDS_NULL ON\nSET QUOTED_IDENTIFIER ON\nSET ANSI_NULLS ON\nSET ANSI_PADDING ON\nSET ANSI_WARNINGS ON\nSET NUMERIC_ROUNDABORT OFF\nGO\nCREATE UNIQUE CLUSTERED INDEX [UCX_v_indexed] ON [probe].[v_indexed]\n(\n\t[id] ASC\n)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]\nGO\n",
+      "delete": "DROP INDEX [UCX_v_indexed] ON [probe].[v_indexed] WITH ( ONLINE = OFF )\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe.p_create_or_alter": {
+      "type": "StoredProcedure",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE   PROCEDURE [probe].[p_create_or_alter] AS SELECT 3 AS three\nGO\n",
+      "delete": "DROP PROCEDURE [probe].[p_create_or_alter]\nGO\n",
+      "execute": "DECLARE @RC int\n\n-- TODO: Set parameter values here.\n\nEXECUTE @RC = [probe].[p_create_or_alter] \nGO",
+      "alter": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nALTER   PROCEDURE [probe].[p_create_or_alter] AS SELECT 3 AS three\nGO\n"
+    },
+    "probe.p_lower": {
+      "type": "StoredProcedure",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\n/* A block comment\n   before the definition. */\ncreate proc [probe].[p_lower] @a varchar(max), @b varbinary(16) = NULL, @c datetime2(3) = '2024-01-01', @d float = 1e3, @e [probe].[phone] = '555' OUTPUT\nas select @a as a\nGO\n",
+      "delete": "DROP PROCEDURE [probe].[p_lower]\nGO\n",
+      "execute": "DECLARE @RC int\nDECLARE @a varchar(max)\nDECLARE @b varbinary(16)\nDECLARE @c datetime2(3)\nDECLARE @d float\nDECLARE @e [probe].[phone]\n\n-- TODO: Set parameter values here.\n\nEXECUTE @RC = [probe].[p_lower] \n   @a\n  ,@b\n  ,@c\n  ,@d\n  ,@e OUTPUT\nGO",
+      "alter": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\n/* A block comment\n   before the definition. */\nALTER proc [probe].[p_lower] @a varchar(max), @b varbinary(16) = NULL, @c datetime2(3) = '2024-01-01', @d float = 1e3, @e [probe].[phone] = '555' OUTPUT\nas select @a as a\nGO\n"
+    },
+    "probe.v_trailing": {
+      "type": "View",
+      "select": "SELECT TOP (1000) [one]\n  FROM [yast_probe].[probe].[v_trailing]",
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE VIEW [probe].[v_trailing] AS SELECT 1 AS one   \n\n\nGO\n",
+      "delete": "DROP VIEW [probe].[v_trailing]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nALTER VIEW [probe].[v_trailing] AS SELECT 1 AS one   \n\n\nGO\n"
+    },
+    "probe_owned": {
+      "type": "Schema",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "CREATE SCHEMA [probe_owned]\nGO\n",
+      "delete": "DROP SCHEMA [probe_owned]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe_role_owned": {
+      "type": "Role",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "CREATE ROLE [probe_role_owned]\nGO\n",
+      "delete": "\r\nDECLARE @RoleName sysname\r\nset @RoleName = N'probe_role_owned'\r\n\r\nIF @RoleName <> N'public' and (select is_fixed_role from sys.database_principals where name = @RoleName) = 0\r\nBEGIN\r\n    DECLARE @RoleMemberName sysname\r\n    DECLARE Member_Cursor CURSOR FOR\r\n    select [name]\r\n    from sys.database_principals \r\n    where principal_id in ( \r\n        select member_principal_id\r\n        from sys.database_role_members\r\n        where role_principal_id in (\r\n            select principal_id\r\n            FROM sys.database_principals where [name] = @RoleName AND type = 'R'))\r\n\r\n    OPEN Member_Cursor;\r\n\r\n    FETCH NEXT FROM Member_Cursor\r\n    into @RoleMemberName\r\n    \r\n    DECLARE @SQL NVARCHAR(4000)\r\n\r\n    WHILE @@FETCH_STATUS = 0\r\n    BEGIN\r\n        \r\n        SET @SQL = 'ALTER ROLE '+ QUOTENAME(@RoleName,'[') +' DROP MEMBER '+ QUOTENAME(@RoleMemberName,'[')\r\n        EXEC(@SQL)\r\n        \r\n        FETCH NEXT FROM Member_Cursor\r\n        into @RoleMemberName\r\n    END;\r\n\r\n    CLOSE Member_Cursor;\r\n    DEALLOCATE Member_Cursor;\r\nEND\r\nDROP ROLE [probe_role_owned]\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    },
+    "probe_login_user": {
+      "type": "User",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": {
+        "error": "An error occurred while scripting the objects. Script failed for Server 'localhost,11433'. "
+      },
+      "delete": {
+        "error": "Attempt to retrieve data for object failed for Server 'localhost,11433'. "
+      },
+      "execute": {
+        "error": "An error occurred while scripting the objects. Attempt to retrieve data for object failed for Server 'localhost,11433'. "
+      },
+      "alter": {
+        "error": "An error occurred while scripting the objects. Attempt to retrieve data for object failed for Server 'localhost,11433'. "
+      }
+    },
+    "trg_ddl_probe/DdlTrigger": {
+      "type": "DdlTrigger",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nCREATE TRIGGER [trg_ddl_probe] ON DATABASE FOR CREATE_SEQUENCE AS SET NOCOUNT ON\nGO\nENABLE TRIGGER [trg_ddl_probe] ON DATABASE\nGO\n",
+      "delete": "DROP TRIGGER [trg_ddl_probe] ON DATABASE\nGO\n",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\nALTER TRIGGER [trg_ddl_probe] ON DATABASE FOR CREATE_SEQUENCE AS SET NOCOUNT ON\nGO\n"
+    },
+    "trg_ddl_probe/DatabaseDdlTrigger": {
+      "type": "DatabaseDdlTrigger",
+      "select": {
+        "error": "An error occurred while scripting the objects. Failed to retrieve data for this request."
+      },
+      "create": "",
+      "delete": "",
+      "execute": {
+        "error": "An error occurred while scripting the objects. Scripting as Execute is only supported for Stored Procedures"
+      },
+      "alter": ""
+    }
+  }
+}

@@ -1,0 +1,91 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+import { IConnectionProfile, AuthenticationTypes } from "./interfaces";
+import { ConnectionCredentials } from "./connectionCredentials";
+import * as utils from "./utils";
+import { uuid } from "../utils/utils";
+import { AzureAuthType } from "./contracts/azure";
+import { ConfigTarget } from "../connectionconfig/connectionconfig";
+import { IConnectionInfo } from "vscode-mssql";
+
+// Concrete implementation of the IConnectionProfile interface
+
+/**
+ * A concrete implementation of an IConnectionProfile with support for profile creation and validation
+ */
+export class ConnectionProfile extends ConnectionCredentials implements IConnectionProfile {
+    public profileName: string;
+    public id: string;
+    public groupId: string;
+    public configSource: ConfigTarget;
+    public savePassword: boolean;
+    public emptyPasswordInput: boolean;
+    public azureAuthType: AzureAuthType;
+    declare public azureAccountToken: string | undefined;
+    declare public expiresOn: number | undefined;
+    declare public accountId: string;
+    declare public tenantId: string;
+
+    constructor(connectionCredentials?: IConnectionInfo) {
+        super();
+        if (connectionCredentials) {
+            this.accountId = connectionCredentials.accountId;
+            this.tenantId = connectionCredentials.tenantId;
+            this.authenticationType = connectionCredentials.authenticationType;
+            this.azureAccountToken = connectionCredentials.azureAccountToken;
+            this.expiresOn = connectionCredentials.expiresOn;
+            this.database = connectionCredentials.database;
+            this.email = connectionCredentials.email;
+            this.user = connectionCredentials.email;
+            this.password = connectionCredentials.password;
+            this.server = connectionCredentials.server;
+        }
+    }
+
+    public static addIdIfMissing(profile: IConnectionProfile): boolean {
+        if (profile && profile.id === undefined) {
+            profile.id = uuid();
+            return true;
+        }
+
+        return false;
+    }
+
+    // Assumption: having a server and the required authentication fields indicates all requirements were met
+    public isValidProfile(): boolean {
+        if (this.authenticationType) {
+            if (
+                this.authenticationType === AuthenticationTypes[AuthenticationTypes.AzureMFA] ||
+                this.authenticationType ===
+                    AuthenticationTypes[AuthenticationTypes.ActiveDirectoryDefault]
+            ) {
+                return utils.isNotEmpty(this.server);
+            } else if (
+                this.authenticationType ===
+                AuthenticationTypes[AuthenticationTypes.ActiveDirectoryServicePrincipal]
+            ) {
+                // Service Principal requires server, App (client) ID (user), and client secret (password)
+                return (
+                    utils.isNotEmpty(this.server) &&
+                    utils.isNotEmpty(this.user) &&
+                    utils.isNotEmpty(this.password)
+                );
+            } else {
+                // SQL Login, and Windows Authentication (NTLM: DOMAIN\user and a password typed in)
+                return utils.isNotEmpty(this.server) && utils.isNotEmpty(this.user);
+            }
+        }
+        return false;
+    }
+
+    public isAzureActiveDirectory(): boolean {
+        return (
+            this.authenticationType === AuthenticationTypes[AuthenticationTypes.AzureMFA] ||
+            this.authenticationType ===
+                AuthenticationTypes[AuthenticationTypes.ActiveDirectoryServicePrincipal]
+        );
+    }
+}

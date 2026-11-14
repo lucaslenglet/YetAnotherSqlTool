@@ -1,0 +1,240 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+import { CoreRPCs, Status } from "./webview";
+
+export interface FormState<
+    TForm,
+    TState extends FormState<TForm, TState, TFormItemSpec>,
+    TFormItemSpec extends FormItemSpec<TForm, TState, TFormItemSpec>,
+> {
+    formState: TForm;
+    formComponents: Partial<Record<keyof TForm, TFormItemSpec>>;
+}
+
+/**
+ * FormContextProps without state - for use with VscodeWebviewProvider2 and selectors
+ */
+export interface FormContextProps<TForm> extends CoreRPCs {
+    formAction: (event: FormEvent<TForm>) => void;
+    openInfoLink?: (option: FormItemOptions) => void;
+}
+
+export interface FormReducers<TForm> {
+    formAction: {
+        event: FormEvent<TForm>;
+    };
+}
+
+/**
+ * Describes a field in a connection dialog form.
+ */
+export interface FormItemSpec<
+    TForm,
+    TState extends FormState<TForm, TState, TFormItemSpec>,
+    TFormItemSpec extends FormItemSpec<TForm, TState, TFormItemSpec>,
+> {
+    /**
+     * The type of the form item
+     */
+    type: FormItemType;
+    /**
+     * The property name of the form item
+     */
+    propertyName: keyof TForm;
+    /**
+     * The label of the form item
+     */
+    label: string;
+    /**
+     * Whether the form item is required
+     */
+    required: boolean;
+    /**
+     * The tooltip of the form item
+     */
+    tooltip?: string;
+    /**
+     * The options for the form item in case of a dropdown
+     */
+    options?: FormItemOptions[];
+    /**
+     * Whether the form item is hidden
+     */
+    hidden?: boolean;
+    /**
+     *	Action buttons for the form item
+     */
+    actionButtons?: FormItemActionButton[];
+    /**
+     * Placeholder text for the form item
+     */
+    placeholder?: string;
+    /**
+     * Placeholder text for the search box in a searchable dropdown
+     */
+    searchBoxPlaceholder?: string;
+    /**
+     * Resource identities currently marked as favorites. When undefined, the form field does not
+     * expose favorite controls.
+     */
+    favoriteOptionIds?: string[];
+    /**
+     * Validation callback for the form item
+     */
+    validate?: (state: TState, value: string | boolean | number) => FormItemValidationState;
+    /**
+     * Validation state and message for the form item
+     */
+    validation?: FormItemValidationState;
+
+    /**
+     * Whether the form item is an advanced option
+     */
+    isAdvancedOption?: boolean;
+
+    /**
+     * Async loading status for label decoration.
+     * Loading → spinner; Loaded → green checkmark; Error → red X next to the label.
+     * The message is shown as a tooltip on the icon.
+     */
+    loadStatus?: Status;
+
+    /**
+     * If true, the user may enter a value that doesn't appear in the options list.
+     */
+    freeform?: boolean;
+}
+
+export interface FormItemValidationState {
+    /**
+     * The validation state of the form item
+     */
+    isValid: boolean;
+    /**
+     * The validation message of the form item
+     */
+    validationMessage: string;
+}
+
+export interface FormItemActionButton {
+    label: string;
+    id: string;
+    hidden?: boolean;
+    callback: () => void | Promise<void>;
+}
+
+//#region Favorites
+export interface FavoritableOption {
+    value: string;
+    favoriteId?: string;
+}
+
+export function sortOptionsWithFavorites<T extends FavoritableOption>(
+    options: T[],
+    favoriteOptionIds?: string[],
+): T[] {
+    if (favoriteOptionIds === undefined) {
+        return options;
+    }
+
+    const favoriteIds = new Set(favoriteOptionIds);
+    return options
+        .map((option, index) => ({ option, index }))
+        .sort((a, b) => {
+            const aIsFavorite = favoriteIds.has(a.option.favoriteId ?? a.option.value);
+            const bIsFavorite = favoriteIds.has(b.option.favoriteId ?? b.option.value);
+            return aIsFavorite === bIsFavorite ? a.index - b.index : aIsFavorite ? -1 : 1;
+        })
+        .map(({ option }) => option);
+}
+
+export function findOptionIndex<T extends FavoritableOption>(options: T[], option: T): number {
+    return options.findIndex((candidate) => candidate.value === option.value);
+}
+
+export function findFirstFavoriteOption<T extends FavoritableOption>(
+    options: T[],
+    favoriteOptionIds?: string[],
+): T | undefined {
+    if (!favoriteOptionIds?.length) {
+        return undefined;
+    }
+
+    const favoriteIds = new Set(favoriteOptionIds);
+    return options.find((option) => favoriteIds.has(option.favoriteId ?? option.value));
+}
+//#endregion
+
+export interface FormItemOptions {
+    displayName: string;
+    value: string;
+    /**
+     * Stable identity used for favorites when the option value is only unique within a parent
+     * resource. Defaults to value when omitted.
+     */
+    favoriteId?: string;
+    /**
+     * Option description
+     */
+    description?: string;
+    /**
+     * Option Fluent UI Icon. Should be the name of a Fluent UI React Icon: https://react.fluentui.dev/?path=/docs/icons-catalog--docs
+     */
+    icon?: string;
+    /**
+     * Optional text color for the option
+     */
+    color?: string;
+    /**
+     * Optional tooltip text for the info icon
+     */
+    infoTooltip?: string;
+    /**
+     * Optional group label for the option. When any option in a list has a groupName,
+     * the front-end renders options grouped under their respective labels. If none do,
+     * then all options are rendered in a flat list.
+     */
+    groupName?: string;
+}
+
+/**
+ * Interface for a form event
+ */
+export interface FormEvent<T> {
+    /**
+     * The property name of the form item that triggered the event
+     */
+    propertyName: keyof T;
+    /**
+     * Whether the event was triggered by an action button for the item
+     */
+    isAction: boolean;
+    /**
+     * Contains the updated value of the form item that triggered the event.
+     * In case of isAction being true, this will contain the id of the action button that was clicked
+     */
+    value: string | boolean | number;
+
+    /**
+     * Whether to update the validation state of the form item
+     */
+    updateValidation?: boolean;
+}
+
+/**
+ * Enum for the input type of form item
+ */
+export enum FormItemType {
+    Input = "input",
+    Dropdown = "dropdown",
+    Checkbox = "checkbox",
+    Combobox = "combobox",
+    Password = "password",
+    Button = "button",
+    TextArea = "textarea",
+    SearchableDropdown = "searchableDropdown",
+    Table = "table",
+}

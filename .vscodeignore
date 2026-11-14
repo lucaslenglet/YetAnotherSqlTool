@@ -1,0 +1,23 @@
+# Packaging whitelist: everything is ignored, then what the extension needs at
+# runtime is re-included. Check the result with `npx vsce ls --no-dependencies`.
+#
+# vsce gives "!" patterns priority over ignore patterns whatever their order, so
+# an exclusion inside a re-included folder has to be written as an extglob: !(x).
+**
+
+!package.json
+!package.nls.json
+!README.md
+!CHANGELOG.md
+!LICENSE
+!NOTICE
+!ThirdPartyNotices.txt
+!THIRD_PARTY_LICENSE_vscode-mssql.txt
+
+# Bundles produced by `npm run build:prod`; source maps are never shipped.
+!dist/**/!(*.map)
+
+# Icons used by the manifest, the tree views and the webview panels.
+# media/icon.svg is only the source of media/icon.png.
+!media/!(icon.svg|screenshots)
+!media/objectTypes/**
