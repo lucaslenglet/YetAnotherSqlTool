@@ -49,7 +49,8 @@ const { values: cli } = parseArgs({
 });
 
 const manifest = JSON.parse(await readFile(path.join(rootDir, "package.json"), "utf8"));
-const extensionId = `${manifest.publisher}.${manifest.name}`;
+// Lowercase, as VS Code names the install folder (the publisher ID has capitals).
+const extensionId = `${manifest.publisher}.${manifest.name}`.toLowerCase();
 const vscodeVersion =
     cli.version === "minimum" ? manifest.engines.vscode.replace(/^[^\d]*/, "") : cli.version;
 const step = stepLogger("screenshots");

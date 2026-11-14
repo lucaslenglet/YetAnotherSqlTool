@@ -51,7 +51,9 @@ const { values: cli } = parseArgs({
 });
 
 const manifest = JSON.parse(await readFile(path.join(rootDir, "package.json"), "utf8"));
-const extensionId = `${manifest.publisher}.${manifest.name}`;
+// Lowercase, as VS Code names the install folder and as the comparisons below expect: the
+// publisher ID ("YetAnotherSqlTool") has capitals.
+const extensionId = `${manifest.publisher}.${manifest.name}`.toLowerCase();
 // "^1.101.0" -> "1.101.0"
 const vscodeVersion =
     cli.version === "minimum" ? manifest.engines.vscode.replace(/^[^\d]*/, "") : cli.version;
@@ -244,12 +246,13 @@ async function extensionLogErrors(installDir) {
     const errors = [];
     for (const file of logs) {
         const own =
-            file.includes(extensionId) || /output_logging_[^/\\]*[/\\][^/\\]*yast/i.test(file);
+            file.toLowerCase().includes(extensionId) ||
+            /output_logging_[^/\\]*[/\\][^/\\]*yast/i.test(file);
         // An entry is a "<date> [level] ..." line plus the lines that follow it (stack traces).
         const entries = (await readFile(file, "utf8")).split(/\r?\n(?=\d{4}-\d{2}-\d{2} )/);
         for (const entry of entries) {
             if (!/^\S+ \S+ \[error\]/.test(entry)) continue;
-            if (own || entry.includes(extensionId) || entry.includes(installDir)) {
+            if (own || entry.toLowerCase().includes(extensionId) || entry.includes(installDir)) {
                 errors.push(`${path.relative(userDataDir, file)}: ${entry.trim()}`);
             }
         }

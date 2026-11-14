@@ -250,7 +250,7 @@ export async function findWebviews(bundle: string): Promise<Webview[]> {
     for (const target of await listTargets()) {
         if (
             !target.url.startsWith("vscode-webview://") ||
-            !target.url.includes(`extensionId=${env.extensionId}`)
+            !target.url.toLowerCase().includes(`extensionid=${env.extensionId}`)
         ) {
             continue;
         }

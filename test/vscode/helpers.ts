@@ -92,7 +92,7 @@ export async function pickFromCommand(command: string, label: string): Promise<v
 
 /** Texts of the status bar items of the extension that are visible. */
 export function statusBarTexts(): Promise<string[]> {
-    return inWorkbench(`[...document.querySelectorAll('.statusbar-item[id^="${env.extensionId}"]')]
+    return inWorkbench(`[...document.querySelectorAll('.statusbar-item[id^="${env.extensionId}" i]')]
         .filter((item) => item.offsetParent !== null)
         .map((item) => item.textContent)`);
 }
