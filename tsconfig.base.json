@@ -6,10 +6,9 @@
         "esModuleInterop": true,
         "resolveJsonModule": true,
         "jsx": "react-jsx",
-        "baseUrl": ".",
         "paths": {
-            "extension-toolkit/base": ["src/vendor/extension-toolkit/base"],
-            "extension-toolkit/vscode": ["src/vendor/extension-toolkit/vscode"]
+            "extension-toolkit/base": ["./src/vendor/extension-toolkit/base"],
+            "extension-toolkit/vscode": ["./src/vendor/extension-toolkit/vscode"]
         }
     }
 }
