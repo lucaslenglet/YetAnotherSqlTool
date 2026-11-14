@@ -1290,7 +1290,7 @@
         "react-dom": "^19.2.0",
         "react-resizable": "^4.0.2",
         "slickgrid-react": "^10.11.3",
-        "tedious": "20.3.3",
+        "tedious": "20.3.9",
         "vscode-jsonrpc": "^9.0.0",
         "xml-formatter": "^3.6.7"
     },
