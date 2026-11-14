@@ -18,6 +18,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: write # create the GitHub release
+      id-token: write # Marketplace Trusted Publishing (OIDC), no stored token
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -51,10 +52,11 @@ jobs:
       - name: Package
         run: npx vsce package --no-dependencies ${{ steps.version.outputs.flag }} --out "yast-${{ steps.version.outputs.version }}.vsix"
 
+      # Trusted Publishing: the publisher's policy on https://marketplace.visualstudio.com/manage
+      # trusts this repository and this workflow file (publish.yml), no environment. Renaming the
+      # file breaks the match. Azure DevOps global PATs are retired on 2026-12-01.
       - name: Publish to the VS Code Marketplace
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npx vsce publish --no-dependencies ${{ steps.version.outputs.flag }} --packagePath "yast-${{ steps.version.outputs.version }}.vsix"
+        run: npx vsce publish --oidc --no-dependencies ${{ steps.version.outputs.flag }} --packagePath "yast-${{ steps.version.outputs.version }}.vsix"
 
       - name: Publish to Open VSX
         env:
