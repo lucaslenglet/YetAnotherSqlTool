@@ -30,6 +30,22 @@ updates:
       # copied from vscode-mssql; upgrade by hand together with upstream.
       - dependency-name: monaco-editor
         update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      # Libraries of the webviews copied from vscode-mssql: new majors follow upstream (see
+      # docs/vscode-mssql-analysis.md for the reference commit), by hand.
+      - dependency-name: vscode-jsonrpc
+        update-types: ["version-update:semver-major"]
+      - dependency-name: slickgrid-react
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@fluentui/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@fluentui-contrib/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@monaco-editor/react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: react
+        update-types: ["version-update:semver-major"]
+      - dependency-name: react-dom
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
