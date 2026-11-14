@@ -58,10 +58,12 @@ jobs:
       - name: Publish to the VS Code Marketplace
         run: npx vsce publish --oidc --no-dependencies ${{ steps.version.outputs.flag }} --packagePath "yast-${{ steps.version.outputs.version }}.vsix"
 
+      # Trusted Publishing too: the namespace's trusted publisher on
+      # https://open-vsx.org/user-settings/trusted-publishers names this repository and
+      # publish.yml, no environment. No OVSX_PAT here: a token would take precedence over OIDC.
+      # The pre-release flag is inside the .vsix (ovsx ignores --pre-release for a package).
       - name: Publish to Open VSX
-        env:
-          OVSX_PAT: ${{ secrets.OVSX_PAT }}
-        run: npx ovsx publish "yast-${{ steps.version.outputs.version }}.vsix" ${{ steps.version.outputs.flag }}
+        run: npx ovsx publish --trusted-publishing --packagePath "yast-${{ steps.version.outputs.version }}.vsix"
 
       - name: Create GitHub release
         env:
