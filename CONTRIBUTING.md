@@ -90,7 +90,9 @@ to upstream as possible. Read `docs/vscode-mssql-analysis.md` before porting any
   1. open a PR titled `chore(release): X.Y.Z` that sets `version` in `package.json` (and
      `package-lock.json`, with `npm version X.Y.Z --no-git-tag-version`) and renames
      `## [Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z] - YYYY-MM-DD`, with a new empty
-     `## [Unreleased]` above it;
+     `## [Unreleased]` above it, and refreshes `ThirdPartyNotices.txt` with `npm run notices`
+     (Dependabot updates bundled libraries without regenerating it; packaging regenerates it
+     anyway, so the published `.vsix` is always right);
   2. merge it once CI passes;
   3. tag the merge commit and push the tag: `git switch main && git pull && git tag -a vX.Y.Z
      -m vX.Y.Z && git push origin vX.Y.Z`. Only repository admins can create, move or delete
