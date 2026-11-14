@@ -45,7 +45,8 @@ Testcontainers, and uses the extension as a user would: Object Explorer, connect
 read the results webview, copy, connection dialog. A VS Code window opens for about ten seconds;
 on a machine without a display, run it under `xvfb-run -a`. Options: `-- --version minimum`
 (oldest VS Code allowed by `engines.vscode`) or an exact version, `-- --vsix <file>` to test an
-existing package. When a test fails, the DOM of the window and of the webviews is saved in
+existing package, `-- --executable <path>` to run in an editor already on disk, such as an
+unpacked [VSCodium](https://vscodium.com/) (`<dir>/codium`). When a test fails, the DOM of the window and of the webviews is saved in
 `.vscode-test/run/artifacts/`. It rebuilds `dist/` as a production build.
 
 `npm run screenshots` regenerates the images of `media/screenshots/` used by the README the same
