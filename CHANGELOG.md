@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-14
+
+### Changed
+
+- SQL Server driver libraries updated: `tedious` 20.3.9 and `mssql` 12.7.14. `tedious` now also refuses by itself to log in to a server that does not encrypt the connection when encryption is required (Encrypt: Mandatory); YetAnotherSqlTool keeps its own check and its explanatory message.
+- Interface libraries updated (Fluent UI, React, react-resizable 4).
+
 ## [0.1.0] - 2026-11-14
 
 Initial release.
