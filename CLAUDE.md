@@ -113,6 +113,8 @@ copied from Microsoft stays close to upstream.
 - User-visible strings of `package.json` live in `package.nls.json` (`%key%`);
   `test/manifest/packageNls.test.ts` fails on a missing or unused key.
 - `ThirdPartyNotices.txt` is generated (`npm run notices`) and committed; never edit it by hand.
+  Packaging (`vscode:prepublish`) regenerates it, so a run of `test:vscode` dirties it after a
+  dependency update: commit it in the release PR, not in unrelated ones.
   When a new bundled dependency makes the script fail, review its license and extend the tables
   at the top of `scripts/notices.mjs`.
 - `engines.vscode` and the `@types/vscode` devDependency must move together (vsce rejects newer
