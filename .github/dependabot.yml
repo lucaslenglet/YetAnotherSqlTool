@@ -13,9 +13,22 @@ updates:
     ignore:
       # tedious is pinned to an exact version on purpose: src/drivers/mssql/tediousRawValues.ts
       # wraps its internal value parser. Upgrade it by hand and run
-      # test/drivers/mssql/cellFormats.test.ts. Patch updates (and security advisories)
-      # still produce PRs.
+      # test/drivers/mssql/cellFormats.integration.test.ts. Patch updates (and security
+      # advisories) still produce PRs.
       - dependency-name: tedious
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      # Moves together with engines.vscode, by hand: vsce rejects types newer than the engine.
+      - dependency-name: "@types/vscode"
+      # Matches the Node.js of the oldest VS Code allowed by engines.vscode (Node 22), not the
+      # Node.js of the development machine (.nvmrc).
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # TypeScript 7 (native compiler) waits for typescript-eslint support: a migration of its own.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      # 0.x: a minor version can break. The webviews deep-import monaco-editor/esm/... paths
+      # copied from vscode-mssql; upgrade by hand together with upstream.
+      - dependency-name: monaco-editor
         update-types: ["version-update:semver-minor", "version-update:semver-major"]
 
   - package-ecosystem: github-actions
