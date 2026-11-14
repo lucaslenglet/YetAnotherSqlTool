@@ -106,6 +106,10 @@ copied from Microsoft stays close to upstream.
   the UI through the DevTools protocol (`test/vscode/cdp.ts`); do not add test hooks to `src/`.
 - Commit messages and PR titles follow Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`,
   `chore:`...); CI checks PR titles. An odd minor version (0.1.x) is a pre-release.
+- `main` is protected: never commit to it directly. Work on a branch, push it and open a PR
+  (squash merge once CI passes; the PR title becomes the commit). Releases follow
+  `CONTRIBUTING.md` ("Versioning and releases"): a `chore(release): X.Y.Z` PR, then a `vX.Y.Z`
+  tag, pushed only on the owner's go since it publishes to the Marketplace and Open VSX.
 - User-visible strings of `package.json` live in `package.nls.json` (`%key%`);
   `test/manifest/packageNls.test.ts` fails on a missing or unused key.
 - `ThirdPartyNotices.txt` is generated (`npm run notices`) and committed; never edit it by hand.

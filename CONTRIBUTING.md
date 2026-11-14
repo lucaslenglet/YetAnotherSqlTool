@@ -74,14 +74,27 @@ to upstream as possible. Read `docs/vscode-mssql-analysis.md` before porting any
   CI checks the PR title.
 - Keep PRs focused, and fill in the pull request template.
 - Code, comments and documentation are in English.
+- `main` only changes through pull requests, for maintainers too: a PR is merged once the
+  `PR title`, `Checks` and `Integration tests` jobs pass, by squash (the PR title becomes the
+  commit message, hence the Conventional Commits rule on titles). Force pushes and deletion of
+  `main` are blocked.
+- A user-visible change adds a line under `## [Unreleased]` in `CHANGELOG.md`, in the same PR.
 
 ## Versioning and releases
 
 - [Semantic Versioning](https://semver.org/); changes are recorded in `CHANGELOG.md` following
   [Keep a Changelog](https://keepachangelog.com/).
 - Marketplace convention: an odd minor version (0.1.x, 0.3.x) is a pre-release, an even minor
-  (0.2.x, 0.4.x) is stable.
-- To cut a release: update the version in `package.json` and `CHANGELOG.md`, merge to `main`,
-  then push a tag `vX.Y.Z` matching the version. The publish workflow verifies the tag,
-  packages the extension, publishes to the VS Code Marketplace and Open VSX, and creates the
-  GitHub release.
+  (0.2.x, 0.4.x) is stable. A version number can be published only once.
+- To cut a release (maintainers):
+  1. open a PR titled `chore(release): X.Y.Z` that sets `version` in `package.json` (and
+     `package-lock.json`, with `npm version X.Y.Z --no-git-tag-version`) and renames
+     `## [Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z] - YYYY-MM-DD`, with a new empty
+     `## [Unreleased]` above it;
+  2. merge it once CI passes;
+  3. tag the merge commit and push the tag: `git switch main && git pull && git tag -a vX.Y.Z
+     -m vX.Y.Z && git push origin vX.Y.Z`. Only repository admins can create, move or delete
+     `v*` tags.
+  The publish workflow checks that the tag matches `package.json`, runs the checks, packages
+  the extension, publishes it to the VS Code Marketplace (Trusted Publishing, no token) and
+  Open VSX, and creates the GitHub release with the `.vsix`.
