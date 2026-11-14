@@ -53,7 +53,7 @@ jobs:
         run: xvfb-run -a npm run test:vscode -- --vsix yet-another-sql-tool-*.vsix --version minimum
       - name: Upload what was on screen when the end-to-end test failed
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-vscode-failure
           path: |
@@ -61,7 +61,7 @@ jobs:
             .vscode-test/run/user-data/logs
           include-hidden-files: true
           if-no-files-found: ignore
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: vsix
           path: "*.vsix"
