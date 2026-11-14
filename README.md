@@ -105,7 +105,7 @@ Planned: SQLite and MySQL / MariaDB drivers, a table designer and Jailer-style d
 
 ## Contributing
 
-Development setup and contribution guidelines are in [CONTRIBUTING.md](CONTRIBUTING.md). Issues and pull requests are welcome at <https://github.com/lucaslenglet/YetAnotherSqlTool>.
+Bug reports and feature ideas are welcome as [issues](https://github.com/lucaslenglet/YetAnotherSqlTool/issues). Code contributions (pull requests) are not accepted: only the maintainer can open them. The code is MIT-licensed, so you are free to fork it. Development setup is in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Credits and license
 

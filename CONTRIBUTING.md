@@ -2,6 +2,18 @@
 
 Thanks for your interest! Please read the [Code of Conduct](CODE_OF_CONDUCT.md) first.
 
+**Pull requests are not accepted from outside the project**: the repository only lets
+collaborators open them, so that all the code has a single author and every change is reviewed
+by the maintainer. What helps most:
+
+- **bugs**: open an [issue](https://github.com/lucaslenglet/YetAnotherSqlTool/issues/new/choose)
+  with the "Bug report" form (engine, versions, steps, what you expected);
+- **ideas**: open an issue with the "Feature request" form;
+- **security problems**: report them privately, see [SECURITY.md](SECURITY.md).
+
+The rest of this document describes how the project is built and released; it is kept for the
+maintainer and for anyone working on a fork (the code is MIT-licensed).
+
 ## Prerequisites
 
 - Node.js, version in [`.nvmrc`](.nvmrc) (`nvm use`)
