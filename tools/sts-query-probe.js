@@ -1,7 +1,7 @@
 // Dev tool: runs queries through Microsoft's sqltoolsservice and records the exact text it displays
 // for each cell type. This is the oracle for the SQL Server driver's cell formatting.
 // Usage: start the databases with `npm run dev:db` in another terminal, then run
-//   MSSQL_SA_PASSWORD='<password printed by dev:db>' node tools/sts-query-probe.js docs/reference
+//   MSSQL_SA_PASSWORD='<DEV_PASSWORD of scripts/dev-db.mjs>' node tools/sts-query-probe.js docs/reference
 const path = require("path");
 const fs = require("fs");
 const cp = require("child_process");

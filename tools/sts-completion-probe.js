@@ -2,7 +2,7 @@
 // positions. This is the reference for the SQL Server autocompletion items: what is offered where,
 // kinds, labels, details, insert text, bracket quoting and order.
 // Usage: start the databases with `npm run dev:db` in another terminal, then run
-//   MSSQL_SA_PASSWORD='<password printed by dev:db>' node tools/sts-completion-probe.js docs/reference
+//   MSSQL_SA_PASSWORD='<DEV_PASSWORD of scripts/dev-db.mjs>' node tools/sts-completion-probe.js docs/reference
 // It creates (or recreates) the database `yast_oe_completion` from SETUP below and reads the
 // suggestions in it; test/languageFeatures/completion.integration.test.ts builds the same database
 // from the `setup` field of the output.

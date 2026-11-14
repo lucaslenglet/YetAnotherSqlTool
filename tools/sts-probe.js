@@ -1,7 +1,7 @@
 // Dev tool: probes Microsoft's sqltoolsservice (installed with the mssql extension) to capture
 // reference data: connection capabilities and the Object Explorer tree of the Docker SQL Server.
 // Usage: start the databases with `npm run dev:db` in another terminal, then run
-//   MSSQL_SA_PASSWORD='<password printed by dev:db>' node tools/sts-probe.js docs/reference
+//   MSSQL_SA_PASSWORD='<DEV_PASSWORD of scripts/dev-db.mjs>' node tools/sts-probe.js docs/reference
 const path = require("path");
 const fs = require("fs");
 const cp = require("child_process");

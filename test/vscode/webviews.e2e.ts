@@ -3,7 +3,7 @@
 
 import * as assert from "node:assert";
 import * as vscode from "vscode";
-import { allSessions, findWebviews, Session, workbench, type Webview } from "./cdp";
+import { allSessions, findWebviews, jsLiteral, Session, workbench, type Webview } from "./cdp";
 import { env, profile } from "./env";
 import {
     codeLensTitles,
@@ -30,18 +30,18 @@ const control = `const control = (label) => {
 async function fill(webview: Webview, label: string, value: string): Promise<void> {
     const filled = await webview.evaluate<boolean>(`(() => {
         ${control}
-        const input = control(${JSON.stringify(label)});
+        const input = control(${jsLiteral(label)});
         if (!input) return false;
-        Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(value)});
+        Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set.call(input, ${jsLiteral(value)});
         input.dispatchEvent(new window.Event("input", { bubbles: true }));
-        return input.value === ${JSON.stringify(value)};
+        return input.value === ${jsLiteral(value)};
     })()`);
     assert.ok(filled, `Could not fill the "${label}" field`);
 }
 
 /** Ticks the checkbox with this label. Its state comes back from the extension: wait for it. */
 async function check(webview: Webview, label: string): Promise<void> {
-    const box = `(() => { ${control} return control(${JSON.stringify(label)}); })()`;
+    const box = `(() => { ${control} return control(${jsLiteral(label)}); })()`;
     assert.ok(await webview.evaluate<boolean>(`!!${box}`), `The dialog has no "${label}" checkbox`);
     await webview.evaluate(`${box}.checked || ${box}.click()`);
     await waitFor(`"${label}" to be checked`, () => webview.evaluate<boolean>(`${box}.checked`));
@@ -49,11 +49,11 @@ async function check(webview: Webview, label: string): Promise<void> {
 
 /** Picks an option of the dropdown with this label, by the text it shows. */
 async function pick(webview: Webview, label: string, option: string): Promise<void> {
-    await webview.evaluate(`(() => { ${control} control(${JSON.stringify(label)}).click(); })()`);
+    await webview.evaluate(`(() => { ${control} control(${jsLiteral(label)}).click(); })()`);
     const clicked = await waitFor(`the "${option}" option of "${label}"`, () =>
         webview.evaluate<boolean>(`(() => {
             const found = [...document.querySelectorAll('[role="option"]')]
-                .find((o) => o.textContent.trim() === ${JSON.stringify(option)});
+                .find((o) => o.textContent.trim() === ${jsLiteral(option)});
             if (!found) return false;
             found.click();
             return true;
@@ -97,7 +97,7 @@ describe("Webviews", () => {
         );
         const has = (label: string) =>
             webview.evaluate<boolean>(
-                `(() => { ${control} return !!control(${JSON.stringify(label)}); })()`,
+                `(() => { ${control} return !!control(${jsLiteral(label)}); })()`,
             );
 
         await pick(webview, "Authentication type", "Windows Authentication");
