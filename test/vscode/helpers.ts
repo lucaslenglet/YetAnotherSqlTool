@@ -106,7 +106,14 @@ export function errorNotifications(): Promise<string[]> {
 
 /** Rows of the Object Explorer tree that are rendered, top to bottom. */
 export function objectExplorerRows(): Promise<
-    { label: string; level: number; expanded: string | null; x: number; y: number }[]
+    {
+        label: string;
+        level: number;
+        expanded: string | null;
+        selected: boolean;
+        x: number;
+        y: number;
+    }[]
 > {
     return inWorkbench(`[...document.querySelectorAll(
             '[id="workbench.view.extension.yastObjectExplorerContainer"] .monaco-list-row')]
@@ -116,11 +123,33 @@ export function objectExplorerRows(): Promise<
                 label: row.querySelector(".monaco-icon-label")?.textContent ?? row.textContent,
                 level: Number(row.getAttribute("aria-level")),
                 expanded: row.getAttribute("aria-expanded"),
+                selected: row.getAttribute("aria-selected") === "true",
                 x: Math.round(box.left + box.width / 2),
                 y: Math.round(box.top + box.height / 2),
             };
         })
         .sort((a, b) => a.y - b.y)`);
+}
+
+/**
+ * Clicks the tree row with this label, which selects it and expands or collapses it. Rows can
+ * move between reading a position and clicking it (the children of a node clicked just before
+ * arriving above): a click that lands elsewhere selects another row, so the click is repeated
+ * until this row is the selected one. Selection, not expansion, is checked: expanding a folder
+ * waits for the database, and a second click would collapse it again.
+ */
+export async function clickObjectExplorerRow(label: string): Promise<void> {
+    const find = async () => (await objectExplorerRows()).find((r) => r.label === label);
+    await waitFor(`the Object Explorer row "${label}" to be selected by a click`, async () => {
+        const row = await find();
+        if (!row) return false;
+        await (await workbench()).clickAt(row.x, row.y);
+        for (let i = 0; i < 10; i++) {
+            await sleep(100);
+            if ((await find())?.selected) return true;
+        }
+        return false;
+    });
 }
 
 // -- webviews ---------------------------------------------------------------------------------

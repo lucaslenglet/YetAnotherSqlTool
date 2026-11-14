@@ -14,6 +14,7 @@ import * as vscode from "vscode";
 import { workbench } from "./cdp";
 import { env, profile, type TestProfile } from "./env";
 import {
+    clickObjectExplorerRow,
     codeLensTitles,
     errorNotifications,
     extension,
@@ -24,14 +25,6 @@ import {
     waitFor,
     waitForWebview,
 } from "./helpers";
-
-/** Clicks the tree row with this label, which selects it and expands or collapses it. */
-async function clickRow(label: string): Promise<void> {
-    const row = await waitFor(`the Object Explorer row "${label}"`, async () =>
-        (await objectExplorerRows()).find((r) => r.label === label),
-    );
-    await (await workbench()).clickAt(row!.x, row!.y);
-}
 
 /**
  * Opens the rows of a path one after the other (a connection takes a moment) and selects the
@@ -46,7 +39,7 @@ async function walkTo(path: string[]): Promise<void> {
             40000,
         );
         if (index === path.length - 1 || row!.expanded !== "true") {
-            await clickRow(label);
+            await clickObjectExplorerRow(label);
         }
     }
 }
@@ -121,7 +114,7 @@ function scriptSelectOn(provider: TestProfile["provider"]): void {
         after(async () => {
             await vscode.commands.executeCommand("workbench.action.revertAndCloseActiveEditor");
             // Collapse the connection so that the next one is in sight whatever the window height.
-            await clickRow(profile(provider).profileName);
+            await clickObjectExplorerRow(profile(provider).profileName);
         });
 
         it("opens a connected editor with the script and shows the rows", async () => {
@@ -359,7 +352,7 @@ function scriptAsOn(provider: TestProfile["provider"]): void {
                     ? "DROP VIEW dbo.e2e_view; DROP PROCEDURE dbo.e2e_proc"
                     : "DROP VIEW public.e2e_view; DROP PROCEDURE public.e2e_proc(integer)",
             );
-            await clickRow(profileName);
+            await clickObjectExplorerRow(profileName);
         });
 
         it("opens Script as Create of a table in a connected editor, without running it", async () => {
