@@ -245,9 +245,11 @@ function forSqlAudiencesOnly(credential: TokenCredential): TokenCredential {
  * calls this for every tedious connection it creates, before the connection reaches the server.
  *
  * Client and server agree on encryption in clear text, before TLS. When the answer (the server's,
- * or that of someone in between) is "encryption not supported", tedious carries on without TLS,
- * even with encrypt: true, and sends the login: the user name and a password that is only
- * scrambled, or an Entra ID token. Microsoft's drivers stop there; so does this:
+ * or that of someone in between) is "encryption not supported", tedious up to 20.3.3 carried on
+ * without TLS, even with encrypt: true, and sent the login: the user name and a password that is
+ * only scrambled, or an Entra ID token. Recent versions stop by themselves with encrypt: true
+ * (see `explainEncryptionRefusal`); these checks stay as a second lock, and are the only one for
+ * a token on an "Optional" connection. Microsoft's drivers stop there; so does this:
  *   - "Mandatory" (encrypt: true): the login message is not sent without TLS;
  *   - Entra ID, whatever the setting: no token is requested without TLS.
  * "Strict" starts with TLS and needs neither.
@@ -305,6 +307,19 @@ const ENCRYPTION_REQUIRED =
 const ENCRYPTION_REQUIRED_FOR_TOKEN =
     "The server does not support encryption, but this connection requires it (Encrypt: Mandatory). " +
     "The login was not sent. Microsoft Entra ID authentication only works on an encrypted connection.";
+
+/**
+ * Since 20.3.9 (perhaps a little earlier), tedious itself stops before the login when encrypt is
+ * true and the server does not take up encryption, so `protectLogin`'s check is not reached. Its
+ * message only suggests turning encryption off: show ours, which says what was kept from the
+ * server and what turning it off costs. Other messages are returned unchanged.
+ */
+export function explainEncryptionRefusal(message: string, authenticationType: unknown): string {
+    if (!message.startsWith("Server did not negotiate encryption")) return message;
+    return isEntraAuthentication(authenticationType)
+        ? ENCRYPTION_REQUIRED_FOR_TOKEN
+        : ENCRYPTION_REQUIRED;
+}
 
 /** An @azure/core-auth TokenCredential backed by the extension's token provider. */
 function entraCredential(getAccessToken: AccessTokenProvider) {

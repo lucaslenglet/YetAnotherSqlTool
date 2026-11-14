@@ -12,7 +12,12 @@ import type {
     ScriptOperation,
     ServerInfo,
 } from "../types";
-import { buildSqlConfig, parseServer, type ServerAddress } from "./connectionConfig";
+import {
+    buildSqlConfig,
+    explainEncryptionRefusal,
+    parseServer,
+    type ServerAddress,
+} from "./connectionConfig";
 import { assertSupportedAuthenticationType } from "./connectionOptions";
 import {
     listCompletionColumns,
@@ -80,7 +85,9 @@ export class MssqlConnection implements DriverConnection {
             return new MssqlConnection(params, address, pool, result.recordset[0]);
         } catch (error) {
             await pool.close().catch(() => undefined);
-            throw new Error(describeConnectionError(error, address));
+            throw new Error(
+                describeConnectionError(error, address, params.options.authenticationType),
+            );
         }
     }
 
@@ -275,6 +282,7 @@ async function openPool(
                 String(params.options.server ?? ""),
                 Number(params.options.port) || undefined,
             ),
+            params.options.authenticationType,
         );
         if (
             params.options.authenticationType === AuthenticationType.Integrated &&
@@ -293,8 +301,15 @@ async function openPool(
 }
 
 /** A readable one-line reason, e.g. "Cannot connect to localhost,1433: Login failed for user 'sa'." */
-function describeConnectionError(error: unknown, address: ServerAddress): string {
-    const details = errorMessages(error).join("; ") || "unknown error";
+function describeConnectionError(
+    error: unknown,
+    address: ServerAddress,
+    authenticationType: unknown,
+): string {
+    const details =
+        errorMessages(error)
+            .map((message) => explainEncryptionRefusal(message, authenticationType))
+            .join("; ") || "unknown error";
     if (details.startsWith("Cannot connect") || details.startsWith("Failed to connect"))
         return details;
     return `Cannot connect to ${address.displayName}: ${details}`;
