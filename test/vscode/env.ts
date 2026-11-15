@@ -9,6 +9,8 @@ export interface TestProfile {
     database: string;
     user: string;
     password: string;
+    /** Database filter of the profile, when it has one. */
+    databaseFilter?: string;
 }
 
 function required(name: string): string {

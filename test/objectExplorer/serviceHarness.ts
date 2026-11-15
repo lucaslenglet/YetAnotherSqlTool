@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { afterAll, beforeEach, vi } from "vitest";
 import * as vscode from "vscode";
-import { ObjectExplorerService } from "../../src/objectExplorer/objectExplorerService";
+import { IConnector, ObjectExplorerService } from "../../src/objectExplorer/objectExplorerService";
 import { TreeNodeInfo } from "../../src/objectExplorer/nodes/treeNodeInfo";
 import { ConnectionNode } from "../../src/objectExplorer/nodes/connectionNode";
 import { Connector } from "../../src/connections/connector";
@@ -30,8 +30,14 @@ const isLoading = (items: vscode.TreeItem[]) =>
  * An Object Explorer service over three saved connections: "mssql-docker" in the "Dev" group,
  * "pg-docker" and "pg-bad-password" (the same server with a wrong password) at the root.
  * Call it at the top of a test file: it registers the hooks that reset and dispose it.
+ * `extra.connector` replaces the real connector (fake driver connections) and
+ * `extra.databaseFilter` sets the database filter of the SQL Server and PostgreSQL profiles.
  */
-export function createExplorer(mssqlOptions: Options, pgOptions: Options) {
+export function createExplorer(
+    mssqlOptions: Options,
+    pgOptions: Options,
+    extra: { connector?: IConnector; databaseFilter?: { mssql?: string; pg?: string } } = {},
+) {
     const groups = [
         { id: ConnectionConfig.ROOT_GROUP_ID, name: ConnectionConfig.ROOT_GROUP_ID },
         { id: "dev", name: "Dev", parentId: ConnectionConfig.ROOT_GROUP_ID },
@@ -43,6 +49,7 @@ export function createExplorer(mssqlOptions: Options, pgOptions: Options) {
         groupId: "dev",
         profileName: "SQL Server (Docker)",
         provider: "mssql",
+        databaseFilter: extra.databaseFilter?.mssql,
     } as unknown as IConnectionProfile;
 
     const pgProfile = {
@@ -51,6 +58,7 @@ export function createExplorer(mssqlOptions: Options, pgOptions: Options) {
         groupId: ConnectionConfig.ROOT_GROUP_ID,
         profileName: "PostgreSQL (Docker)",
         provider: "pg",
+        databaseFilter: extra.databaseFilter?.pg,
     } as unknown as IConnectionProfile;
 
     const badPasswordProfile = {
@@ -67,7 +75,7 @@ export function createExplorer(mssqlOptions: Options, pgOptions: Options) {
 
     const service = new ObjectExplorerService(
         { connectionConfig, removeProfile: async () => true },
-        new Connector(),
+        extra.connector ?? new Connector(),
         () => undefined,
     );
 

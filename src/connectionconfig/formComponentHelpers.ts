@@ -245,6 +245,16 @@ export async function completeFormComponents(
         connectionGroupOptions,
     ) as ConnectionDialogFormItemSpec;
 
+    components["databaseFilter"] = {
+        propertyName: "databaseFilter",
+        label: Loc.databaseFilter,
+        required: false,
+        type: FormItemType.Input,
+        placeholder: Loc.databaseFilterPlaceholder,
+        tooltip: Loc.databaseFilterTooltip,
+        isAdvancedOption: false,
+    };
+
     components["savePassword"] = {
         propertyName: "savePassword",
         label: Loc.savePassword,

@@ -146,6 +146,19 @@ export const ConnectionInfoFormContainer = () => {
                     }}
                 />
 
+                <FormField<
+                    IConnectionDialogProfile,
+                    ConnectionDialogWebviewState,
+                    ConnectionDialogFormItemSpec,
+                    ConnectionDialogContextProps
+                >
+                    context={context}
+                    formState={formState}
+                    component={formComponents["databaseFilter"] as ConnectionDialogFormItemSpec}
+                    idx={0}
+                    props={{ orientation: "horizontal" }}
+                />
+
                 <div className={formStyles.formComponentDiv}>
                     <div className={styles.inputLink}>
                         <Form20Regular style={{ marginRight: "8px" }} />

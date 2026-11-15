@@ -172,7 +172,7 @@ function freePort() {
     });
 }
 
-/** The two profiles the tests connect with. Ids and names are what the tests look for. */
+/** The profiles the tests connect with. Ids and names are what the tests look for. */
 function connectionProfiles({ mssql, pg }) {
     return [
         {
@@ -198,6 +198,33 @@ function connectionProfiles({ mssql, pg }) {
             authenticationType: "SqlLogin",
             user: pg.user,
             password: pg.password,
+        },
+        // The same servers through a database filter (test/vscode/connectionFilter.e2e.ts). They
+        // come after the two above, which `profile(provider)` and the connection quick pick find first.
+        {
+            id: "filtered-mssql",
+            profileName: "Filtered SQL Server",
+            provider: "mssql",
+            server: `${mssql.host},${mssql.port}`,
+            database: mssql.database,
+            authenticationType: "SqlLogin",
+            user: mssql.user,
+            password: mssql.password,
+            encrypt: "Mandatory",
+            trustServerCertificate: true,
+            databaseFilter: "ms*",
+        },
+        {
+            id: "filtered-pg",
+            profileName: "Filtered PostgreSQL",
+            provider: "pg",
+            server: pg.host,
+            port: pg.port,
+            database: pg.database,
+            authenticationType: "SqlLogin",
+            user: pg.user,
+            password: pg.password,
+            databaseFilter: "post*",
         },
     ];
 }

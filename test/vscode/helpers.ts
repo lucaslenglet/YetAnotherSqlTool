@@ -108,6 +108,8 @@ export function errorNotifications(): Promise<string[]> {
 export function objectExplorerRows(): Promise<
     {
         label: string;
+        /** Grey text after the label, e.g. "(filtered)". */
+        description: string;
         level: number;
         expanded: string | null;
         selected: boolean;
@@ -120,7 +122,9 @@ export function objectExplorerRows(): Promise<
         .map((row) => {
             const box = row.getBoundingClientRect();
             return {
-                label: row.querySelector(".monaco-icon-label")?.textContent ?? row.textContent,
+                label: row.querySelector(".monaco-icon-label .label-name")?.textContent
+                    ?? row.querySelector(".monaco-icon-label")?.textContent ?? row.textContent,
+                description: row.querySelector(".monaco-icon-label .label-description")?.textContent ?? "",
                 level: Number(row.getAttribute("aria-level")),
                 expanded: row.getAttribute("aria-expanded"),
                 selected: row.getAttribute("aria-selected") === "true",

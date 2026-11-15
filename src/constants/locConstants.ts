@@ -1153,6 +1153,11 @@ export class ConnectionDialog {
         "[Optional] Enter a display name for this connection profile",
     );
     public static connectionGroup = l10n.t("Connection Group");
+    public static databaseFilter = l10n.t("Database filter");
+    public static databaseFilterPlaceholder = l10n.t("*-dev-*");
+    public static databaseFilterTooltip = l10n.t(
+        "[Optional] Show only the databases whose name matches. Use * and ? as wildcards, separate several patterns with ';', and start a pattern with '!' to hide the databases it matches. Every database is shown when empty.",
+    );
     public static serverIsRequired = l10n.t("Server is required");
     public static usernameIsRequired = l10n.t("User name is required");
     public static connectionString = l10n.t("Connection String");
