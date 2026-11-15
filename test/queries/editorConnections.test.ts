@@ -6,7 +6,7 @@ import type { Connector } from "../../src/connections/connector";
 import type { IConnectionConfig } from "../../src/connectionconfig/connectionconfig";
 import type { IConnectionProfile } from "../../src/models/interfaces";
 
-// The connection color in the status bar and along the editors, with VS Code mocked: status bar
+// The connection color in the status bar and in the gutter of the editors, with VS Code mocked: status bar
 // items and decoration types record what the extension sets on them.
 
 const mockWindow = vscode.window as unknown as {

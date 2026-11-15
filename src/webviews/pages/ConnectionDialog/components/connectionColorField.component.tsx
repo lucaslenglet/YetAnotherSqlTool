@@ -1,4 +1,4 @@
-// "Color" field of the connection dialog: the color shown in the status bar and along the SQL
+// "Color" field of the connection dialog: the color shown in the status bar and in the gutter of the SQL
 // editors that use the connection. Swatches for "no color" and the palette of the connection
 // groups, plus any other color through the color picker of the connection group dialog.
 
