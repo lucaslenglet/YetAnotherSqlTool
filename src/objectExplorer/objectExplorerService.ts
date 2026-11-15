@@ -29,6 +29,7 @@ import { ILogger } from "../sharedInterfaces/logger";
 import { logger } from "../models/logger";
 import { getErrorMessage, uuid } from "../utils/utils";
 import type { DriverConnection } from "../drivers/types";
+import { createDatabaseFilter } from "../connections/databaseFilter";
 
 /** Opens a driver connection for a profile; resolves undefined when the user cancels. */
 export interface IConnector {
@@ -325,7 +326,16 @@ export class ObjectExplorerService {
             if (!connection || !node.objectNode) {
                 throw new Error(LocalizedConstants.msgUnableToExpand);
             }
-            const nodes = await connection.expandNode(node.objectNode);
+            let nodes = await connection.expandNode(node.objectNode);
+            // The connection's database filter hides databases wherever they are listed,
+            // system ones included; the folder then says it is filtered, as in SSMS.
+            const databaseFilter = createDatabaseFilter(node.connectionProfile?.databaseFilter);
+            if (databaseFilter && nodes.some((n) => n.nodeType === Constants.databaseString)) {
+                nodes = nodes.filter(
+                    (n) => n.nodeType !== Constants.databaseString || databaseFilter(n.label),
+                );
+                node.description = LocalizedConstants.ObjectExplorer.filtered;
+            }
             const children = nodes.map((n) =>
                 TreeNodeInfo.fromObjectNode(n, node.sessionId, node, node.connectionProfile),
             );

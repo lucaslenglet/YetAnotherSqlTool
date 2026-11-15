@@ -362,6 +362,8 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
                     provider,
                     profileName: current.profileName,
                     groupId: current.groupId,
+                    databaseFilter: current.databaseFilter,
+                    color: current.color,
                     id: current.id,
                     savePassword: current.savePassword,
                 } as IConnectionDialogProfile;
@@ -454,6 +456,8 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
             database: previous.database,
             profileName: previous.profileName,
             groupId: previous.groupId,
+            databaseFilter: previous.databaseFilter,
+            color: previous.color,
             id: previous.id,
         };
         await this.updateItemVisibility();

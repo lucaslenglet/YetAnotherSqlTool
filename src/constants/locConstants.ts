@@ -1073,6 +1073,7 @@ export class Notebooks {
 export class ObjectExplorer {
     public static ErrorLoadingRefreshToTryAgain = l10n.t("Error loading; refresh to try again");
     public static NoItems = l10n.t("No items");
+    public static filtered = l10n.t("(filtered)");
     public static FailedOEConnectionError = l10n.t(
         "We couldn't connect using the current connection information. Would you like to retry the connection or edit the connection profile?",
     );

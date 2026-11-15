@@ -41,6 +41,8 @@
     "yast.connections.provider.enumDescriptions.pg": "PostgreSQL",
     "yast.connections.id": "The unique identifier for this connection profile.",
     "yast.connections.groupId": "The unique identifier for the connection group this connection profile belongs to.",
+    "yast.connections.databaseFilter": "[Optional] Patterns of the databases this connection shows in the Object Explorer and in the list of databases of an editor, e.g. '*-dev-*'. '*' stands for any text and '?' for one character; separate several patterns with ';'; a pattern starting with '!' hides the databases it matches. Every database is shown when empty.",
+    "yast.connections.color": "[Optional] Color of this connection ('#RRGGBB'), shown in the status bar and along the SQL editors that use it.",
     "yast.connections.server": "[Required] Specify the server name to connect to. Use 'hostname instance' or '<server>.database.windows.net' for Azure SQL Database.",
     "yast.connections.database": "[Optional] Specify the database name to connect to. If database is not specified, the default user database setting is used, typically 'master'.",
     "yast.connections.user": "[Optional] Specify the user name for SQL Server authentication. If user name is not specified, when you connect, you will be asked again.",

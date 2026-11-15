@@ -122,6 +122,10 @@ export interface IConnectionDialogProfile extends vscodeMssql.IConnectionInfo {
     clientId?: string;
     profileName?: string;
     groupId?: string;
+    /** Patterns of the databases the connection shows; every database when empty. */
+    databaseFilter?: string;
+    /** Color (`#RRGGBB`) shown in the editors that use the connection. */
+    color?: string;
     savePassword?: boolean;
     emptyPasswordInput?: boolean;
     azureAuthType?: vscodeMssql.AzureAuthType;

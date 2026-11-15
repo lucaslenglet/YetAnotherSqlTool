@@ -75,6 +75,13 @@ export interface IConnectionProfile extends vscodeMssql.IConnectionInfo {
      * Optional sort order for display in the Object Explorer. Set manually in config JSON.
      */
     order?: number;
+    /**
+     * Patterns of the databases this connection shows (see src/connections/databaseFilter.ts);
+     * every database when empty.
+     */
+    databaseFilter?: string;
+    /** Color (`#RRGGBB`) shown in the editors and the status bar when they use this connection. */
+    color?: string;
     isValidProfile(): boolean;
     isAzureActiveDirectory(): boolean;
 }
