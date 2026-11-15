@@ -8,7 +8,7 @@
  *
  * The color of the connection's profile, when it has one, is the text color of the
  * connection and database items (as vscode-mssql does with the group color) and a
- * strip along the left edge of every visible editor using the connection.
+ * bar in the gutter, at the far left of every visible editor using the connection.
  */
 
 import * as vscode from "vscode";
@@ -19,7 +19,7 @@ import * as ConnInfo from "../models/connectionInfo";
 import { IConnectionProfile } from "../models/interfaces";
 import type { DriverConnection } from "../drivers/types";
 import { Connector } from "../connections/connector";
-import { resolveConnectionColor } from "../connections/connectionColor";
+import { colorBarIcon, resolveConnectionColor } from "../connections/connectionColor";
 import type { IConnectionConfig } from "../connectionconfig/connectionconfig";
 import { getErrorMessage, getUriKey } from "../utils/utils";
 
@@ -40,7 +40,7 @@ export class EditorConnections implements vscode.Disposable {
     private readonly _connecting = new Set<string>();
     private readonly _running = new Set<string>();
     private readonly _statusBar = new EditorStatusBar();
-    private readonly _colorStrips = new ConnectionColorStrips();
+    private readonly _colorBars = new ConnectionColorBars();
     /** Saved profiles, to read the current color of a connection's profile. */
     private _savedProfiles: IConnectionProfile[] = [];
     private _savedProfilesLoad = 0;
@@ -56,14 +56,14 @@ export class EditorConnections implements vscode.Disposable {
     ) {
         this._disposables.push(
             this._statusBar,
-            this._colorStrips,
+            this._colorBars,
             this._onDidChange,
             vscode.window.onDidChangeActiveTextEditor(() => this.refreshStatusBar()),
-            vscode.window.onDidChangeVisibleTextEditors(() => this.refreshColorStrips()),
+            vscode.window.onDidChangeVisibleTextEditors(() => this.refreshColorBars()),
             vscode.workspace.onDidChangeTextDocument((e) => {
-                // The strip covers the lines of the document: follow lines added at its end.
+                // The bar covers the lines of the document: follow lines added at its end.
                 if (e.contentChanges.length > 0 && this.colorOf(e.document)) {
-                    this.refreshColorStrips();
+                    this.refreshColorBars();
                 }
             }),
             vscode.workspace.onDidCloseTextDocument((doc) => void this.onDidCloseDocument(doc)),
@@ -222,7 +222,7 @@ export class EditorConnections implements vscode.Disposable {
             ...this._connections.keys(),
         ]);
         this.refreshStatusBar();
-        this.refreshColorStrips();
+        this.refreshColorBars();
         this._onDidChange.fire(uri);
     }
 
@@ -241,7 +241,7 @@ export class EditorConnections implements vscode.Disposable {
         }
         this._savedProfiles = profiles;
         this.refreshStatusBar();
-        this.refreshColorStrips();
+        this.refreshColorBars();
     }
 
     /** Color of the connection of a SQL document; undefined when not connected or uncolored. */
@@ -255,8 +255,8 @@ export class EditorConnections implements vscode.Disposable {
             : undefined;
     }
 
-    private refreshColorStrips(): void {
-        this._colorStrips.update((document) => this.colorOf(document));
+    private refreshColorBars(): void {
+        this._colorBars.update((document) => this.colorOf(document));
     }
 
     private refreshStatusBar(): void {
@@ -276,10 +276,13 @@ export class EditorConnections implements vscode.Disposable {
 }
 
 /**
- * Strip of the connection's color along the left edge of the visible editors: a whole-line
- * decoration with a left border over every line. One decoration type per color in use.
+ * Bar of the connection's color in the gutter of the visible editors: a gutter icon on every
+ * line, drawn left of the line numbers so that selections and highlights of the text never
+ * cover it and it never touches the code. VS Code shows gutter icons in the glyph margin
+ * only: with `editor.glyphMargin` off, there is no bar (the status bar keeps the color).
+ * One decoration type per color in use.
  */
-class ConnectionColorStrips implements vscode.Disposable {
+class ConnectionColorBars implements vscode.Disposable {
     private readonly _types = new Map<string, vscode.TextEditorDecorationType>();
 
     public update(colorOf: (document: vscode.TextDocument) => string | undefined): void {
@@ -301,9 +304,10 @@ class ConnectionColorStrips implements vscode.Disposable {
                     color,
                     vscode.window.createTextEditorDecorationType({
                         isWholeLine: true,
-                        borderColor: color,
-                        borderStyle: "solid",
-                        borderWidth: "0 0 0 3px",
+                        gutterIconPath: vscode.Uri.parse(colorBarIcon(color)),
+                        // The icon fills the whole cell of each line: the bars of consecutive
+                        // lines join into one.
+                        gutterIconSize: "100% 100%",
                         rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
                     }),
                 );

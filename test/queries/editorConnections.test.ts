@@ -14,6 +14,17 @@ const mockWindow = vscode.window as unknown as {
     visibleTextEditors: unknown[];
 };
 
+/** Color of the bar a decoration type draws: the fill of its SVG gutter icon. */
+function barColor(type: MockTextEditorDecorationType): string | undefined {
+    const uri = String(type.options.gutterIconPath);
+    const match = /^data:image\/svg\+xml;base64,(.+)$/.exec(uri);
+    if (!match) return undefined;
+    const svg = Buffer.from(match[1], "base64").toString();
+    // A 3px bar on the left edge, as high as the line.
+    expect(svg).toMatch(/<rect x="0" y="0" width="3" height="100%"/);
+    return /fill="(#[0-9a-f]{6})"/.exec(svg)?.[1];
+}
+
 /** A text editor that records the ranges set for each decoration type. */
 class FakeEditor {
     readonly decorations = new Map<MockTextEditorDecorationType, vscode.Range[]>();
@@ -25,12 +36,12 @@ class FakeEditor {
         this.decorations.set(type, ranges);
     }
     /** Colors of the decorations shown in this editor, with the lines they cover. */
-    strips(): { color: unknown; lines: [number, number] }[] {
+    bars(): { color: unknown; lines: [number, number] }[] {
         return [...this.decorations]
             .filter(([type, ranges]) => !type.disposed && ranges.length > 0)
             .flatMap(([type, ranges]) =>
                 ranges.map((r) => ({
-                    color: type.options.borderColor,
+                    color: barColor(type),
                     lines: [r.start.line, r.end.line] as [number, number],
                 })),
             );
@@ -159,7 +170,7 @@ describe("status bar", () => {
     });
 });
 
-describe("color strip along the editors", () => {
+describe("color bar in the gutter of the editors", () => {
     it("covers every line of each visible editor of the connected document", async () => {
         const editor = new FakeEditor("file:///a.sql", "sql", 12);
         const split = new FakeEditor("file:///a.sql", "sql", 12);
@@ -173,21 +184,20 @@ describe("color strip along the editors", () => {
         expect(liveDecorationTypes()).toHaveLength(1);
         expect(type.options).toMatchObject({
             isWholeLine: true,
-            borderColor: "#0078d4",
-            borderStyle: "solid",
-            borderWidth: "0 0 0 3px",
+            gutterIconSize: "100% 100%",
         });
-        expect(editor.strips()).toEqual([{ color: "#0078d4", lines: [0, 11] }]);
-        expect(split.strips()).toEqual([{ color: "#0078d4", lines: [0, 11] }]);
-        expect(notConnected.strips()).toEqual([]);
-        expect(notSql.strips()).toEqual([]);
+        expect(barColor(type)).toBe("#0078d4");
+        expect(editor.bars()).toEqual([{ color: "#0078d4", lines: [0, 11] }]);
+        expect(split.bars()).toEqual([{ color: "#0078d4", lines: [0, 11] }]);
+        expect(notConnected.bars()).toEqual([]);
+        expect(notSql.bars()).toEqual([]);
     });
 
     it("never shows on a non-SQL editor, even with a connection", async () => {
         const editor = new FakeEditor("file:///a.txt", "plaintext");
         show(editor);
         await connections.connect(editor.document.uri.toString(), profile("x", "#0078d4"));
-        expect(editor.strips()).toEqual([]);
+        expect(editor.bars()).toEqual([]);
     });
 
     it("appears in an editor of the document that becomes visible later", async () => {
@@ -198,7 +208,7 @@ describe("color strip along the editors", () => {
         const later = new FakeEditor("file:///a.sql");
         show(later);
 
-        expect(later.strips()).toEqual([{ color: "#0078d4", lines: [0, 2] }]);
+        expect(later.bars()).toEqual([{ color: "#0078d4", lines: [0, 2] }]);
     });
 
     it("follows the document as lines are added", async () => {
@@ -212,7 +222,7 @@ describe("color strip along the editors", () => {
             contentChanges: [{ text: "\n" }],
         });
 
-        expect(editor.strips()).toEqual([{ color: "#0078d4", lines: [0, 39] }]);
+        expect(editor.bars()).toEqual([{ color: "#0078d4", lines: [0, 39] }]);
     });
 
     it("goes away when the editor disconnects, and its decoration type is disposed", async () => {
@@ -222,7 +232,7 @@ describe("color strip along the editors", () => {
 
         await connections.disconnect(editor.document.uri.toString());
 
-        expect(editor.strips()).toEqual([]);
+        expect(editor.bars()).toEqual([]);
         expect(createdDecorationTypes()).toHaveLength(1);
         expect(liveDecorationTypes()).toHaveLength(0);
     });
@@ -234,7 +244,7 @@ describe("color strip along the editors", () => {
 
         await connections.connect(editor.document.uri.toString(), profile("y"));
 
-        expect(editor.strips()).toEqual([]);
+        expect(editor.bars()).toEqual([]);
         expect(liveDecorationTypes()).toHaveLength(0);
     });
 
@@ -247,13 +257,10 @@ describe("color strip along the editors", () => {
         await connections.connect(b.document.uri.toString(), profile("y", "#0078D4"));
         await connections.connect(c.document.uri.toString(), profile("z", "#107c10"));
 
-        expect(liveDecorationTypes().map((t) => t.options.borderColor)).toEqual([
-            "#0078d4",
-            "#107c10",
-        ]);
-        expect(a.strips()).toEqual([{ color: "#0078d4", lines: [0, 2] }]);
-        expect(b.strips()).toEqual([{ color: "#0078d4", lines: [0, 2] }]);
-        expect(c.strips()).toEqual([{ color: "#107c10", lines: [0, 2] }]);
+        expect(liveDecorationTypes().map(barColor)).toEqual(["#0078d4", "#107c10"]);
+        expect(a.bars()).toEqual([{ color: "#0078d4", lines: [0, 2] }]);
+        expect(b.bars()).toEqual([{ color: "#0078d4", lines: [0, 2] }]);
+        expect(c.bars()).toEqual([{ color: "#107c10", lines: [0, 2] }]);
     });
 
     it("disposes its decoration types with the editor connections", async () => {
@@ -277,7 +284,7 @@ describe("color changed in the settings", () => {
         show(editor);
         const connect = vi.spyOn(connections, "connect");
         await connections.connect(editor.document.uri.toString(), profile("prod", "#107c10"));
-        expect(editor.strips()).toEqual([{ color: "#107c10", lines: [0, 2] }]);
+        expect(editor.bars()).toEqual([{ color: "#107c10", lines: [0, 2] }]);
 
         savedProfiles = [profile("prod", "#c50f1f")];
         changeSettings();
@@ -286,9 +293,9 @@ describe("color changed in the settings", () => {
         expect(connect).toHaveBeenCalledTimes(1);
         expect(connectionItem().color).toBe("#c50f1f");
         expect(databaseItem().color).toBe("#c50f1f");
-        expect(editor.strips()).toEqual([{ color: "#c50f1f", lines: [0, 2] }]);
+        expect(editor.bars()).toEqual([{ color: "#c50f1f", lines: [0, 2] }]);
         // The type of the previous color is not leaked.
-        expect(liveDecorationTypes().map((t) => t.options.borderColor)).toEqual(["#c50f1f"]);
+        expect(liveDecorationTypes().map(barColor)).toEqual(["#c50f1f"]);
 
         // Color removed from the saved profile: the snapshot's color no longer applies.
         savedProfiles = [profile("prod")];
@@ -296,7 +303,7 @@ describe("color changed in the settings", () => {
         await settle();
 
         expect(connectionItem().color).toBeUndefined();
-        expect(editor.strips()).toEqual([]);
+        expect(editor.bars()).toEqual([]);
         expect(liveDecorationTypes()).toHaveLength(0);
     });
 
@@ -313,7 +320,7 @@ describe("color changed in the settings", () => {
         await settle();
 
         expect(connectionItem().color).toBe("#107c10");
-        expect(editor.strips()).toEqual([{ color: "#107c10", lines: [0, 2] }]);
+        expect(editor.bars()).toEqual([{ color: "#107c10", lines: [0, 2] }]);
     });
 
     it("ignores changes to other settings", async () => {

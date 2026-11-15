@@ -1,4 +1,4 @@
-// The color of a connection: the status bar items and a strip along the left edge of a SQL editor
+// The color of a connection: the status bar items and a bar in the gutter of a SQL editor
 // connected with a colored profile, as the user sees them, then the Color field of the connection
 // dialog. The suite changes the saved connections and puts them back at the end.
 
@@ -52,28 +52,58 @@ function statusBarColors(): Promise<{ text: string; color: string }[]> {
         })`);
 }
 
+interface GutterBars {
+    /** Visible editors. */
+    editors: number;
+    /** Per editor, the lines that have a color bar. */
+    lines: number[];
+    /** Per editor, the bars that are on top at their left edge: nothing of the editor covers them. */
+    uncovered: number[];
+    /** Per editor, whether every bar lies left of the line numbers and of the text. */
+    leftOfCode: boolean[];
+    /** Colors of the bars (fill of their SVG icon). */
+    colors: string[];
+}
+
 /**
- * The colored strips Monaco draws in the visible editors: the elements of the line overlays
- * that have a 3px left border, with its color and their line count per editor.
+ * The color bars Monaco draws in the gutter of the visible editors: the margin elements whose
+ * background is an SVG data URI. For each one, what is at the point 1px inside its left edge, in
+ * the middle of its height, tells whether something (a selection, a highlight...) covers it.
  */
-function editorStrips(): Promise<{ editors: number; lines: number[]; colors: string[] }> {
+function gutterBars(): Promise<GutterBars> {
     return inWorkbench(`(() => {
         const editors = [...document.querySelectorAll(".editor-instance .monaco-editor")]
             .filter((e) => e.offsetParent !== null);
-        const lines = [];
+        const result = { editors: editors.length, lines: [], uncovered: [], leftOfCode: [], colors: [] };
         const colors = new Set();
         for (const editor of editors) {
-            let count = 0;
-            for (const el of editor.querySelectorAll(".view-overlays > div > div")) {
-                const style = getComputedStyle(el);
-                if (style.borderLeftWidth === "3px" && style.borderLeftStyle === "solid") {
-                    count++;
-                    colors.add(style.borderLeftColor);
-                }
+            const lineNumbers = [...editor.querySelectorAll(".line-numbers")]
+                .map((n) => n.getBoundingClientRect().left);
+            const code = editor.querySelector(".lines-content")?.getBoundingClientRect().left ?? Infinity;
+            const firstNumber = lineNumbers.length ? Math.min(...lineNumbers) : Infinity;
+            let count = 0, uncovered = 0, left = true;
+            for (const el of editor.querySelectorAll(".margin *")) {
+                const background = getComputedStyle(el).backgroundImage;
+                const start = background.indexOf("data:image/svg+xml;base64,");
+                if (start < 0) continue;
+                const svg = atob(background.slice(start + 26).split(/["')]/)[0]);
+                const fill = svg.split('fill="')[1];
+                if (fill) colors.add(fill.slice(0, 7).toLowerCase());
+                count++;
+                const box = el.getBoundingClientRect();
+                // The sash between the side bar and the editors may lie over the edge: it is
+                // transparent until hovered.
+                const top = document.elementsFromPoint(box.left + 1, box.top + box.height / 2)
+                    .find((e) => !e.classList.contains("monaco-sash"));
+                if (top === el) uncovered++;
+                if (box.left + 3 > firstNumber || box.left + 3 > code) left = false;
             }
-            lines.push(count);
+            result.lines.push(count);
+            result.uncovered.push(uncovered);
+            result.leftOfCode.push(left);
         }
-        return { editors: editors.length, lines, colors: [...colors] };
+        result.colors = [...colors];
+        return result;
     })()`);
 }
 
@@ -112,6 +142,11 @@ describe("Connection color", () => {
             .getConfiguration("yast")
             .inspect<Profiles>("connections")?.globalValue;
         await extension().activate();
+        // At activation the extension writes the profiles back with their group: changing them
+        // before that would be lost when this suite runs first.
+        await waitFor("the profiles to have their group", () =>
+            savedConnections().every((p) => p.groupId),
+        );
         await vscode.commands.executeCommand("workbench.action.closeAllEditors");
         await setColor(pg.id, red.hex);
         const document = await vscode.workspace.openTextDocument({
@@ -130,7 +165,7 @@ describe("Connection color", () => {
         await waitFor("the Connect status bar item", statusBarTexts, (texts) =>
             texts.some((t) => t.includes("Connect")),
         );
-        assert.deepStrictEqual((await editorStrips()).colors, []);
+        assert.deepStrictEqual((await gutterBars()).colors, []);
     });
 
     it("colors the status bar and the editor once connected with a colored profile", async () => {
@@ -149,13 +184,38 @@ describe("Connection color", () => {
             items.some((i) => i.color === red.rgb && i.text.includes(pg.database)),
             JSON.stringify(items),
         );
-        const strips = await waitFor(
-            "the red strip along the editor",
-            editorStrips,
-            (s) => s.colors.length === 1 && s.lines[0] >= 4,
+        const bars = await waitFor(
+            "the red bar in the gutter of the editor",
+            gutterBars,
+            (b) => b.colors.length === 1 && b.lines[0] === editor.document.lineCount,
         );
-        assert.deepStrictEqual(strips.colors, [red.rgb]);
+        assert.deepStrictEqual(bars.colors, [red.hex]);
+        assert.deepStrictEqual(bars.uncovered, bars.lines, JSON.stringify(bars));
+        assert.deepStrictEqual(bars.leftOfCode, [true], JSON.stringify(bars));
         assert.deepStrictEqual(await errorNotifications(), []);
+    });
+
+    it("keeps the bar visible when every line is selected or a word at column 0 is highlighted", async () => {
+        await vscode.window.showTextDocument(editor.document);
+        await vscode.commands.executeCommand("editor.action.selectAll");
+        await waitFor("the selection to be drawn", () =>
+            inWorkbench<boolean>(`!!document.querySelector(".editor-instance .selected-text")`),
+        );
+        let bars = await gutterBars();
+        assert.strictEqual(bars.lines[0], editor.document.lineCount, JSON.stringify(bars));
+        assert.deepStrictEqual(bars.uncovered, bars.lines, JSON.stringify(bars));
+        assert.deepStrictEqual(bars.colors, [red.hex]);
+
+        // The cursor in "SELECT" highlights its other occurrences, all at column 0.
+        editor.selection = new vscode.Selection(0, 2, 0, 2);
+        await waitFor("the occurrences of SELECT to be highlighted", () =>
+            inWorkbench<number>(
+                `document.querySelectorAll(".editor-instance .wordHighlightText, .editor-instance .wordHighlight, .editor-instance .wordHighlightStrong").length`,
+            ),
+        );
+        bars = await gutterBars();
+        assert.deepStrictEqual(bars.uncovered, bars.lines, JSON.stringify(bars));
+        assert.deepStrictEqual(bars.leftOfCode, [true], JSON.stringify(bars));
     });
 
     it("covers the lines added to the document", async () => {
@@ -166,9 +226,9 @@ describe("Connection color", () => {
             ),
         );
         await waitFor(
-            "the strip to cover the 7 lines",
-            editorStrips,
-            (s) => s.lines[0] === editor.document.lineCount,
+            "the bar to cover the 7 lines",
+            gutterBars,
+            (b) => b.lines[0] === editor.document.lineCount,
         );
     });
 
@@ -180,28 +240,28 @@ describe("Connection color", () => {
             statusBarColors,
             (list) => list.filter((i) => i.color === green.rgb).length === 2,
         );
-        const strips = await waitFor(
-            "the green strip",
-            editorStrips,
-            (s) => s.colors.length === 1 && s.colors[0] === green.rgb,
+        const bars = await waitFor(
+            "the green bar",
+            gutterBars,
+            (b) => b.colors.length === 1 && b.colors[0] === green.hex,
         );
-        assert.ok(strips.lines[0] > 0);
+        assert.ok(bars.lines[0] > 0);
     });
 
     it("loses the color when the color is removed from the profile", async () => {
         await setColor(pg.id, undefined);
-        await waitFor("no strip", editorStrips, (s) => s.colors.length === 0);
+        await waitFor("no bar", gutterBars, (b) => b.colors.length === 0);
         const items = await statusBarColors();
         assert.ok(!items.some((i) => i.color === green.rgb), JSON.stringify(items));
         await setColor(pg.id, red.hex);
-        await waitFor("the red strip again", editorStrips, (s) => s.colors[0] === red.rgb);
+        await waitFor("the red bar again", gutterBars, (b) => b.colors[0] === red.hex);
     });
 
     it("loses the color when the editor disconnects", async () => {
         await vscode.window.showTextDocument(editor.document);
         await vscode.commands.executeCommand("yast.disconnect");
 
-        await waitFor("no strip", editorStrips, (s) => s.colors.length === 0);
+        await waitFor("no bar", gutterBars, (b) => b.colors.length === 0);
         const items = await waitFor("the Connect status bar item", statusBarColors, (list) =>
             list.some((i) => i.text.includes("Connect")),
         );

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+    colorBarIcon,
     parseConnectionColor,
     resolveConnectionColor,
 } from "../../src/connections/connectionColor";
@@ -51,5 +52,17 @@ describe("resolveConnectionColor", () => {
     it("ignores an invalid color", () => {
         expect(resolveConnectionColor({ id: "broken" }, saved)).toBeUndefined();
         expect(resolveConnectionColor({ color: "blue" }, [])).toBeUndefined();
+    });
+});
+
+describe("colorBarIcon", () => {
+    it("is an SVG data URI holding a 3px bar of the color on the left edge, full height", () => {
+        const uri = colorBarIcon("#c50f1f");
+        const match = /^data:image\/svg\+xml;base64,(.+)$/.exec(uri);
+        expect(match).not.toBeNull();
+        const svg = Buffer.from(match![1], "base64").toString();
+        // No viewBox: the units are CSS pixels whatever size the icon is drawn at.
+        expect(svg).not.toContain("viewBox");
+        expect(svg).toContain('<rect x="0" y="0" width="3" height="100%" fill="#c50f1f"/>');
     });
 });
