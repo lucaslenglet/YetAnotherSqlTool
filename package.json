@@ -2,7 +2,7 @@
     "name": "yet-another-sql-tool",
     "displayName": "YetAnotherSqlTool",
     "description": "Multi-database SQL client for VS Code (SQL Server, PostgreSQL), inspired by the mssql extension",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "publisher": "YetAnotherSqlTool",
     "private": true,
     "license": "MIT",
