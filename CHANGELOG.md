@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-15
+
 ### Added
 
 - Database filter of a connection ("Database filter" in the connection dialog, `databaseFilter` in `yast.connections`): the connection only shows the databases whose name matches patterns such as `*-dev-*`, in the Object Explorer and in the list of databases of an editor. Several connections to the same server can each show their own set of databases.
