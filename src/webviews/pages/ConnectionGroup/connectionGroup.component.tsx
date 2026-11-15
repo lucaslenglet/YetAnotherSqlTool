@@ -65,7 +65,7 @@ const useStyles = makeStyles({
 });
 
 // A few known "good" colors from the Fluent color palette
-const colors = [
+export const colors = [
     "#c50f1f", // colorPaletteCranberryBorderActive,
     "#ff8c00", // colorPalettePeachBorderActive,
     "#eaa300", // colorPaletteMarigoldBorderActive

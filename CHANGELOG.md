@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Database filter of a connection ("Database filter" in the connection dialog, `databaseFilter` in `yast.connections`): the connection only shows the databases whose name matches patterns such as `*-dev-*`, in the Object Explorer and in the list of databases of an editor. Several connections to the same server can each show their own set of databases.
+- Color of a connection ("Color" in the connection dialog, `color` in `yast.connections`): shown in the status bar and as a bar in the gutter of the SQL editors that use the connection. The bar needs the editor's glyph margin (`editor.glyphMargin`, on by default).
+
 ## [0.1.1] - 2026-11-14
 
 ### Changed

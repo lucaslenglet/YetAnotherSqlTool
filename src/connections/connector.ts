@@ -33,6 +33,8 @@ const profileOnlyKeys = new Set([
     "accountStore",
     "configSource",
     "order",
+    "databaseFilter",
+    "color",
     "connectionString",
     "containerName",
 ]);

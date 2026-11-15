@@ -12,6 +12,8 @@ A multi-database SQL client for Visual Studio Code, with a user experience inspi
 - **Connection dialog**: a form generated for each database engine, saved and recent connections, connection groups, and connection strings. Passwords are kept in VS Code's `SecretStorage`.
 
   ![The Connect to Database dialog with the list of database types open](media/screenshots/connection-dialog.png)
+- **Filtered connections**: give a connection a database filter such as `*-dev-*` and it only shows the databases whose name matches, in the Object Explorer and in the editor's list of databases. Create several connections to the same server, one per environment. `*` and `?` are wildcards, `;` separates several patterns and a pattern starting with `!` hides the databases it matches.
+- **Connection colors**: give a connection a color (red for production, green for development...) and every SQL editor using it shows that color, as a bar at the left of the editor and in the status bar, so you always see where a script is about to run.
 - **One connection per editor**: every SQL editor owns its own connection, shown in the status bar and as a CodeLens at the top of the script. Connect, disconnect, change connection and change database from the editor.
 - **Query execution**: several batches and result sets per script, rows streamed into the results grid as they arrive, a Messages tab with a link to the line in error, a plain-text view, and cancellation of a running query. Run the whole script, the selection, or just the statement under the cursor.
 

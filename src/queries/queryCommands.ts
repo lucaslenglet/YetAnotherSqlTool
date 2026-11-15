@@ -14,6 +14,7 @@ import {
     IConnectionProfile,
 } from "../models/interfaces";
 import { ConnectionStore } from "../connections/connectionStore";
+import { createDatabaseFilter } from "../connections/databaseFilter";
 import { EditorConnections } from "./editorConnections";
 import { QueryManager } from "./queryManager";
 import { TreeNodeInfo } from "../objectExplorer/nodes/treeNodeInfo";
@@ -80,7 +81,11 @@ export function registerQueryCommands(
             vscode.window.showInformationMessage(LocalizedConstants.msgChooseDatabaseNotConnected);
             return;
         }
-        const databases = await editorConnection.connection.listDatabases();
+        // The connection's database filter applies here too; the current database always stays.
+        const filter = createDatabaseFilter(editorConnection.profile.databaseFilter);
+        const databases = (await editorConnection.connection.listDatabases()).filter(
+            (name) => !filter || filter(name) || name === editorConnection.database,
+        );
         const picked = await vscode.window.showQuickPick(
             databases.map((name) => ({
                 label: name,

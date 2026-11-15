@@ -5,6 +5,10 @@
  * options and USE statements stay with the editor that ran them. The status bar
  * follows vscode-mssql's StatusView: connection item (click: change connection),
  * database item (click: change database) and an "Executing query..." timer.
+ *
+ * The color of the connection's profile, when it has one, is the text color of the
+ * connection and database items (as vscode-mssql does with the group color) and a
+ * bar in the gutter, at the far left of every visible editor using the connection.
  */
 
 import * as vscode from "vscode";
@@ -15,6 +19,8 @@ import * as ConnInfo from "../models/connectionInfo";
 import { IConnectionProfile } from "../models/interfaces";
 import type { DriverConnection } from "../drivers/types";
 import { Connector } from "../connections/connector";
+import { colorBarIcon, resolveConnectionColor } from "../connections/connectionColor";
+import type { IConnectionConfig } from "../connectionconfig/connectionconfig";
 import { getErrorMessage, getUriKey } from "../utils/utils";
 
 export interface EditorConnection {
@@ -34,20 +40,45 @@ export class EditorConnections implements vscode.Disposable {
     private readonly _connecting = new Set<string>();
     private readonly _running = new Set<string>();
     private readonly _statusBar = new EditorStatusBar();
+    private readonly _colorBars = new ConnectionColorBars();
+    /** Saved profiles, to read the current color of a connection's profile. */
+    private _savedProfiles: IConnectionProfile[] = [];
+    private _savedProfilesLoad = 0;
     private readonly _disposables: vscode.Disposable[] = [];
 
     private readonly _onDidChange = new vscode.EventEmitter<string>();
     /** Fires with the editor URI when its connection or database changes. */
     public readonly onDidChange = this._onDidChange.event;
 
-    constructor(private readonly _connector: Connector) {
+    constructor(
+        private readonly _connector: Connector,
+        private readonly _connectionConfig: IConnectionConfig,
+    ) {
         this._disposables.push(
             this._statusBar,
+            this._colorBars,
             this._onDidChange,
             vscode.window.onDidChangeActiveTextEditor(() => this.refreshStatusBar()),
+            vscode.window.onDidChangeVisibleTextEditors(() => this.refreshColorBars()),
+            vscode.workspace.onDidChangeTextDocument((e) => {
+                // The bar covers the lines of the document: follow lines added at its end.
+                if (e.contentChanges.length > 0 && this.colorOf(e.document)) {
+                    this.refreshColorBars();
+                }
+            }),
             vscode.workspace.onDidCloseTextDocument((doc) => void this.onDidCloseDocument(doc)),
+            vscode.workspace.onDidChangeConfiguration((e) => {
+                if (
+                    e.affectsConfiguration(
+                        `${Constants.extensionName}.${Constants.connectionsArrayName}`,
+                    )
+                ) {
+                    void this.loadSavedProfiles();
+                }
+            }),
         );
         this.refreshStatusBar();
+        void this.loadSavedProfiles();
     }
 
     public get(uri: string): EditorConnection | undefined {
@@ -191,7 +222,41 @@ export class EditorConnections implements vscode.Disposable {
             ...this._connections.keys(),
         ]);
         this.refreshStatusBar();
+        this.refreshColorBars();
         this._onDidChange.fire(uri);
+    }
+
+    /** Reads the saved profiles again (their colors may have changed) and repaints. */
+    private async loadSavedProfiles(): Promise<void> {
+        const load = ++this._savedProfilesLoad;
+        let profiles: IConnectionProfile[];
+        try {
+            profiles = await this._connectionConfig.getConnections();
+        } catch {
+            return;
+        }
+        // A later load (settings changed again meanwhile) wins.
+        if (load !== this._savedProfilesLoad) {
+            return;
+        }
+        this._savedProfiles = profiles;
+        this.refreshStatusBar();
+        this.refreshColorBars();
+    }
+
+    /** Color of the connection of a SQL document; undefined when not connected or uncolored. */
+    private colorOf(document: vscode.TextDocument): string | undefined {
+        if (document.languageId !== Constants.languageId) {
+            return undefined;
+        }
+        const connection = this._connections.get(getUriKey(document.uri));
+        return connection
+            ? resolveConnectionColor(connection.profile, this._savedProfiles)
+            : undefined;
+    }
+
+    private refreshColorBars(): void {
+        this._colorBars.update((document) => this.colorOf(document));
     }
 
     private refreshStatusBar(): void {
@@ -205,7 +270,63 @@ export class EditorConnections implements vscode.Disposable {
             connecting: this._connecting.has(uri),
             connection: this._connections.get(uri),
             running: this._running.has(uri),
+            color: this.colorOf(editor.document),
         });
+    }
+}
+
+/**
+ * Bar of the connection's color in the gutter of the visible editors: a gutter icon on every
+ * line, drawn left of the line numbers so that selections and highlights of the text never
+ * cover it and it never touches the code. VS Code shows gutter icons in the glyph margin
+ * only: with `editor.glyphMargin` off, there is no bar (the status bar keeps the color).
+ * One decoration type per color in use.
+ */
+class ConnectionColorBars implements vscode.Disposable {
+    private readonly _types = new Map<string, vscode.TextEditorDecorationType>();
+
+    public update(colorOf: (document: vscode.TextDocument) => string | undefined): void {
+        const editors = vscode.window.visibleTextEditors.map((editor) => ({
+            editor,
+            color: colorOf(editor.document),
+        }));
+        const used = new Set(editors.map((e) => e.color).filter((c) => c !== undefined));
+        // Disposing a type removes its decorations from every editor.
+        for (const [color, type] of this._types) {
+            if (!used.has(color)) {
+                type.dispose();
+                this._types.delete(color);
+            }
+        }
+        for (const color of used) {
+            if (!this._types.has(color)) {
+                this._types.set(
+                    color,
+                    vscode.window.createTextEditorDecorationType({
+                        isWholeLine: true,
+                        gutterIconPath: vscode.Uri.parse(colorBarIcon(color)),
+                        // The icon fills the whole cell of each line: the bars of consecutive
+                        // lines join into one.
+                        gutterIconSize: "100% 100%",
+                        rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
+                    }),
+                );
+            }
+        }
+        for (const { editor, color } of editors) {
+            const lastLine = Math.max(editor.document.lineCount - 1, 0);
+            for (const [typeColor, type] of this._types) {
+                editor.setDecorations(
+                    type,
+                    typeColor === color ? [new vscode.Range(0, 0, lastLine, 0)] : [],
+                );
+            }
+        }
+    }
+
+    public dispose(): void {
+        this._types.forEach((type) => type.dispose());
+        this._types.clear();
     }
 }
 
@@ -226,7 +347,12 @@ class EditorStatusBar implements vscode.Disposable {
 
     public show(
         uri: string,
-        state: { connecting: boolean; connection?: EditorConnection; running: boolean },
+        state: {
+            connecting: boolean;
+            connection?: EditorConnection;
+            running: boolean;
+            color?: string;
+        },
     ): void {
         this._shownUri = uri;
         const maxLength = vscode.workspace
@@ -237,6 +363,7 @@ class EditorStatusBar implements vscode.Disposable {
             this._connection.text = `$(loading~spin) ${LocalizedConstants.StatusBar.connectingLabel}`;
             this._connection.tooltip = undefined;
             this._connection.command = undefined;
+            this._connection.color = undefined;
             this._database.hide();
         } else if (state.connection) {
             const creds = { ...state.connection.profile, database: state.connection.database };
@@ -255,10 +382,13 @@ class EditorStatusBar implements vscode.Disposable {
             this._database.tooltip = LocalizedConstants.StatusBar.changeDatabaseTooltip;
             this._database.command = Constants.cmdChangeDatabase;
             this._database.show();
+            this._connection.color = state.color;
+            this._database.color = state.color;
         } else {
             this._connection.text = `$(plug) ${LocalizedConstants.StatusBar.disconnectedLabel}`;
             this._connection.tooltip = LocalizedConstants.StatusBar.notConnectedTooltip;
             this._connection.command = Constants.cmdConnect;
+            this._connection.color = undefined;
             this._database.hide();
         }
         this._connection.show();

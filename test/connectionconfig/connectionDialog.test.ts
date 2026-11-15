@@ -126,6 +126,100 @@ describe("connection string", () => {
     });
 });
 
+describe("database filter", () => {
+    const saved = (filter?: string) =>
+        ({
+            id: "p1",
+            provider: "mssql",
+            server: "localhost,11433",
+            user: "sa",
+            authenticationType: "SqlLogin",
+            savePassword: true,
+            groupId: ConnectionConfig.ROOT_GROUP_ID,
+            ...(filter === undefined ? {} : { databaseFilter: filter }),
+        }) as IConnectionProfile;
+
+    async function fillLogin() {
+        await openDialog();
+        await setField("server", "myhost");
+        await setField("user", "sa");
+        await setField("password", "pw");
+    }
+
+    it("is a plain optional text field, not an advanced option, on both engines", async () => {
+        await openDialog();
+        for (const provider of ["mssql", "pg"]) {
+            await setField("provider", provider);
+            expect(state().formComponents.databaseFilter).toMatchObject({
+                propertyName: "databaseFilter",
+                type: "input",
+                required: false,
+                isAdvancedOption: false,
+                placeholder: "*-dev-*",
+            });
+            expect(state().formComponents.databaseFilter.tooltip).toContain("'!'");
+            expect(state().connectionComponents.mainOptions).not.toContain("databaseFilter");
+        }
+    });
+
+    it("is saved in the profile", async () => {
+        await fillLogin();
+        await setField("databaseFilter", "*-dev-*;!*-old");
+        await dispatch("saveWithoutConnecting");
+
+        expect(h.config.connections).toHaveLength(1);
+        expect(h.config.connections[0].databaseFilter).toBe("*-dev-*;!*-old");
+    });
+
+    it("is not written when empty", async () => {
+        await fillLogin();
+        await setField("databaseFilter", "");
+        await dispatch("saveWithoutConnecting");
+
+        expect(h.config.connections).toHaveLength(1);
+        expect("databaseFilter" in h.config.connections[0]).toBe(false);
+    });
+
+    it("shows when the connection is edited, and leaves the profile once cleared", async () => {
+        const profile = saved("*-rec-*");
+        h.config.connections.push(profile);
+        await openDialog(profile);
+        expect(state().connectionProfile.databaseFilter).toBe("*-rec-*");
+
+        await setField("databaseFilter", "");
+        await dispatch("saveWithoutConnecting");
+
+        expect(h.config.connections).toHaveLength(1);
+        expect("databaseFilter" in h.config.connections[0]).toBe(false);
+    });
+
+    it("is kept when a connection is copied as a new draft", async () => {
+        const profile = saved("*-dev-*");
+        h.config.connections.push(profile);
+        await openDialog();
+        await dispatch("loadConnectionAsNewDraft", { connection: profile });
+
+        expect(state().isEditingConnection).toBe(false);
+        expect(state().connectionProfile.id).toBeUndefined();
+        expect(state().connectionProfile.databaseFilter).toBe("*-dev-*");
+    });
+
+    it("is kept when the engine changes, and when a connection string is loaded", async () => {
+        await openDialog();
+        await setField("databaseFilter", "app_*");
+        await setField("provider", "pg");
+        expect(state().connectionProfile.databaseFilter).toBe("app_*");
+        await setField("provider", "mssql");
+        expect(state().connectionProfile.databaseFilter).toBe("app_*");
+
+        await dispatch("loadFromConnectionString", {
+            connectionString: "postgresql://yast:yast@localhost:15432/yast",
+        });
+        expect(state().connectionProfile.provider).toBe("pg");
+        expect(state().connectionProfile.databaseFilter).toBe("app_*");
+    });
+});
+
 describe("Windows Authentication", () => {
     const hidden = (name: string) => state().formComponents[name].hidden;
 
@@ -216,5 +310,86 @@ describe("Windows Authentication", () => {
             expect(state().formMessage?.message).toMatch(/expects the domain and the user name/);
             expect(server.logins).toHaveLength(0);
         });
+    });
+});
+
+describe("connection color", () => {
+    /** Sets the color the way the Color field of the page does. */
+    async function chooseColor(value: string) {
+        await dispatch("formAction", { event: { propertyName: "color", isAction: false, value } });
+    }
+
+    async function fillAndSave(name: string) {
+        await setField("profileName", name);
+        await setField("server", "myhost");
+        await setField("user", "sa");
+        await setField("password", "pw");
+        await dispatch("saveWithoutConnecting");
+        const saved = h.config.connections.find((c) => c.profileName === name);
+        expect(saved, "the profile is not saved").toBeDefined();
+        return saved!;
+    }
+
+    it("saves the chosen color with the profile and shows it again when editing", async () => {
+        await openDialog();
+        await chooseColor("#c50f1f");
+        expect(state().connectionProfile.color).toBe("#c50f1f");
+
+        const saved = await fillAndSave("Production");
+        expect(saved.color).toBe("#c50f1f");
+
+        await openDialog(saved);
+        expect(state().connectionProfile.color).toBe("#c50f1f");
+    });
+
+    it("removes the color from the saved profile when 'no color' is chosen", async () => {
+        const profile = {
+            id: "p1",
+            profileName: "Production",
+            server: "myhost",
+            user: "sa",
+            authenticationType: "SqlLogin",
+            color: "#c50f1f",
+            groupId: ConnectionConfig.ROOT_GROUP_ID,
+        } as IConnectionProfile;
+        h.config.connections.push(profile);
+        await openDialog(profile);
+        await chooseColor("");
+        await setField("password", "pw");
+        await dispatch("saveWithoutConnecting");
+
+        expect(h.config.connections).toHaveLength(1);
+        expect(h.config.connections[0].profileName).toBe("Production");
+        expect("color" in h.config.connections[0]).toBe(false);
+    });
+
+    it("does not write an invalid color", async () => {
+        await openDialog();
+        await chooseColor("red");
+        const saved = await fillAndSave("Odd");
+        expect("color" in saved).toBe(false);
+    });
+
+    it("keeps the color when a connection is copied as a new draft", async () => {
+        const profile = {
+            id: "p1",
+            profileName: "Production",
+            server: "myhost",
+            color: "#107c10",
+            groupId: ConnectionConfig.ROOT_GROUP_ID,
+        } as IConnectionProfile;
+        h.config.connections.push(profile);
+        await openDialog();
+        await dispatch("loadConnectionAsNewDraft", { connection: profile });
+
+        expect(state().connectionProfile.id).toBeUndefined();
+        expect(state().connectionProfile.color).toBe("#107c10");
+    });
+
+    it("keeps the color when the engine changes", async () => {
+        await openDialog();
+        await chooseColor("#107c10");
+        await setField("provider", "pg");
+        expect(state().connectionProfile.color).toBe("#107c10");
     });
 });

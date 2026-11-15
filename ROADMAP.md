@@ -31,6 +31,8 @@ Related document: `docs/vscode-mssql-analysis.md`, what is taken from Microsoft'
 | 15 | Autocompletion in connected SQL editors: schemas, tables, views, columns with their type, aliases, CTEs, variables, procedures, user and built-in functions, data types and keywords, offered according to the position in the statement; metadata read by the drivers on a connection other than the query session, cached per editor, reloaded after DDL or with "Refresh IntelliSense Cache"; `yast.intelliSense.*` settings; sqltoolsservice's completions captured in `docs/reference/mssql-completions.json` |
 | 16 | Windows Authentication for SQL Server through NTLM: authentication type `Integrated` with the account typed as `DOMAIN\user` (or `user@domain`) and its password, saved and asked like a SQL login; works from Linux and macOS. Handshake checked against a fake TDS server (NTLMv2 response recomputed independently) and against the refusal of the SQL Server Linux container |
 | 17 | Large results: a result set stays in memory up to 16 MiB (128 MiB for a window), beyond that its rows go to an append-only file under the extension's storage, with a sparse index and a small read cache; both drivers stop reading from the server while the store is behind; paging, copy (cancellable, refused beyond 50 million characters), selection summary (on click above the threshold, as vscode-mssql) and Save as CSV / JSON / Excel / INSERT read the store in chunks and stream to the file |
+| 18 | Filtered connections: a profile's `databaseFilter` (patterns with `*` and `?`, several separated by `;`, `!` to exclude) limits the databases its connection shows in the Object Explorer (system databases included, folders marked "(filtered)" as in SSMS) and in the "change database" list of an editor; "Database filter" field in the connection dialog. Two profiles on the same server can show two sets of databases |
+| 19 | Connection color, in the spirit of SSMS: a profile's `color` (`#RRGGBB`, "Color" field of the connection dialog: palette of the connection groups or any color) is the text color of the connection and database items of the status bar and a bar in the gutter of every SQL editor using the connection; a color changed in the settings applies to connected editors without reconnecting. No inheritance from the group color |
 
 ## Features required before publication
 
@@ -64,7 +66,7 @@ All done (steps 10 to 17 above).
 
 ## Known Object Explorer limitations
 
-- no filters on folders, no drag and drop;
+- no filters on folders (a connection can filter its databases, see step 18), no drag and drop;
 - no object subtype on folders (sqltoolsservice's `objectType`): the "New Table" /
   "New Database" menus that depend on it will come with those features;
 - password neither saved nor in the profile: asked once then kept in memory

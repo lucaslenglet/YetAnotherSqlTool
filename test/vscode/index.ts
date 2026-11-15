@@ -11,8 +11,10 @@ import { dumpDom } from "./helpers";
 const suites = [
     "packaging.e2e.js",
     "objectExplorer.e2e.js",
+    "connectionFilter.e2e.js",
     "scripting.e2e.js",
     "queries.e2e.js",
+    "connectionColor.e2e.js",
     "shortcuts.e2e.js",
     "largeResults.e2e.js",
     "webviews.e2e.js",

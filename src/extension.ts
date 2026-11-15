@@ -43,7 +43,7 @@ export function activate(context: vscode.ExtensionContext): void {
     resultFiles = new ResultFiles(path.join(context.globalStorageUri.fsPath, "results"));
     void resultFiles.removeStaleSessions();
     const files = resultFiles;
-    const connections = new EditorConnections(connector);
+    const connections = new EditorConnections(connector, store.connectionConfig);
     const queries = new QueryManager(connections, results, () => files.createRowStore());
     context.subscriptions.push(
         connections,

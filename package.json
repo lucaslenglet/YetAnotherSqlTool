@@ -556,6 +556,15 @@
                                 "type": "string",
                                 "description": "%yast.connections.groupId%"
                             },
+                            "databaseFilter": {
+                                "type": "string",
+                                "description": "%yast.connections.databaseFilter%"
+                            },
+                            "color": {
+                                "type": "string",
+                                "pattern": "^#[0-9a-fA-F]{6}$",
+                                "description": "%yast.connections.color%"
+                            },
                             "server": {
                                 "type": "string",
                                 "default": "{{put-server-name-here}}",

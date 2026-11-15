@@ -1073,6 +1073,7 @@ export class Notebooks {
 export class ObjectExplorer {
     public static ErrorLoadingRefreshToTryAgain = l10n.t("Error loading; refresh to try again");
     public static NoItems = l10n.t("No items");
+    public static filtered = l10n.t("(filtered)");
     public static FailedOEConnectionError = l10n.t(
         "We couldn't connect using the current connection information. Would you like to retry the connection or edit the connection profile?",
     );
@@ -1152,6 +1153,12 @@ export class ConnectionDialog {
         "[Optional] Enter a display name for this connection profile",
     );
     public static connectionGroup = l10n.t("Connection Group");
+    public static databaseFilter = l10n.t("Database filter");
+    // An example pattern, not a sentence: not translated.
+    public static databaseFilterPlaceholder = "*-dev-*";
+    public static databaseFilterTooltip = l10n.t(
+        "[Optional] Show only the databases whose name matches. Use * and ? as wildcards, separate several patterns with ';', and start a pattern with '!' to hide the databases it matches. Every database is shown when empty.",
+    );
     public static serverIsRequired = l10n.t("Server is required");
     public static usernameIsRequired = l10n.t("User name is required");
     public static connectionString = l10n.t("Connection String");
