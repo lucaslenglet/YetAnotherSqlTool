@@ -97,7 +97,11 @@ export class EventEmitter<T> {
     private listeners: ((e: T) => void)[] = [];
     event = (listener: (e: T) => void) => {
         this.listeners.push(listener);
-        return { dispose: () => undefined };
+        return {
+            dispose: () => {
+                this.listeners = this.listeners.filter((l) => l !== listener);
+            },
+        };
     };
     fire(e: T) {
         this.listeners.forEach((l) => l(e));
@@ -210,6 +214,62 @@ export enum ColorThemeKind {
 
 const noopEvent = () => ({ dispose: () => undefined });
 
+export enum StatusBarAlignment {
+    Left = 1,
+    Right = 2,
+}
+
+export enum DecorationRangeBehavior {
+    OpenOpen = 0,
+    ClosedClosed = 1,
+    OpenClosed = 2,
+    ClosedOpen = 3,
+}
+
+/** Status bar item that records its fields; `visible` says whether it is shown. */
+export class MockStatusBarItem {
+    text = "";
+    tooltip?: unknown;
+    command?: unknown;
+    color?: unknown;
+    visible = false;
+    disposed = false;
+    constructor(public readonly alignment?: StatusBarAlignment) {}
+    show() {
+        this.visible = true;
+    }
+    hide() {
+        this.visible = false;
+    }
+    dispose() {
+        this.disposed = true;
+        this.visible = false;
+    }
+}
+
+/** Decoration type that records its options. */
+export class MockTextEditorDecorationType {
+    disposed = false;
+    constructor(public readonly options: Record<string, unknown>) {}
+    dispose() {
+        this.disposed = true;
+    }
+}
+
+/**
+ * Events that tests can fire (`mockEvents.<name>.fire(...)`). Code subscribing to them gets the
+ * same no-op behavior as before when a test fires nothing.
+ */
+export const mockEvents = {
+    onDidChangeActiveTextEditor: new EventEmitter<unknown>(),
+    onDidChangeVisibleTextEditors: new EventEmitter<unknown>(),
+    onDidChangeTextDocument: new EventEmitter<unknown>(),
+    onDidCloseTextDocument: new EventEmitter<unknown>(),
+    onDidChangeConfiguration: new EventEmitter<{
+        affectsConfiguration: (section: string) => boolean;
+    }>(),
+};
+
 /** Webview panel that drops every message; tests call controller reducers directly. */
 function createWebviewPanel(_viewType: string, title: string) {
     return {
@@ -241,6 +301,15 @@ export const window = {
     createOutputChannel: () => outputChannel,
     setStatusBarMessage: vi.fn(() => ({ dispose: () => undefined })),
     activeTextEditor: undefined as unknown,
+    visibleTextEditors: [] as unknown[],
+    onDidChangeActiveTextEditor: mockEvents.onDidChangeActiveTextEditor.event,
+    onDidChangeVisibleTextEditors: mockEvents.onDidChangeVisibleTextEditors.event,
+    createStatusBarItem: vi.fn(
+        (alignment?: StatusBarAlignment) => new MockStatusBarItem(alignment),
+    ),
+    createTextEditorDecorationType: vi.fn(
+        (options: Record<string, unknown>) => new MockTextEditorDecorationType(options),
+    ),
 };
 
 export const workspace = {
@@ -249,7 +318,9 @@ export const workspace = {
         inspect: () => undefined,
         update: async () => undefined,
     }),
-    onDidChangeConfiguration: () => ({ dispose: () => undefined }),
+    onDidChangeConfiguration: mockEvents.onDidChangeConfiguration.event,
+    onDidChangeTextDocument: mockEvents.onDidChangeTextDocument.event,
+    onDidCloseTextDocument: mockEvents.onDidCloseTextDocument.event,
     isTrusted: true,
     onDidGrantWorkspaceTrust: () => ({ dispose: () => undefined }),
 };

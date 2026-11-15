@@ -36,6 +36,7 @@ import {
 } from "../../common/searchableDropdown.component";
 import { ChangePasswordDialog } from "../ChangePassword/changePasswordDialog";
 import { DialogMessage } from "../../common/dialogMessage";
+import { ConnectionColorField } from "./components/connectionColorField.component";
 
 const useStyles = makeStyles({
     inputLink: {
@@ -157,6 +158,13 @@ export const ConnectionInfoFormContainer = () => {
                     component={formComponents["databaseFilter"] as ConnectionDialogFormItemSpec}
                     idx={0}
                     props={{ orientation: "horizontal" }}
+                />
+
+                <ConnectionColorField
+                    value={formState.color}
+                    onChange={(color) =>
+                        context.formAction({ propertyName: "color", isAction: false, value: color })
+                    }
                 />
 
                 <div className={formStyles.formComponentDiv}>

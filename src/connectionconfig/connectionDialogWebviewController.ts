@@ -46,6 +46,7 @@ import {
 } from "./connectionGroupWebviewController";
 import { ConnectionStore } from "../connections/connectionStore";
 import { Connector, openConnection } from "../connections/connector";
+import { parseConnectionColor } from "../connections/connectionColor";
 import { getDriver } from "../drivers";
 import type { DriverId } from "../drivers/types";
 import {
@@ -1218,6 +1219,10 @@ function toStoredProfile(connection: IConnectionDialogProfile): IConnectionProfi
     }
     // Keep an empty password explicit so that it is not asked again.
     profile.password = connection.password ?? "";
+    // An invalid color would be ignored anyway: do not write it.
+    if (profile.color !== undefined && !parseConnectionColor(profile.color)) {
+        delete profile.color;
+    }
     const stored = profile as unknown as IConnectionProfile;
     if (currentProvider(stored) === "mssql") {
         const port = String(stored.port ?? "").trim();

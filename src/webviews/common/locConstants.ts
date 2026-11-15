@@ -733,6 +733,15 @@ export class LocConstants {
             connectionString: l10n.t("Connection String"),
             browseAzure: l10n.t("Browse Azure"),
             loadFromConnectionString: l10n.t("Load from Connection String"),
+            color: l10n.t("Color"),
+            noColor: l10n.t("No color"),
+            customColor: l10n.t("Other color..."),
+            colorSwatch: (color: string) =>
+                l10n.t({
+                    message: "Color {0}",
+                    args: [color],
+                    comment: ["{0} is a color as #RRGGBB"],
+                }),
             savedConnections: l10n.t("Saved Connections"),
             recentConnections: l10n.t("Recent Connections"),
             subscriptionLabel: l10n.t("Subscription"),
