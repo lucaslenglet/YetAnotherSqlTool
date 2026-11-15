@@ -143,13 +143,16 @@ for (const provider of ["mssql", "pg"] as const) {
 
                 await vscode.window.showTextDocument(editor.document);
                 const picking = vscode.commands.executeCommand("yast.changeDatabase");
+                // The label comes first; the current database carries a check mark after it.
+                const namesOf = (list: string[]) => list.map((item) => item.split(/[,\s]/)[0]);
+                // The widget may still hold the rows of the connection quick pick when it opens
+                // again: wait for the current database, which the list always has.
                 const items = await waitFor(
                     "the databases in the quick pick",
                     quickPickItems,
-                    (list) => list.length > 0,
+                    (list) => namesOf(list).includes(database),
                 );
-                // The label comes first; the current database carries a check mark after it.
-                const names = items.map((item) => item.split(/[,\s]/)[0]);
+                const names = namesOf(items);
                 assert.deepStrictEqual(names, expected[provider].picker, JSON.stringify(items));
                 await vscode.commands.executeCommand("workbench.action.closeQuickOpen");
                 await picking;
