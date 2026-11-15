@@ -1154,7 +1154,8 @@ export class ConnectionDialog {
     );
     public static connectionGroup = l10n.t("Connection Group");
     public static databaseFilter = l10n.t("Database filter");
-    public static databaseFilterPlaceholder = l10n.t("*-dev-*");
+    // An example pattern, not a sentence: not translated.
+    public static databaseFilterPlaceholder = "*-dev-*";
     public static databaseFilterTooltip = l10n.t(
         "[Optional] Show only the databases whose name matches. Use * and ? as wildcards, separate several patterns with ';', and start a pattern with '!' to hide the databases it matches. Every database is shown when empty.",
     );
