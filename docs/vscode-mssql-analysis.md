@@ -187,7 +187,8 @@ provides the quoting.
 
 **To remove:**
 - Execution plan (`webviews/pages/ExecutionPlan`, `@xyflow/react`): closely tied to SQL
-  Server. A PostgreSQL version based on `EXPLAIN` can be made later.
+  Server. A PostgreSQL version based on `EXPLAIN` can be made later. Since planned again:
+  see `execution-plan-analysis.md`.
 - Live statistics, Copilot, telemetry.
 
 ## What we write ourselves
