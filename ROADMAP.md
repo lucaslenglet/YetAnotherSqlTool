@@ -55,6 +55,9 @@ All done (steps 10 to 17 above).
 
 ## Planned features (after publication)
 
+- [ ] **Execution plan**: estimated and actual plans in Microsoft's graphical view, SQL Server
+      first, then PostgreSQL through `EXPLAIN`. Pre-analysis in
+      `docs/execution-plan-analysis.md`.
 - [ ] **Table structure editor** like the Table Designer of Microsoft's extension.
 - [ ] **Jailer-style data extraction**: extract a consistent subset of
       data by following foreign keys.
