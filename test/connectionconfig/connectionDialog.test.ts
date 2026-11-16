@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
 import { ConnectionConfig } from "../../src/connectionconfig/connectionconfig";
 import { IConnectionProfile } from "../../src/models/interfaces";
+import { ApiStatus } from "../../src/sharedInterfaces/webview";
 import { FakeTdsServer } from "../support/fakeTdsServer";
 import { setupDialog } from "./dialogHarness";
 
@@ -310,6 +311,133 @@ describe("Windows Authentication", () => {
             expect(state().formMessage?.message).toMatch(/expects the domain and the user name/);
             expect(server.logins).toHaveLength(0);
         });
+    });
+});
+
+describe("database list, against a SQL Server stand-in", () => {
+    let server: FakeTdsServer;
+    beforeEach(async () => {
+        server = await new FakeTdsServer().start();
+        server.sqlLogins.set("pooluser", "pw");
+        server.answer = (sql) =>
+            sql.includes("FROM sys.databases")
+                ? {
+                      columns: ["name"],
+                      rows: [["master"], ["pool"]],
+                  }
+                : undefined;
+    });
+    afterEach(() => server.stop());
+
+    const options = () => state().formComponents.database.options?.map((o) => o.value) ?? [];
+    const settled = () => state().formComponents.database.loadStatus?.status !== ApiStatus.Loading;
+
+    const loaded = async () => {
+        await h.waitFor(() => options().length > 0 || settled(), "database list");
+        await h.waitFor(settled, "database list");
+    };
+
+    /** Fills the form in its order: the login, then (optionally) the database. */
+    async function fill(database?: string) {
+        await openDialog();
+        await setField("server", "127.0.0.1");
+        await setField("port", server.port);
+        await setField("trustServerCertificate", true);
+        await setField("authenticationType", "SqlLogin");
+        await setField("user", "pooluser");
+        await setField("password", "pw");
+        await loaded();
+        if (database !== undefined) await setField("database", database);
+    }
+
+    /** Types in the database box, which sends each keystroke and never a blur. */
+    async function typeDatabase(name: string) {
+        for (let length = 1; length <= name.length; length++) {
+            await dispatch("formAction", {
+                event: { propertyName: "database", value: name.slice(0, length), isAction: false },
+            });
+        }
+    }
+
+    /** A user of the "pool" database only (contained user). */
+    const containedUser = (login: { database: string }) =>
+        login.database === "pool" ? undefined : `Login failed (${login.database || "default"}).`;
+
+    it("is read from the server's default database when the login allows it", async () => {
+        await fill();
+
+        expect(options()).toEqual(["pool", "master"]);
+        expect(state().formComponents.database.loadStatus).toBeUndefined();
+        expect(server.logins.length).toBeGreaterThan(0);
+        expect(server.logins.every((l) => l.accepted && l.database === "")).toBe(true);
+    });
+
+    it("is read from the database typed after a refused Entra login, once the typing stops", async () => {
+        // What Azure answers to a token whose user exists in one database only.
+        server.refuseLogin = (login) =>
+            login.database === "pool"
+                ? undefined
+                : "Login failed for user '<token-identified principal>'.";
+        await fill();
+        expect(state().formComponents.database.loadStatus?.status).toBe(ApiStatus.Error);
+        const refusedDefaultLogins = server.logins.length;
+
+        await typeDatabase("pool");
+        await h.waitFor(() => options().length > 0, "database list");
+
+        expect(options()).toEqual(["pool", "master"]);
+        expect(state().formComponents.database.loadStatus).toBeUndefined();
+        // Logins to the database typed in full only; the default database is not tried again.
+        const retries = server.logins.slice(refusedDefaultLogins);
+        expect(retries.length).toBeGreaterThan(0);
+        expect(retries.every((l) => l.database === "pool")).toBe(true);
+    });
+
+    it("is not read again while typing after a refused password login, which could lock the account", async () => {
+        server.refuseLogin = containedUser;
+        await fill();
+        expect(state().formComponents.database.loadStatus?.status).toBe(ApiStatus.Error);
+        const logins = server.logins.length;
+
+        await typeDatabase("pool");
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
+        expect(server.logins).toHaveLength(logins);
+        expect(state().formComponents.database.loadStatus?.status).toBe(ApiStatus.Error);
+    });
+
+    it("is read from the typed database when the form already has it and the default one is refused", async () => {
+        server.refuseLogin = containedUser;
+        await openDialog();
+        await setField("server", "127.0.0.1");
+        await setField("port", server.port);
+        await setField("trustServerCertificate", true);
+        await setField("authenticationType", "SqlLogin");
+        await setField("database", "pool");
+        await setField("user", "pooluser");
+        await setField("password", "pw");
+        await loaded();
+
+        expect(options()).toEqual(["pool", "master"]);
+        expect(state().formComponents.database.loadStatus).toBeUndefined();
+    });
+
+    it("reports the refusal of the default database when the typed one is refused too", async () => {
+        server.refuseLogin = containedUser;
+        await openDialog();
+        await setField("server", "127.0.0.1");
+        await setField("port", server.port);
+        await setField("trustServerCertificate", true);
+        await setField("authenticationType", "SqlLogin");
+        await setField("database", "other");
+        await setField("user", "pooluser");
+        await setField("password", "pw");
+        await loaded();
+
+        expect(options()).toEqual([]);
+        expect(state().formComponents.database.loadStatus?.message).toMatch(
+            /Login failed \(default\)/,
+        );
     });
 });
 

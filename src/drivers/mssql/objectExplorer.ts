@@ -29,16 +29,42 @@ export type MetadataQueryRunner = (
 export interface ServerNodeInfo {
     /** Server as typed by the user, e.g. "localhost,11433". It is the root nodePath. */
     serverDisplayName: string;
-    /** @@SERVERNAME, used in URNs. */
+    /** SERVERPROPERTY('ServerName'), used in URNs. */
     serverName: string;
     version: string;
     userName: string;
+    /** SERVERPROPERTY('EngineEdition'): 6 is a dedicated SQL pool of Azure Synapse Analytics. */
+    engineEdition: number;
 }
 
 type Context = Record<string, string>;
 type ObjectKind = "Table" | "View";
 
 const SYSTEM_DATABASE_IDS_MAX = 4; // master, model, msdb, tempdb
+
+export const DEDICATED_SQL_POOL_ENGINE_EDITION = 6;
+
+/**
+ * Folders (by `kind`) that sqltoolsservice leaves out on a dedicated SQL pool: their `ValidFor` in
+ * SmoTreeNodesDefinition.xml excludes the flavor the pool is given there. A pool database is
+ * "SqlDw"; master is not a pool (its IsSqlDw is false) and keeps the usual tree. The server's own
+ * folders are judged as "AzureV12".
+ */
+const NOT_VALID_FOR_POOL_DATABASES = new Set([
+    "synonyms", // AllOnPrem|AzureV12
+    "databaseTriggers", // AllOnPrem|AzureV12
+    "sequences", // Sql2012OrHigher|AzureV12
+    "tableValuedFunctions", // NotSqlDw
+    "aggregateFunctions", // AllOnPrem|AzureV12
+    "userDefinedDataTypes", // AllOnPrem|AzureV12
+    "userDefinedTableTypes", // Sql2008OrHigher|AzureV12
+    "applicationRoles", // AllOnPrem|AzureV12
+    "keys", // NotSqlDw
+    "objectTriggers", // AllOnPrem|AzureV12
+]);
+const NOT_VALID_FOR_POOL_SERVERS = new Set([
+    "serverRoles", // AllOnPrem
+]);
 
 export class ObjectExplorer {
     private readonly serverUrn: string;
@@ -65,7 +91,26 @@ export class ObjectExplorer {
         const context = node.context ?? {};
         const expander = this.expanders[context.kind];
         if (!expander) return [];
-        return expander(node, context);
+        const children = await expander(node, context);
+        if (this.info.engineEdition !== DEDICATED_SQL_POOL_ENGINE_EDITION) return children;
+        return children.filter((child) => !this.isNotValidForPool(child));
+    }
+
+    private isNotValidForPool(node: ObjectNode): boolean {
+        if (node.nodeType !== "Folder") return false;
+        const { kind, database } = node.context ?? {};
+        if (!database) return NOT_VALID_FOR_POOL_SERVERS.has(kind);
+        return database !== "master" && NOT_VALID_FOR_POOL_DATABASES.has(kind);
+    }
+
+    /** Rows of sys.databases the tree shows: name, databaseId. */
+    private listDatabases(): Promise<Row[]> {
+        return this.runQuery(
+            undefined,
+            this.info.engineEdition === DEDICATED_SQL_POOL_ENGINE_EDITION
+                ? serverQueries.dedicatedPoolDatabases
+                : serverQueries.databases,
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -82,7 +127,7 @@ export class ObjectExplorer {
             folder(parent, "Security", { kind: "serverSecurity" }),
         ],
         databases: async (parent) => {
-            const rows = await this.runQuery(undefined, serverQueries.databases);
+            const rows = await this.listDatabases();
             const userDatabases = sortByName(
                 rows.filter((r) => r.databaseId > SYSTEM_DATABASE_IDS_MAX),
                 (r) => r.name,
@@ -93,7 +138,7 @@ export class ObjectExplorer {
             ];
         },
         systemDatabases: async (parent) => {
-            const rows = await this.runQuery(undefined, serverQueries.databases);
+            const rows = await this.listDatabases();
             const systemDatabases = sortByName(
                 rows.filter((r) => r.databaseId <= SYSTEM_DATABASE_IDS_MAX),
                 (r) => r.name,

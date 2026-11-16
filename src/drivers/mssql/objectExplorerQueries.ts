@@ -12,16 +12,28 @@
 // -- Server level -----------------------------------------------------------
 
 export const serverQueries = {
-    /** One row: serverName, version, edition, engineEdition, loginName. */
+    /**
+     * One row: serverName, version, edition, engineEdition, loginName. Not @@SERVERNAME: dedicated
+     * SQL pools reject it.
+     */
     serverInfo: `
         SELECT
-            @@SERVERNAME AS serverName,
+            CAST(SERVERPROPERTY('ServerName') AS nvarchar(128)) AS serverName,
             CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(128)) AS version,
             CAST(SERVERPROPERTY('Edition') AS nvarchar(128)) AS edition,
             CAST(SERVERPROPERTY('EngineEdition') AS int) AS engineEdition,
             SUSER_SNAME() AS loginName`,
 
     databases: `SELECT name, database_id AS databaseId FROM sys.databases`,
+
+    /**
+     * On a dedicated SQL pool, sys.databases lists every database of the logical server (master
+     * included), which a user of the pool database alone cannot open. The current database stays
+     * whatever HAS_DBACCESS says.
+     */
+    dedicatedPoolDatabases: `
+        SELECT name, database_id AS databaseId FROM sys.databases
+        WHERE name = DB_NAME() OR HAS_DBACCESS(name) = 1`,
 
     logins: `
         SELECT name

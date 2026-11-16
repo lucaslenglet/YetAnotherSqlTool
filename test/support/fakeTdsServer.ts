@@ -97,6 +97,12 @@ export interface FakeResultSet {
     rows: (string | number | null)[][];
 }
 
+/** A server error answered to a query instead of rows. */
+export interface FakeServerError {
+    error: string;
+    number: number;
+}
+
 /** One physical connection that sent a LOGIN7 message. */
 export interface FakeTdsLogin {
     /** True when the login arrived inside TLS. */
@@ -173,7 +179,10 @@ export class FakeTdsServer {
     /** PRELOGIN answer; "notSupported" makes the server refuse TLS, as a downgrade attack would. */
     encryption: "on" | "notSupported";
     /** Answers a query; when it returns nothing, the built-in answers apply (server information, empty result). */
-    answer: (sql: string, login: FakeTdsLogin) => FakeResultSet | undefined = () => undefined;
+    answer: (sql: string, login: FakeTdsLogin) => FakeResultSet | FakeServerError | undefined =
+        () => undefined;
+    /** Returns the "Login failed" message for a login the server refuses after authenticating it (e.g. by its database). */
+    refuseLogin: (login: FakeTdsLogin) => string | undefined = () => undefined;
     /** When set, an accepted login is sent to this other server. */
     redirectTo: { host: string; port: number } | undefined;
 
@@ -764,6 +773,11 @@ class FakeTdsSession {
     }
 
     private accept(login: FakeTdsLogin): void {
+        const refusal = this.server.refuseLogin(login);
+        if (refusal !== undefined) {
+            this.refuse(refusal);
+            return;
+        }
         if (this.server.transientFailures > 0) {
             this.server.transientFailures--;
             const NOT_CURRENTLY_AVAILABLE = 40613;
@@ -833,7 +847,16 @@ class FakeTdsSession {
             return;
         }
         login.requests.push(sql);
-        const result = this.server.answer(sql, login) ?? this.server.defaultAnswer(sql, login);
+        const answer = this.server.answer(sql, login) ?? this.server.defaultAnswer(sql, login);
+        if (answer && "error" in answer) {
+            const error = errorToken(answer.number, answer.error, this.server.identity.serverName);
+            this.send(
+                error,
+                doneToken(isRpc ? TOKEN.DONE_PROC : TOKEN.DONE, DONE_ERROR | DONE_FINAL),
+            );
+            return;
+        }
+        const result = answer;
         const tokens = result
             ? [
                   resultSetTokens(result),
