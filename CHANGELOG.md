@@ -8,8 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Environment variables in connections: any text field of a connection (password or client secret, server, database, user, tenant ID...) can hold `${env:NAME}`, read from VS Code's environment only when connecting and never saved or shown. A password written this way is kept as typed in the settings and is not asked for. Connections from the workspace settings must be allowed before they read a variable: a confirmation names the server and the variables. `$${env:NAME}` keeps the literal text.
 - "Import Connections from SQL Server Extension" (command, and a link in the Connections view while it is empty): copies the connections and connection groups saved by Microsoft's SQL Server extension into YetAnotherSqlTool. You choose the connections to import; the ones already present are unchecked. The group tree is kept, running the import again creates no duplicate, and nothing is written to the SQL Server extension's settings. What could not be carried over (options YetAnotherSqlTool does not support, authentication types it does not handle, passwords) is listed per connection in the "YetAnotherSqlTool" output channel.
 - A password typed at the first connection is now saved to `SecretStorage` once the connection has succeeded, for a connection that has "Save Password" checked.
+
+### Fixed
+
+- Connection dialog: the "Database name" list no longer jumps between two places, many times per second, on a server with many databases when it fits on no side of the field. The list is now at most 300 px high (less in a short window, so that it always fits above or below the field) and scrolls.
+- Azure Synapse Analytics dedicated SQL pools: the connection no longer fails on `@@SERVERNAME`; the Object Explorer shows the folders Microsoft's extension shows for a pool (no Triggers, Sequences, Synonyms, Keys, user-defined types...) and, like "Change Database", leaves out the databases the user cannot open, such as `master` for a user of the pool database only; autocompletion works; "Change Database" connects to the chosen database instead of running `USE`, which pools do not support.
+- SQL Server connection dialog: when the login to the server's default database is refused, as for a user of a single database, the "Database name" list is read from the database typed in the form (for a Microsoft Entra ID login, also when the database is typed after the list has failed).
 
 ## [0.1.2] - 2026-11-15
 

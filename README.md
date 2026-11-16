@@ -81,6 +81,16 @@ All settings are under `yast.*`; search for "YetAnotherSqlTool" in the Settings 
 - **Token audience protection**: a Microsoft Entra ID token is only sent to Azure servers (for example `*.database.windows.net` or `*.postgres.database.azure.com`). To use it with another name (a custom DNS name, or `localhost` through a tunnel), add it to `yast.entraId.allowedServers`; an entry starting with a dot, such as `.corp.example.com`, allows every name ending with it. A token sent to a server lets that server act as you on your Azure databases for about an hour, so only add servers you trust.
 - **Workspace Trust**: connection profiles found in the settings of an untrusted workspace are ignored.
 
+### Environment variables in connections
+
+The text fields of a connection (server, database, user, password or client secret, tenant ID and the other options) can reference environment variables with `${env:NAME}`, as in VS Code's `launch.json`: for example `${env:SQL_PASSWORD}` as the password, or `${env:DB_HOST}` as the server. Names are made of letters, digits and `_`; they are case-sensitive, except on Windows.
+
+- The variables are read from VS Code's own environment (the extension host's), only when a connection is opened. Their values are never written to settings or `SecretStorage`, and are not shown in the connection dialog, the Object Explorer, connection errors or connection strings: everything keeps the text as typed. After changing a variable, restart VS Code from a shell or session that has the new value.
+- A variable that is not set makes the connection fail with a message naming it (`Environment variable SQL_PASSWORD is not set`), before anything is sent to the server. A variable set to an empty string is an empty value.
+- A password holding a reference is not a secret: it is saved as typed in `yast.connections`, connecting does not ask for a password, and "Save Password" has nothing to store.
+- `$${env:NAME}` is the literal text `${env:NAME}`. Other text containing `$` or braces is used as is.
+- References in your user settings, or typed in the connection dialog, are read directly. A connection defined in the **workspace** settings (or a recent connection whose profile is not in your user settings) could send your variables to a server chosen by the repository: before reading them, a confirmation names the connection, its server as written and the variables. Allowing is remembered for that engine, server, port, authentication type, encryption settings (`encrypt`, `trustServerCertificate`, `hostNameInCertificate`, `sslmode`, `sslrootcert`) and those exact references; if one of them changes, the confirmation is shown again. The connection dialog does not list the databases of such a connection until you allow it with "Test Connection" or "Connect".
+
 ## Privacy
 
 YetAnotherSqlTool collects **no telemetry**. The telemetry layer inherited from `vscode-mssql` is replaced by a stub that never sends anything, and the extension does not bundle any telemetry or analytics library. The extension only talks to:

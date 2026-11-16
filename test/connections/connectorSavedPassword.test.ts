@@ -93,4 +93,21 @@ describe("Connector saves a typed password", () => {
         await connection!.close();
         expect([...secrets.keys()]).toEqual(["yast:profile:p1"]);
     });
+
+    it("not when the typed password is a reference to an environment variable", async () => {
+        saved = [profile()];
+        process.env.YAST_TEST_TYPED_PASSWORD = "s3cret";
+        vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(
+            "${env:YAST_TEST_TYPED_PASSWORD}",
+        );
+        // A reference typed at the prompt is not in the saved profile: reading it is confirmed.
+        vi.mocked(vscode.window.showWarningMessage).mockResolvedValueOnce("Allow" as never);
+        try {
+            const connection = await newConnector().connect(profile());
+            await connection!.close();
+            expect(secrets.size).toBe(0);
+        } finally {
+            delete process.env.YAST_TEST_TYPED_PASSWORD;
+        }
+    });
 });

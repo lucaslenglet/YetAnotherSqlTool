@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
 import { ConnectionConfig } from "../../src/connectionconfig/connectionconfig";
+import { Connector } from "../../src/connections/connector";
 import { IConnectionProfile } from "../../src/models/interfaces";
+import { ApiStatus } from "../../src/sharedInterfaces/webview";
 import { FakeTdsServer } from "../support/fakeTdsServer";
 import { setupDialog } from "./dialogHarness";
 
@@ -313,6 +315,133 @@ describe("Windows Authentication", () => {
     });
 });
 
+describe("database list, against a SQL Server stand-in", () => {
+    let server: FakeTdsServer;
+    beforeEach(async () => {
+        server = await new FakeTdsServer().start();
+        server.sqlLogins.set("pooluser", "pw");
+        server.answer = (sql) =>
+            sql.includes("FROM sys.databases")
+                ? {
+                      columns: ["name"],
+                      rows: [["master"], ["pool"]],
+                  }
+                : undefined;
+    });
+    afterEach(() => server.stop());
+
+    const options = () => state().formComponents.database.options?.map((o) => o.value) ?? [];
+    const settled = () => state().formComponents.database.loadStatus?.status !== ApiStatus.Loading;
+
+    const loaded = async () => {
+        await h.waitFor(() => options().length > 0 || settled(), "database list");
+        await h.waitFor(settled, "database list");
+    };
+
+    /** Fills the form in its order: the login, then (optionally) the database. */
+    async function fill(database?: string) {
+        await openDialog();
+        await setField("server", "127.0.0.1");
+        await setField("port", server.port);
+        await setField("trustServerCertificate", true);
+        await setField("authenticationType", "SqlLogin");
+        await setField("user", "pooluser");
+        await setField("password", "pw");
+        await loaded();
+        if (database !== undefined) await setField("database", database);
+    }
+
+    /** Types in the database box, which sends each keystroke and never a blur. */
+    async function typeDatabase(name: string) {
+        for (let length = 1; length <= name.length; length++) {
+            await dispatch("formAction", {
+                event: { propertyName: "database", value: name.slice(0, length), isAction: false },
+            });
+        }
+    }
+
+    /** A user of the "pool" database only (contained user). */
+    const containedUser = (login: { database: string }) =>
+        login.database === "pool" ? undefined : `Login failed (${login.database || "default"}).`;
+
+    it("is read from the server's default database when the login allows it", async () => {
+        await fill();
+
+        expect(options()).toEqual(["pool", "master"]);
+        expect(state().formComponents.database.loadStatus).toBeUndefined();
+        expect(server.logins.length).toBeGreaterThan(0);
+        expect(server.logins.every((l) => l.accepted && l.database === "")).toBe(true);
+    });
+
+    it("is read from the database typed after a refused Entra login, once the typing stops", async () => {
+        // What Azure answers to a token whose user exists in one database only.
+        server.refuseLogin = (login) =>
+            login.database === "pool"
+                ? undefined
+                : "Login failed for user '<token-identified principal>'.";
+        await fill();
+        expect(state().formComponents.database.loadStatus?.status).toBe(ApiStatus.Error);
+        const refusedDefaultLogins = server.logins.length;
+
+        await typeDatabase("pool");
+        await h.waitFor(() => options().length > 0, "database list");
+
+        expect(options()).toEqual(["pool", "master"]);
+        expect(state().formComponents.database.loadStatus).toBeUndefined();
+        // Logins to the database typed in full only; the default database is not tried again.
+        const retries = server.logins.slice(refusedDefaultLogins);
+        expect(retries.length).toBeGreaterThan(0);
+        expect(retries.every((l) => l.database === "pool")).toBe(true);
+    });
+
+    it("is not read again while typing after a refused password login, which could lock the account", async () => {
+        server.refuseLogin = containedUser;
+        await fill();
+        expect(state().formComponents.database.loadStatus?.status).toBe(ApiStatus.Error);
+        const logins = server.logins.length;
+
+        await typeDatabase("pool");
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
+        expect(server.logins).toHaveLength(logins);
+        expect(state().formComponents.database.loadStatus?.status).toBe(ApiStatus.Error);
+    });
+
+    it("is read from the typed database when the form already has it and the default one is refused", async () => {
+        server.refuseLogin = containedUser;
+        await openDialog();
+        await setField("server", "127.0.0.1");
+        await setField("port", server.port);
+        await setField("trustServerCertificate", true);
+        await setField("authenticationType", "SqlLogin");
+        await setField("database", "pool");
+        await setField("user", "pooluser");
+        await setField("password", "pw");
+        await loaded();
+
+        expect(options()).toEqual(["pool", "master"]);
+        expect(state().formComponents.database.loadStatus).toBeUndefined();
+    });
+
+    it("reports the refusal of the default database when the typed one is refused too", async () => {
+        server.refuseLogin = containedUser;
+        await openDialog();
+        await setField("server", "127.0.0.1");
+        await setField("port", server.port);
+        await setField("trustServerCertificate", true);
+        await setField("authenticationType", "SqlLogin");
+        await setField("database", "other");
+        await setField("user", "pooluser");
+        await setField("password", "pw");
+        await loaded();
+
+        expect(options()).toEqual([]);
+        expect(state().formComponents.database.loadStatus?.message).toMatch(
+            /Login failed \(default\)/,
+        );
+    });
+});
+
 describe("connection color", () => {
     /** Sets the color the way the Color field of the page does. */
     async function chooseColor(value: string) {
@@ -391,5 +520,164 @@ describe("connection color", () => {
         await chooseColor("#107c10");
         await setField("provider", "pg");
         expect(state().connectionProfile.color).toBe("#107c10");
+    });
+});
+
+describe("environment variables", () => {
+    const SECRET = "Secr3t-from-the-env!";
+    const warning = vi.mocked(vscode.window.showWarningMessage);
+    let server: FakeTdsServer;
+    beforeEach(async () => {
+        server = await new FakeTdsServer().start();
+        server.sqlLogins.set("sa", SECRET);
+        process.env.YAST_TEST_PASSWORD = SECRET;
+        warning.mockReset();
+        warning.mockResolvedValue(undefined);
+    });
+    afterEach(async () => {
+        delete process.env.YAST_TEST_PASSWORD;
+        await server.stop();
+    });
+
+    function workspaceProfile(): IConnectionProfile {
+        return {
+            id: "w1",
+            provider: "mssql",
+            profileName: "From the repository",
+            server: `127.0.0.1,${server.port}`,
+            authenticationType: "SqlLogin",
+            user: "sa",
+            password: "${env:YAST_TEST_PASSWORD}",
+            trustServerCertificate: true,
+            groupId: ConnectionConfig.ROOT_GROUP_ID,
+            configSource: vscode.ConfigurationTarget.Workspace,
+        } as IConnectionProfile;
+    }
+
+    it("resolves a reference typed in the form and saves it as typed, not as a secret", async () => {
+        await openDialog();
+        await setField("server", "127.0.0.1");
+        await setField("port", server.port);
+        await setField("trustServerCertificate", true);
+        await setField("user", "sa");
+        await setField("password", "${env:YAST_TEST_PASSWORD}");
+        await setField("savePassword", true);
+        await dispatch("connect");
+
+        expect(state().formMessage).toBeUndefined();
+        expect(warning).not.toHaveBeenCalled();
+        expect(server.logins.at(-1)?.password).toBe(SECRET);
+        expect(h.config.connections[0].password).toBe("${env:YAST_TEST_PASSWORD}");
+        expect(h.secrets.values.size).toBe(0);
+        expect(JSON.stringify(h.config.connections)).not.toContain(SECRET);
+    });
+
+    it("asks before a workspace profile's references are read, and not for the database list", async () => {
+        h.config.connections.push(workspaceProfile());
+        await openDialog(workspaceProfile());
+        await h.waitFor(
+            () => state().formComponents.database.loadStatus?.status === ApiStatus.Error,
+            "the database list to fail",
+        );
+
+        expect(state().connectionProfile.password).toBe("${env:YAST_TEST_PASSWORD}");
+        expect(state().formComponents.database.loadStatus?.message).toContain(
+            "allow it first with Test Connection or Connect",
+        );
+        expect(warning).not.toHaveBeenCalled();
+        expect(server.logins).toHaveLength(0);
+
+        await dispatch("testConnection");
+        expect(warning).toHaveBeenCalledTimes(1);
+        expect(state().formMessage?.message).toContain("was not allowed");
+        expect(server.logins).toHaveLength(0);
+
+        warning.mockResolvedValueOnce("Allow" as never);
+        await dispatch("testConnection");
+        expect(state().testConnectionSucceeded).toBe(true);
+        expect(server.logins.at(-1)?.password).toBe(SECRET);
+        // Allowed: the database list loads without touching the form again.
+        await h.waitFor(
+            () => state().formComponents.database.loadStatus === undefined,
+            "the database list to load",
+        );
+        // The stand-in lists no database: a successful fetch leaves the list empty, without error.
+        expect(server.logins.at(-1)?.requests.join("\n")).toMatch(/sys\.databases/i);
+        expect(warning).toHaveBeenCalledTimes(2);
+    });
+
+    it("reads a user profile's references directly, for the database list too", async () => {
+        const mine = {
+            ...workspaceProfile(),
+            id: "u1",
+            configSource: vscode.ConfigurationTarget.Global,
+        } as IConnectionProfile;
+        h.config.connections.push(mine);
+        await openDialog(mine);
+        await h.waitFor(() => server.logins.length > 0, "the database list to connect");
+        await dispatch("testConnection");
+
+        expect(state().testConnectionSucceeded).toBe(true);
+        expect(server.logins.every((login) => login.password === SECRET)).toBe(true);
+        expect(warning).not.toHaveBeenCalled();
+    });
+
+    it("remembers a typed combination only once tested, not when the database list loads", async () => {
+        const allowed = () =>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (h.store as any)._globalState.get("yast.environmentReferences.allowed") ?? [];
+        await openDialog();
+        await setField("server", "127.0.0.1");
+        await setField("port", server.port);
+        await setField("trustServerCertificate", true);
+        await setField("user", "sa");
+        await setField("password", "${env:YAST_TEST_PASSWORD}");
+        await h.waitFor(() => server.logins.length > 0, "the database list to connect");
+        expect(allowed()).toHaveLength(0);
+
+        await dispatch("testConnection");
+        expect(allowed()).toHaveLength(1);
+    });
+
+    it("does not ask again when the allowed workspace profile is saved and connected", async () => {
+        h.config.connections.push(workspaceProfile());
+        await openDialog(workspaceProfile());
+        warning.mockResolvedValueOnce("Allow" as never);
+        await dispatch("connect");
+        expect(warning).toHaveBeenCalledTimes(1);
+
+        const [saved] = h.config.connections;
+        expect(saved.configSource).toBe(vscode.ConfigurationTarget.Workspace);
+        await (await new Connector(h.store).connect(saved))!.close();
+
+        expect(warning).toHaveBeenCalledTimes(1);
+    });
+
+    it("fills the reference password of a recent connection from its saved profile", async () => {
+        const mine = {
+            ...workspaceProfile(),
+            id: "u1",
+            configSource: vscode.ConfigurationTarget.Global,
+        } as IConnectionProfile;
+        h.config.connections.push(mine);
+        await h.store.addRecentlyUsed(mine);
+        const [recent] = h.store.getRecentlyUsedConnections();
+        expect(recent.password).toBe("");
+        await openDialog();
+
+        await dispatch("loadConnectionForEdit", { connection: recent });
+
+        expect(state().connectionProfile.password).toBe("${env:YAST_TEST_PASSWORD}");
+    });
+
+    it("still asks when a workspace profile is copied as a new draft", async () => {
+        h.config.connections.push(workspaceProfile());
+        await openDialog();
+        await dispatch("loadConnectionAsNewDraft", { connection: workspaceProfile() });
+
+        await dispatch("testConnection");
+
+        expect(warning).toHaveBeenCalledTimes(1);
+        expect(server.logins).toHaveLength(0);
     });
 });
