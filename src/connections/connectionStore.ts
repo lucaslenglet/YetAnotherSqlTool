@@ -12,16 +12,23 @@ import * as Constants from "../constants/constants";
 import { IConnectionConfig } from "../connectionconfig/connectionconfig";
 import { IConnectionProfile, IConnectionProfileWithSource } from "../models/interfaces";
 import { CredentialsQuickPickItemType } from "../models/interfaces";
+import { EnvironmentConsent } from "./environmentConsent";
+import { hasEnvironmentReferences } from "./environmentReferences";
 
 const RECENT_CONNECTIONS_KEY = `${Constants.extensionName}.${Constants.configRecentConnections}`;
 const DEFAULT_MAX_RECENT_CONNECTIONS = 5;
 
 export class ConnectionStore {
+    /** Which profiles may read the environment variables they reference. */
+    public readonly environmentConsent: EnvironmentConsent;
+
     constructor(
         public readonly connectionConfig: IConnectionConfig,
         private readonly _secrets: vscode.SecretStorage,
         private readonly _globalState: vscode.Memento,
-    ) {}
+    ) {
+        this.environmentConsent = new EnvironmentConsent(_globalState, connectionConfig);
+    }
 
     // -- passwords --------------------------------------------------------
 
@@ -50,13 +57,18 @@ export class ConnectionStore {
 
     /**
      * Saves a profile to settings (without its password) and its password to SecretStorage
-     * when requested. Assigns id, group and config source when missing.
+     * when requested. Assigns id, group and config source when missing. A password that
+     * references environment variables is not a secret: it stays in settings as typed.
      */
     public async saveProfile(profile: IConnectionProfile): Promise<IConnectionProfile> {
         this.connectionConfig.populateMissingConnectionMetadata(profile);
         const password = profile.password;
-        await this.connectionConfig.addConnection({ ...profile, password: "" });
-        await this.savePassword(profile, password);
+        const isReference = hasEnvironmentReferences(password);
+        await this.connectionConfig.addConnection({
+            ...profile,
+            password: isReference ? password : "",
+        });
+        await this.savePassword(profile, isReference ? undefined : password);
         return profile;
     }
 

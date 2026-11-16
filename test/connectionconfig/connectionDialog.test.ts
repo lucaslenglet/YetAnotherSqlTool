@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
 import { ConnectionConfig } from "../../src/connectionconfig/connectionconfig";
+import { Connector } from "../../src/connections/connector";
 import { IConnectionProfile } from "../../src/models/interfaces";
 import { ApiStatus } from "../../src/sharedInterfaces/webview";
 import { FakeTdsServer } from "../support/fakeTdsServer";
@@ -519,5 +520,164 @@ describe("connection color", () => {
         await chooseColor("#107c10");
         await setField("provider", "pg");
         expect(state().connectionProfile.color).toBe("#107c10");
+    });
+});
+
+describe("environment variables", () => {
+    const SECRET = "Secr3t-from-the-env!";
+    const warning = vi.mocked(vscode.window.showWarningMessage);
+    let server: FakeTdsServer;
+    beforeEach(async () => {
+        server = await new FakeTdsServer().start();
+        server.sqlLogins.set("sa", SECRET);
+        process.env.YAST_TEST_PASSWORD = SECRET;
+        warning.mockReset();
+        warning.mockResolvedValue(undefined);
+    });
+    afterEach(async () => {
+        delete process.env.YAST_TEST_PASSWORD;
+        await server.stop();
+    });
+
+    function workspaceProfile(): IConnectionProfile {
+        return {
+            id: "w1",
+            provider: "mssql",
+            profileName: "From the repository",
+            server: `127.0.0.1,${server.port}`,
+            authenticationType: "SqlLogin",
+            user: "sa",
+            password: "${env:YAST_TEST_PASSWORD}",
+            trustServerCertificate: true,
+            groupId: ConnectionConfig.ROOT_GROUP_ID,
+            configSource: vscode.ConfigurationTarget.Workspace,
+        } as IConnectionProfile;
+    }
+
+    it("resolves a reference typed in the form and saves it as typed, not as a secret", async () => {
+        await openDialog();
+        await setField("server", "127.0.0.1");
+        await setField("port", server.port);
+        await setField("trustServerCertificate", true);
+        await setField("user", "sa");
+        await setField("password", "${env:YAST_TEST_PASSWORD}");
+        await setField("savePassword", true);
+        await dispatch("connect");
+
+        expect(state().formMessage).toBeUndefined();
+        expect(warning).not.toHaveBeenCalled();
+        expect(server.logins.at(-1)?.password).toBe(SECRET);
+        expect(h.config.connections[0].password).toBe("${env:YAST_TEST_PASSWORD}");
+        expect(h.secrets.values.size).toBe(0);
+        expect(JSON.stringify(h.config.connections)).not.toContain(SECRET);
+    });
+
+    it("asks before a workspace profile's references are read, and not for the database list", async () => {
+        h.config.connections.push(workspaceProfile());
+        await openDialog(workspaceProfile());
+        await h.waitFor(
+            () => state().formComponents.database.loadStatus?.status === ApiStatus.Error,
+            "the database list to fail",
+        );
+
+        expect(state().connectionProfile.password).toBe("${env:YAST_TEST_PASSWORD}");
+        expect(state().formComponents.database.loadStatus?.message).toContain(
+            "allow it first with Test Connection or Connect",
+        );
+        expect(warning).not.toHaveBeenCalled();
+        expect(server.logins).toHaveLength(0);
+
+        await dispatch("testConnection");
+        expect(warning).toHaveBeenCalledTimes(1);
+        expect(state().formMessage?.message).toContain("was not allowed");
+        expect(server.logins).toHaveLength(0);
+
+        warning.mockResolvedValueOnce("Allow" as never);
+        await dispatch("testConnection");
+        expect(state().testConnectionSucceeded).toBe(true);
+        expect(server.logins.at(-1)?.password).toBe(SECRET);
+        // Allowed: the database list loads without touching the form again.
+        await h.waitFor(
+            () => state().formComponents.database.loadStatus === undefined,
+            "the database list to load",
+        );
+        // The stand-in lists no database: a successful fetch leaves the list empty, without error.
+        expect(server.logins.at(-1)?.requests.join("\n")).toMatch(/sys\.databases/i);
+        expect(warning).toHaveBeenCalledTimes(2);
+    });
+
+    it("reads a user profile's references directly, for the database list too", async () => {
+        const mine = {
+            ...workspaceProfile(),
+            id: "u1",
+            configSource: vscode.ConfigurationTarget.Global,
+        } as IConnectionProfile;
+        h.config.connections.push(mine);
+        await openDialog(mine);
+        await h.waitFor(() => server.logins.length > 0, "the database list to connect");
+        await dispatch("testConnection");
+
+        expect(state().testConnectionSucceeded).toBe(true);
+        expect(server.logins.every((login) => login.password === SECRET)).toBe(true);
+        expect(warning).not.toHaveBeenCalled();
+    });
+
+    it("remembers a typed combination only once tested, not when the database list loads", async () => {
+        const allowed = () =>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (h.store as any)._globalState.get("yast.environmentReferences.allowed") ?? [];
+        await openDialog();
+        await setField("server", "127.0.0.1");
+        await setField("port", server.port);
+        await setField("trustServerCertificate", true);
+        await setField("user", "sa");
+        await setField("password", "${env:YAST_TEST_PASSWORD}");
+        await h.waitFor(() => server.logins.length > 0, "the database list to connect");
+        expect(allowed()).toHaveLength(0);
+
+        await dispatch("testConnection");
+        expect(allowed()).toHaveLength(1);
+    });
+
+    it("does not ask again when the allowed workspace profile is saved and connected", async () => {
+        h.config.connections.push(workspaceProfile());
+        await openDialog(workspaceProfile());
+        warning.mockResolvedValueOnce("Allow" as never);
+        await dispatch("connect");
+        expect(warning).toHaveBeenCalledTimes(1);
+
+        const [saved] = h.config.connections;
+        expect(saved.configSource).toBe(vscode.ConfigurationTarget.Workspace);
+        await (await new Connector(h.store).connect(saved))!.close();
+
+        expect(warning).toHaveBeenCalledTimes(1);
+    });
+
+    it("fills the reference password of a recent connection from its saved profile", async () => {
+        const mine = {
+            ...workspaceProfile(),
+            id: "u1",
+            configSource: vscode.ConfigurationTarget.Global,
+        } as IConnectionProfile;
+        h.config.connections.push(mine);
+        await h.store.addRecentlyUsed(mine);
+        const [recent] = h.store.getRecentlyUsedConnections();
+        expect(recent.password).toBe("");
+        await openDialog();
+
+        await dispatch("loadConnectionForEdit", { connection: recent });
+
+        expect(state().connectionProfile.password).toBe("${env:YAST_TEST_PASSWORD}");
+    });
+
+    it("still asks when a workspace profile is copied as a new draft", async () => {
+        h.config.connections.push(workspaceProfile());
+        await openDialog();
+        await dispatch("loadConnectionAsNewDraft", { connection: workspaceProfile() });
+
+        await dispatch("testConnection");
+
+        expect(warning).toHaveBeenCalledTimes(1);
+        expect(server.logins).toHaveLength(0);
     });
 });

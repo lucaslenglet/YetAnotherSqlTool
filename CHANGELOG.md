@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Environment variables in connections: any text field of a connection (password or client secret, server, database, user, tenant ID...) can hold `${env:NAME}`, read from VS Code's environment only when connecting and never saved or shown. A password written this way is kept as typed in the settings and is not asked for. Connections from the workspace settings must be allowed before they read a variable: a confirmation names the server and the variables. `$${env:NAME}` keeps the literal text.
+
 ### Fixed
 
 - Connection dialog: the "Database name" list no longer jumps between two places, many times per second, on a server with many databases when it fits on no side of the field. The list is now at most 300 px high (less in a short window, so that it always fits above or below the field) and scrolls.

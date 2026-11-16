@@ -45,7 +45,8 @@ import {
     getDefaultConnectionGroupDialogProps,
 } from "./connectionGroupWebviewController";
 import { ConnectionStore } from "../connections/connectionStore";
-import { Connector, openConnection } from "../connections/connector";
+import { Connector } from "../connections/connector";
+import { hasEnvironmentReferences } from "../connections/environmentReferences";
 import { parseConnectionColor } from "../connections/connectionColor";
 import { getDriver } from "../drivers";
 import type { DriverId } from "../drivers/types";
@@ -95,6 +96,11 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
     ];
 
     private _connectionBeingEdited: IConnectionDialogProfile | undefined;
+    /**
+     * Saved or recent connection the form was filled from, as it was stored; null when the user
+     * filled it in. Decides whether the form's `${env:NAME}` references need a confirmation.
+     */
+    private _formLoadedFrom: IConnectionProfile | null = null;
     private _lastSubmittedAction: ConnectionSubmitAction = ConnectionSubmitAction.Connect;
     /** Engine whose options are currently in the form. */
     private _formProvider: DriverId | undefined;
@@ -683,6 +689,7 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
 
     private loadEmptyConnection() {
         this.state.connectionProfile = defaultConnectionFor(this._formProvider ?? "mssql");
+        this._formLoadedFrom = null;
         this._connectionBeingEdited = undefined;
         this.state.isEditingConnection = false;
         this.state.editingConnectionDisplayName = undefined;
@@ -693,6 +700,7 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
         openAsNewDraft: boolean = false,
     ): Promise<void> {
         this.clearFormError();
+        this._formLoadedFrom = structuredClone(connectionToLoad);
         const initializedConnection = await this.initializeConnectionForDialog(
             structuredClone(connectionToLoad),
         );
@@ -721,6 +729,7 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
 
     private async setConnectionAsNewDraft(connectionToCopy: IConnectionProfile): Promise<void> {
         this.clearFormError();
+        this._formLoadedFrom = structuredClone(connectionToCopy);
         const connectionDraft = await this.initializeConnectionForDialog(
             structuredClone(connectionToCopy),
         );
@@ -747,6 +756,13 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
         // Load the password if it's saved
         if (!connection.password) {
             connection.password = (await this._store.lookupPassword(connection)) ?? "";
+        }
+        if (!connection.password) {
+            // A recent entry has no password; a reference is kept in its saved profile's settings.
+            const saved = await this._store.findSavedProfile(connection);
+            if (hasEnvironmentReferences(saved?.password)) {
+                connection.password = saved.password;
+            }
         }
         splitServerAndPort(connection);
         return connection as IConnectionDialogProfile;
@@ -826,8 +842,15 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
     /** Opens and closes a connection; on failure, shows the error (or the trust certificate dialog). */
     private async testConnectionStep(connection: IConnectionDialogProfile): Promise<boolean> {
         try {
-            const opened = await openConnection(toStoredProfile(connection));
+            const opened = await this._connector.open(toStoredProfile(connection), {
+                interactive: true,
+                formLoadedFrom: this._formLoadedFrom,
+            });
             await opened.close().catch(() => undefined);
+            if (this._lastSubmittedAction === ConnectionSubmitAction.TestConnection) {
+                // A list refused before the environment variables were allowed can load now.
+                this.triggerDatabaseFetchIfReady();
+            }
             return true;
         } catch (error) {
             const message = getErrorMessage(error);
@@ -979,14 +1002,20 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
         try {
             const profile = toStoredProfile(this.cleanConnection(this.state.connectionProfile));
             const typedDatabase = profile.database;
+            // The list never prompts for environment variables: Test Connection or Connect does.
+            const open = (p: IConnectionProfile) =>
+                this._connector.open(p, {
+                    interactive: false,
+                    formLoadedFrom: this._formLoadedFrom,
+                });
             let dbs: string[];
             if (typedDatabase && this._defaultDatabaseRefusedKey === fetchKey) {
-                dbs = await listDatabasesOf(profile);
+                dbs = await listDatabasesOf(open, profile);
             } else {
                 try {
                     // From the server's default database first: on Azure SQL Database, only master
                     // lists every database of the server.
-                    dbs = await listDatabasesOf({ ...profile, database: "" });
+                    dbs = await listDatabasesOf(open, { ...profile, database: "" });
                 } catch (error) {
                     // SQL Server refuses a user of a single database (contained user) anywhere else.
                     const message = getErrorMessage(error);
@@ -1000,7 +1029,7 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
                     if (!typedDatabase) {
                         throw error;
                     }
-                    dbs = await listDatabasesOf(profile).catch(() => Promise.reject(error));
+                    dbs = await listDatabasesOf(open, profile).catch(() => Promise.reject(error));
                 }
             }
 
@@ -1301,8 +1330,11 @@ function isUntrustedCertificateError(
 /** Pause in the typing of a database name after which a failed database list is read again. */
 const DATABASE_LIST_RETRY_DELAY_MS = 800;
 
-async function listDatabasesOf(profile: IConnectionProfile): Promise<string[]> {
-    const connection = await openConnection(profile);
+async function listDatabasesOf(
+    open: (profile: IConnectionProfile) => ReturnType<Connector["open"]>,
+    profile: IConnectionProfile,
+): Promise<string[]> {
+    const connection = await open(profile);
     try {
         return await connection.listDatabases();
     } finally {
