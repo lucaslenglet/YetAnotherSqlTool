@@ -4,6 +4,7 @@ import * as Constants from "./constants/constants";
 import { ConnectionConfig } from "./connectionconfig/connectionconfig";
 import { ConnectionStore } from "./connections/connectionStore";
 import { Connector } from "./connections/connector";
+import { registerImportMssqlConnections } from "./connections/importMssqlConnectionsCommand";
 import { registerSqlCompletion } from "./languageFeatures/completion/completionProvider";
 import { registerObjectExplorer } from "./objectExplorer/objectExplorerCommands";
 import { EditorConnections } from "./queries/editorConnections";
@@ -32,6 +33,8 @@ export function activate(context: vscode.ExtensionContext): void {
         (node, operation) => scripting!.scriptNode(node, operation),
         (node) => scripting!.scriptDatabase(node),
     );
+
+    registerImportMssqlConnections(context, store);
 
     const results = new QueryResultWebviewController(context);
     context.subscriptions.push(

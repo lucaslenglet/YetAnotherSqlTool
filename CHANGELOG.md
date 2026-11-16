@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- "Import Connections from SQL Server Extension" (command, and a link in the Connections view while it is empty): copies the connections and connection groups saved by Microsoft's SQL Server extension into YetAnotherSqlTool. You choose the connections to import; the ones already present are unchecked. The group tree is kept, running the import again creates no duplicate, and nothing is written to the SQL Server extension's settings. What could not be carried over (options YetAnotherSqlTool does not support, authentication types it does not handle, passwords) is listed per connection in the "YetAnotherSqlTool" output channel.
+- A password typed at the first connection is now saved to `SecretStorage` once the connection has succeeded, for a connection that has "Save Password" checked.
+
 ## [0.1.2] - 2026-11-15
 
 ### Added

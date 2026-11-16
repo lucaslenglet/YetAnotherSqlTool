@@ -15,6 +15,7 @@ const suites = [
     "scripting.e2e.js",
     "queries.e2e.js",
     "connectionColor.e2e.js",
+    "importConnections.e2e.js",
     "shortcuts.e2e.js",
     "largeResults.e2e.js",
     "webviews.e2e.js",

@@ -382,6 +382,7 @@ try {
                 YAST_TEST_PROFILES: JSON.stringify(profiles),
                 YAST_TEST_DEBUG_PORT: String(debugPort),
                 YAST_TEST_ARTIFACTS: artifactsDir,
+                YAST_TEST_USER_SETTINGS: path.join(userDataDir, "User", "settings.json"),
             },
         });
     } catch (error) {

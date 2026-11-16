@@ -141,6 +141,11 @@
                 "icon": "$(edit)"
             },
             {
+                "command": "yast.importMssqlConnections",
+                "title": "%yast.importMssqlConnections%",
+                "category": "%yast.category%"
+            },
+            {
                 "command": "yast.runQuery",
                 "title": "%yast.runQuery%",
                 "category": "%yast.category%",
