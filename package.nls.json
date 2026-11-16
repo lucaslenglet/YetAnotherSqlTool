@@ -14,6 +14,7 @@
     "yast.editConnection": "Edit Connection...",
     "yast.connectionGroups.create": "Add Connection Group",
     "yast.connectionGroups.edit": "Edit Connection Group",
+    "yast.importMssqlConnections": "Import Connections from SQL Server Extension",
     "yast.runQuery": "Execute Query",
     "yast.runCurrentStatement": "Execute Selection or Current Statement",
     "yast.cancelQuery": "Cancel Query",

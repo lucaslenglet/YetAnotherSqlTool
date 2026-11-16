@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { ConnectionGroupNode } from "../../src/objectExplorer/nodes/connectionGroupNode";
 import { createExplorer, iconFile, labelOf } from "./serviceHarness";
+import { ObjectExplorerService } from "../../src/objectExplorer/objectExplorerService";
+import { Connector } from "../../src/connections/connector";
+import {
+    ConnectionConfig,
+    type IConnectionConfig,
+} from "../../src/connectionconfig/connectionconfig";
 
 // Nothing is expanded here, so these servers are never contacted.
 const { children, connectionNode } = createExplorer(
@@ -33,5 +39,30 @@ describe("root", () => {
         const node = await connectionNode("pg-docker");
         expect(node.context.type).toBe("disconnectedServer");
         expect(iconFile(node)).toBe("Database_red.svg");
+    });
+});
+
+describe("empty view", () => {
+    it("offers to add a connection and to import the ones of the SQL Server extension", async () => {
+        const connectionConfig = {
+            getGroups: async () => [{ id: ConnectionConfig.ROOT_GROUP_ID, name: "ROOT" }],
+            getConnections: async () => [],
+        } as unknown as IConnectionConfig;
+        const service = new ObjectExplorerService(
+            { connectionConfig, removeProfile: async () => true },
+            new Connector(),
+            () => undefined,
+        );
+
+        const items = await service.getChildren();
+
+        expect(items.map(labelOf)).toEqual([
+            "Add Connection",
+            "Import Connections from SQL Server Extension",
+        ]);
+        expect((items[1].command as { command: string }).command).toBe(
+            "yast.importMssqlConnections",
+        );
+        service.dispose();
     });
 });

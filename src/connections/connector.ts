@@ -4,7 +4,8 @@
  * The password comes from, in order: the profile itself (typed in the connection
  * dialog, or written in plain text in settings), SecretStorage when the profile
  * saves its password, then a prompt whose answer is kept in memory for the rest
- * of the VS Code session.
+ * of the VS Code session, and also saved to SecretStorage once the connection succeeds when the
+ * profile saves its password.
  */
 
 import * as vscode from "vscode";
@@ -22,6 +23,7 @@ import { acquireTokenFromVscodeAccount } from "../azure/vscodeEntraMfaUtils";
 import type { EnvironmentAccessRequest } from "./environmentConsent";
 import {
     environmentReferenceFields,
+    hasEnvironmentReferences,
     redactConnectionErrors,
     redactError,
     resolveConnectionOptions,
@@ -57,17 +59,20 @@ export class Connector {
      * password prompt. Rejects with the driver's error when the connection fails.
      */
     public async connect(profile: IConnectionProfile): Promise<DriverConnection | undefined> {
+        let typedPassword: string | undefined;
         if (needsPassword(profile)) {
-            const password = await this.getPassword(profile);
-            if (password === undefined) {
+            const answer = await this.getPassword(profile);
+            if (answer === undefined) {
                 return undefined;
             }
-            profile = { ...profile, password };
+            profile = { ...profile, password: answer.password };
+            typedPassword = answer.typed ? answer.password : undefined;
         }
 
         try {
             const connection = await this.open(profile, { interactive: true });
             await this._store?.addRecentlyUsed(profile);
+            await this.savePasswordAfterSuccess(profile, typedPassword);
             return connection;
         } catch (error) {
             // The typed password may be the cause: ask again next time.
@@ -95,21 +100,46 @@ export class Connector {
         this._passwords.set(profileId, password);
     }
 
-    private async getPassword(profile: IConnectionProfile): Promise<string | undefined> {
+    /**
+     * Saves a password typed at the prompt once the connection it opened has succeeded, when the
+     * saved profile asks for its password to be saved: a wrong password never gets here.
+     */
+    private async savePasswordAfterSuccess(
+        profile: IConnectionProfile,
+        typedPassword: string | undefined,
+    ): Promise<void> {
+        // A reference to environment variables is not a secret and never goes to SecretStorage.
+        if (!typedPassword || !this._store || hasEnvironmentReferences(typedPassword)) {
+            return;
+        }
+        try {
+            const saved = (await this._store.findSavedProfile(profile)) ?? profile;
+            if (saved.savePassword && saved.id) {
+                await this._store.storePassword(saved, typedPassword);
+            }
+        } catch {
+            // The connection works; the password is asked again next session.
+        }
+    }
+
+    /** `typed` is true when the user just typed the password at the prompt. */
+    private async getPassword(
+        profile: IConnectionProfile,
+    ): Promise<{ password: string; typed: boolean } | undefined> {
         if (profile.password || profile.emptyPasswordInput) {
-            return profile.password ?? "";
+            return { password: profile.password ?? "", typed: false };
         }
         // A recently used entry has no password: take it from its saved profile.
         const saved = await this._store?.findSavedProfile(profile);
         if (saved?.password || saved?.emptyPasswordInput) {
-            return saved.password ?? "";
+            return { password: saved.password ?? "", typed: false };
         }
         const known =
             this._passwords.get(profile.id) ??
             (saved && this._passwords.get(saved.id)) ??
             (await this._store?.lookupPassword(saved ?? profile));
         if (known !== undefined) {
-            return known;
+            return { password: known, typed: false };
         }
         const typed = await vscode.window.showInputBox({
             title: getConnectionDisplayName(profile),
@@ -120,10 +150,11 @@ export class Connector {
             password: true,
             ignoreFocusOut: true,
         });
-        if (typed !== undefined) {
-            this._passwords.set(profile.id, typed);
+        if (typed === undefined) {
+            return undefined;
         }
-        return typed;
+        this._passwords.set(profile.id, typed);
+        return { password: typed, typed: true };
     }
 }
 

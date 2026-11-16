@@ -32,6 +32,8 @@ export const env = {
     debugPort: Number(required("YAST_TEST_DEBUG_PORT")),
     /** Where to leave DOM dumps when a test fails. */
     artifactsDir: required("YAST_TEST_ARTIFACTS"),
+    /** settings.json of the user of the test window. */
+    userSettingsFile: required("YAST_TEST_USER_SETTINGS"),
     /** Connection profiles written to the settings, in the order of the connection quick pick. */
     profiles,
 };

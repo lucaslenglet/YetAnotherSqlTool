@@ -53,6 +53,11 @@ export class ConnectionStore {
         }
     }
 
+    /** Keeps a password in SecretStorage for a profile that saves its password. */
+    public async storePassword(profile: IConnectionProfile, password: string): Promise<void> {
+        await this.savePassword(profile, password);
+    }
+
     // -- saved profiles -------------------------------------------------------
 
     /**

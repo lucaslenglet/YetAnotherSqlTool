@@ -89,6 +89,7 @@ export const cmdRebuildIntelliSenseCache = "yast.rebuildIntelliSenseCache";
 export const cmdAddObjectExplorer = "yast.addObjectExplorer";
 export const cmdConnectionGroupCreate = "yast.connectionGroups.create";
 export const cmdConnectionGroupEdit = "yast.connectionGroups.edit";
+export const cmdImportMssqlConnections = "yast.importMssqlConnections";
 export const cmdConnectionGroupDelete = "yast.connectionGroups.delete";
 export const cmdObjectExplorerNewQuery = "yast.objectExplorerNewQuery";
 export const cmdCreateDatabase = "yast.createDatabase";

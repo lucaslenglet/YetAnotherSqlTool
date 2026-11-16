@@ -17,6 +17,7 @@ import { TreeNodeInfo } from "./nodes/treeNodeInfo";
 import { ConnectionNode } from "./nodes/connectionNode";
 import { ConnectionGroupNode } from "./nodes/connectionGroupNode";
 import { AddConnectionTreeNode } from "./nodes/addConnectionTreeNode";
+import { ImportConnectionsTreeNode } from "./nodes/importConnectionsTreeNode";
 import { ConnectTreeNode } from "./nodes/connectTreeNode";
 import { ExpandErrorNode } from "./nodes/expandErrorNode";
 import { NoItemsNode } from "./nodes/noItemNode";
@@ -134,7 +135,7 @@ export class ObjectExplorerService {
             this._logger.debug(
                 "No saved connections or groups found. Showing add connection node.",
             );
-            return this.getAddConnectionNodes();
+            return [...this.getAddConnectionNodes(), new ImportConnectionsTreeNode()];
         }
 
         const newConnectionGroupNodes = new Map<string, ConnectionGroupNode>();
