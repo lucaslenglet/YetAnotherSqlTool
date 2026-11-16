@@ -111,6 +111,14 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
     private _activeDbFetchKey = "";
     /** Cache of database lists keyed by fetch key, reused within the same dialog session. */
     private _databaseListCache: Map<string, string[]> = new Map();
+    /**
+     * Fetch key whose Microsoft Entra login was refused without a database: typing one then reads
+     * the list again from it. Only for token logins, which no wrong password can lock out.
+     */
+    private _retryOnDatabaseKey = "";
+    private _databaseListRetry: ReturnType<typeof setTimeout> | undefined;
+    /** Fetch key whose login to the server's default database was refused. */
+    private _defaultDatabaseRefusedKey = "";
     private _originalUserLabel: string | undefined;
     private _originalUserTooltip: string | undefined;
     private _originalPasswordLabel: string | undefined;
@@ -447,6 +455,17 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
             (isBlur || !isTextField(this.state.formComponents[propertyName]))
         ) {
             this.triggerDatabaseFetchIfReady();
+        }
+
+        const retryKey = this._retryOnDatabaseKey;
+        if (propertyName === "database" && retryKey && retryKey === this.buildDatabaseFetchKey()) {
+            // The database box sends every keystroke and has no blur: wait for the typing to stop.
+            clearTimeout(this._databaseListRetry);
+            this._databaseListRetry = setTimeout(() => {
+                if (!this.isDisposed && this._retryOnDatabaseKey === this.buildDatabaseFetchKey()) {
+                    this.triggerDatabaseFetchIfReady();
+                }
+            }, DATABASE_LIST_RETRY_DELAY_MS);
         }
     }
 
@@ -965,6 +984,7 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
         // 1. Use cached list if available
         const cached = this._databaseListCache.get(fetchKey);
         if (cached) {
+            this._retryOnDatabaseKey = "";
             this._activeDbFetchKey = fetchKey;
             dbComponent.options = toOptions(cached);
             dbComponent.loadStatus = undefined;
@@ -981,16 +1001,36 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
         // 3. Attempt to fetch database list
         try {
             const profile = toStoredProfile(this.cleanConnection(this.state.connectionProfile));
-            profile.database = "";
-            const connection = await this._connector.open(profile, {
-                interactive: false,
-                formLoadedFrom: this._formLoadedFrom,
-            });
+            const typedDatabase = profile.database;
+            // The list never prompts for environment variables: Test Connection or Connect does.
+            const open = (p: IConnectionProfile) =>
+                this._connector.open(p, {
+                    interactive: false,
+                    formLoadedFrom: this._formLoadedFrom,
+                });
             let dbs: string[];
-            try {
-                dbs = await connection.listDatabases();
-            } finally {
-                await connection.close().catch(() => undefined);
+            if (typedDatabase && this._defaultDatabaseRefusedKey === fetchKey) {
+                dbs = await listDatabasesOf(open, profile);
+            } else {
+                try {
+                    // From the server's default database first: on Azure SQL Database, only master
+                    // lists every database of the server.
+                    dbs = await listDatabasesOf(open, { ...profile, database: "" });
+                } catch (error) {
+                    // SQL Server refuses a user of a single database (contained user) anywhere else.
+                    const message = getErrorMessage(error);
+                    if (provider !== "mssql" || !/Login failed/i.test(message)) {
+                        throw error;
+                    }
+                    this._defaultDatabaseRefusedKey = fetchKey;
+                    if (message.includes("<token-identified principal>")) {
+                        this._retryOnDatabaseKey = fetchKey;
+                    }
+                    if (!typedDatabase) {
+                        throw error;
+                    }
+                    dbs = await listDatabasesOf(open, profile).catch(() => Promise.reject(error));
+                }
             }
 
             // Check if this fetch attempt is out-of-date
@@ -998,6 +1038,7 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
                 return;
             }
 
+            this._retryOnDatabaseKey = "";
             this._databaseListCache.set(fetchKey, dbs);
             dbComponent.options = toOptions(dbs);
             dbComponent.loadStatus = undefined;
@@ -1284,6 +1325,21 @@ function isUntrustedCertificateError(
         !connection.trustServerCertificate &&
         /certificate/i.test(message)
     );
+}
+
+/** Pause in the typing of a database name after which a failed database list is read again. */
+const DATABASE_LIST_RETRY_DELAY_MS = 800;
+
+async function listDatabasesOf(
+    open: (profile: IConnectionProfile) => ReturnType<Connector["open"]>,
+    profile: IConnectionProfile,
+): Promise<string[]> {
+    const connection = await open(profile);
+    try {
+        return await connection.listDatabases();
+    } finally {
+        await connection.close().catch(() => undefined);
+    }
 }
 
 function buildDatabaseOptions(databases: string[], system: string[]): FormItemOptions[] {

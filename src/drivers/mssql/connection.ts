@@ -26,7 +26,7 @@ import {
     type DatabaseQueryRunner,
 } from "./completion";
 import { executeBatch } from "./execute";
-import { ObjectExplorer, type Row } from "./objectExplorer";
+import { DEDICATED_SQL_POOL_ENGINE_EDITION, ObjectExplorer, type Row } from "./objectExplorer";
 import { serverQueries } from "./objectExplorerQueries";
 import { ScriptCatalog } from "./scriptCatalog";
 import { scriptDatabase } from "./scriptDatabase";
@@ -43,6 +43,7 @@ const METADATA_POOL_MAX = 2;
 
 export class MssqlConnection implements DriverConnection {
     readonly serverInfo: ServerInfo;
+    private readonly engineEdition: number;
     private readonly explorer: ObjectExplorer;
     private readonly metadataPools = new Map<string, Promise<sql.ConnectionPool>>();
 
@@ -50,9 +51,10 @@ export class MssqlConnection implements DriverConnection {
         private readonly params: ConnectParams,
         address: ServerAddress,
         /** The query session: ONE physical connection, so USE, SET options and #temp tables persist between batches. */
-        private readonly sessionPool: sql.ConnectionPool,
+        private sessionPool: sql.ConnectionPool,
         info: Row,
     ) {
+        this.engineEdition = info.engineEdition;
         this.serverInfo = {
             serverVersion: info.version,
             productName: "SQL Server",
@@ -66,6 +68,7 @@ export class MssqlConnection implements DriverConnection {
                 serverName: info.serverName,
                 version: this.serverInfo.serverVersion,
                 userName: this.serverInfo.userName,
+                engineEdition: this.engineEdition,
             },
             (database, text, parameters) => this.runMetadataQuery(database, text, parameters),
         );
@@ -99,11 +102,23 @@ export class MssqlConnection implements DriverConnection {
     async listDatabases(): Promise<string[]> {
         const result = await this.sessionPool
             .request()
-            .query("SELECT name FROM sys.databases ORDER BY name");
+            .query(
+                this.engineEdition === DEDICATED_SQL_POOL_ENGINE_EDITION
+                    ? `${serverQueries.dedicatedPoolDatabases} ORDER BY name`
+                    : "SELECT name FROM sys.databases ORDER BY name",
+            );
         return result.recordset.map((row) => row.name);
     }
 
     async changeDatabase(database: string): Promise<void> {
+        if (this.engineEdition === DEDICATED_SQL_POOL_ENGINE_EDITION) {
+            // Dedicated SQL pools do not support USE: the session logs in to the database instead.
+            const previous = this.sessionPool;
+            this.sessionPool = await openPool(this.params, database);
+            // Waits for a query still running on the previous session, as USE would.
+            await previous.close().catch(() => undefined);
+            return;
+        }
         // USE on the session connection: it stays in effect for the following batches.
         await this.sessionPool.request().batch(`USE ${quoteIdentifier(database)}`);
     }
@@ -207,27 +222,21 @@ export class MssqlConnection implements DriverConnection {
     }
 
     /**
-     * Runs a batch in the context of `database` (sp_executesql of that database switches to it for the
-     * call only) on a metadata connection; aborting `signal` cancels it on the server.
+     * Runs a batch in the context of `database` on a metadata connection; aborting `signal` cancels
+     * it on the server.
      */
     private readonly runInDatabase: DatabaseQueryRunner = async (database, text, signal) => {
         signal.throwIfAborted();
         const pool = await this.getMetadataPool(database);
         signal.throwIfAborted();
         const request = pool.request();
-        // Dirty reads: an editor's open transaction holding locks on new objects must not block
-        // autocompletion. The setting ends with sp_executesql, so the pooled connection keeps its own.
-        request.input(
-            "statement",
-            sql.NVarChar(sql.MAX),
-            `SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;\n${text}`,
-        );
+        const batch = databaseBatch(database, this.metadataPoolKey(database), text);
+        if (batch.statement !== undefined)
+            request.input(STATEMENT_PARAMETER, sql.NVarChar(sql.MAX), batch.statement);
         const cancel = () => request.cancel();
         signal.addEventListener("abort", cancel, { once: true });
         try {
-            const result = await request.query(
-                `EXEC ${quoteIdentifier(database)}.sys.sp_executesql @statement`,
-            );
+            const result = await request.query(batch.text);
             signal.throwIfAborted();
             return result.recordsets as unknown as Row[][];
         } finally {
@@ -240,7 +249,7 @@ export class MssqlConnection implements DriverConnection {
      * query another database from a connection, so there each database gets its own pool.
      */
     private getMetadataPool(database: string | undefined): Promise<sql.ConnectionPool> {
-        const key = this.serverInfo.isCloud && database ? database : "";
+        const key = this.metadataPoolKey(database);
         let pool = this.metadataPools.get(key);
         if (!pool) {
             pool = openPool(this.params, key || undefined, METADATA_POOL_MAX);
@@ -250,6 +259,38 @@ export class MssqlConnection implements DriverConnection {
         }
         return pool;
     }
+
+    /** The database the metadata pool serving `database` logs in to; "" for the profile's own. */
+    private metadataPoolKey(database: string | undefined): string {
+        return this.serverInfo.isCloud && database ? database : "";
+    }
+}
+
+/**
+ * Not "statement": mssql sends every query through sp_executesql with its inputs declared, and
+ * dedicated SQL pools reject a nested sp_executesql that declares the same name again.
+ */
+const STATEMENT_PARAMETER = "yast_statement";
+
+/**
+ * What `runInDatabase` sends: `text` itself when the connection is logged in to `database`,
+ * otherwise `EXEC [database].sys.sp_executesql`, which switches to that database for the call
+ * only, with `statement` as the value of @yast_statement.
+ */
+export function databaseBatch(
+    database: string,
+    connectedDatabase: string,
+    text: string,
+): { text: string; statement?: string } {
+    // Dirty reads: an editor's open transaction holding locks on new objects must not block
+    // autocompletion. mssql runs the text through sp_executesql and the setting ends with it, so
+    // the pooled connection keeps its own.
+    const statement = `SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;\n${text}`;
+    if (connectedDatabase === database) return { text: statement };
+    return {
+        text: `EXEC ${quoteIdentifier(database)}.sys.sp_executesql @${STATEMENT_PARAMETER}`,
+        statement,
+    };
 }
 
 /** 16 for "16.0.4295.3". */
