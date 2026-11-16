@@ -288,6 +288,8 @@ describe("Webviews", () => {
 // on no side of the field. Fluent's autoSize then resized it on every placement and it jumped
 // between sides; the list is now a fixed 300 px box that scrolls.
 describe("The Database name list of the connection dialog, on a server with many databases", () => {
+    /** Height forced on the webview for the second pass: what a small screen leaves. */
+    const SHORT_VIEWPORT_PX = 360;
     const databaseCount = 80;
     const names = Array.from(
         { length: databaseCount },
@@ -348,6 +350,7 @@ describe("The Database name list of the connection dialog, on a server with many
             scrollHeight: number;
             clientHeight: number;
             windowHeight: number;
+            windowWidth: number;
         } | null>(`(() => {
             ${listOf}
             const list = listbox();
@@ -356,11 +359,11 @@ describe("The Database name list of the connection dialog, on a server with many
             return {
                 left: box.left, top: box.top, width: box.width, height: box.height,
                 scrollHeight: list.scrollHeight, clientHeight: list.clientHeight,
-                windowHeight: window.innerHeight,
+                windowHeight: window.innerHeight, windowWidth: window.innerWidth,
             };
         })()`);
 
-    it("opens at most 300 px high, scrolls to the last database and stays where it is", async function () {
+    it("opens inside the webview, scrolls to the last database and stays where it is, in a tall and in a short webview", async function () {
         this.timeout(120000);
         await vscode.commands.executeCommand("yast.addObjectExplorer");
         const webview = await waitForWebview(
@@ -385,10 +388,67 @@ describe("The Database name list of the connection dialog, on a server with many
             return true;
         })()`);
 
+        const natural = await checkOpenList(webview, "natural");
+
+        // The same in a short webview, as the window of a small screen gives: the frame that holds the
+        // page is made short (the viewport of the page is that frame), then restored. The DevTools
+        // protocol refuses a metrics override on a webview.
+        await webview.evaluate(
+            `(() => { ${listOf} control("Database name").dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true })); return true; })()`,
+        );
+        await waitFor(
+            "the list to close",
+            () => listbox(webview),
+            (box) => box === null,
+        );
+        await webview.session.evaluate(
+            `document.querySelector("iframe#active-frame").style.setProperty("height", "${SHORT_VIEWPORT_PX}px", "important")`,
+        );
+        try {
+            await waitFor(
+                "the webview to be short",
+                () => webview.evaluate<number>("window.innerHeight"),
+                (height) => !!height && height <= SHORT_VIEWPORT_PX,
+            );
+            const short = await checkOpenList(webview, "short");
+            assert.ok(
+                short.windowHeight < natural.windowHeight,
+                "the short case was not shorter than the natural one",
+            );
+
+            // And it can be picked.
+            await webview.evaluate(`(() => {
+                ${listOf}
+                [...listbox().querySelectorAll('[role="option"]')]
+                    .find((o) => o.textContent.trim() === ${jsLiteral(lastName)}).click();
+                return true;
+            })()`);
+            await waitFor(
+                "the picked database in the field",
+                () =>
+                    webview.evaluate<string>(
+                        `(() => { ${control} return control("Database name").value; })()`,
+                    ),
+                (value) => value === lastName,
+            );
+        } finally {
+            await webview.session.evaluate(
+                `document.querySelector("iframe#active-frame").style.removeProperty("height")`,
+            );
+        }
+    });
+
+    /**
+     * Opens the Database name list the way a user does (the field scrolled into view, then a
+     * click) and checks what must hold in any window: the whole list is inside the webview, it is
+     * not taller than the rule allows, it scrolls to the last database, and it never moves.
+     */
+    async function checkOpenList(webview: Webview, tag: string) {
         // The list fills in once the databases are read; the options exist only while it is open.
         const openList = `(() => {
             ${listOf}
             const input = control("Database name");
+            input.scrollIntoView({ block: "center" });
             if (!listbox()) input.click();
             return [...(listbox()?.querySelectorAll('[role="option"]') ?? [])].map((o) => o.textContent.trim());
         })()`;
@@ -430,14 +490,20 @@ describe("The Database name list of the connection dialog, on a server with many
             format: "png",
         });
         fs.writeFileSync(
-            path.join(env.artifactsDir, "database-list-open.png"),
+            path.join(env.artifactsDir, `database-list-${tag}.png`),
             Buffer.from(shot.data, "base64"),
         );
 
+        const where = `${JSON.stringify(first)}`;
         assert.ok(
-            first.height <= 300,
-            `the list is ${first.height} px high; ${first.scrollHeight} px of content in a ${first.windowHeight} px window`,
+            first.top >= 0 &&
+                first.top + first.height <= first.windowHeight &&
+                first.left >= 0 &&
+                first.left + first.width <= first.windowWidth,
+            `the list is not inside the webview: ${where}`,
         );
+        const allowed = Math.min(300, first.windowHeight / 2 - 24);
+        assert.ok(first.height <= allowed + 1, `the list is taller than ${allowed} px: ${where}`);
         assert.ok(
             first.scrollHeight > first.clientHeight,
             `the list does not scroll: ${first.scrollHeight} px of content in a ${first.clientHeight} px box`,
@@ -484,21 +550,6 @@ describe("The Database name list of the connection dialog, on a server with many
             reached.onTop,
             `the last database is hidden behind something: ${JSON.stringify(reached)}`,
         );
-
-        // And it can be picked.
-        await webview.evaluate(`(() => {
-            ${listOf}
-            [...listbox().querySelectorAll('[role="option"]')]
-                .find((o) => o.textContent.trim() === ${jsLiteral(lastName)}).click();
-            return true;
-        })()`);
-        await waitFor(
-            "the picked database in the field",
-            () =>
-                webview.evaluate<string>(
-                    `(() => { ${control} return control("Database name").value; })()`,
-                ),
-            (value) => value === lastName,
-        );
-    });
+        return first;
+    }
 });

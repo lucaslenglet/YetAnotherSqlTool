@@ -368,9 +368,12 @@ export const FormField = <
 /**
  * Fluent's autoSize resizes the listbox to the space left, and each resize triggers a new placement:
  * a list too long to fit on any side of the field (hundreds of databases) then jumps between sides
- * forever. A fixed maximum height keeps the size independent of the position.
+ * forever. So the size is fixed, whatever the placement, and chosen so that the list fits above or
+ * below a visible field: the larger of the two spaces is at least half the viewport (the webview,
+ * where the listbox is portaled) minus half the field (about 24 px high) and Fluent's 2 px offset,
+ * hence 50vh - 24px, with the rest of the field's height as margin.
  */
-const COMBOBOX_LISTBOX_MAX_HEIGHT_PX = 300;
+const COMBOBOX_LISTBOX_MAX_HEIGHT = "min(300px, calc(50vh - 24px))";
 
 export const FormCombobox = <
     TForm,
@@ -415,7 +418,7 @@ export const FormCombobox = <
             autoComplete={isFreeform ? "off" : "on"}
             positioning={{ autoSize: false }}
             listbox={{
-                style: { maxHeight: `${COMBOBOX_LISTBOX_MAX_HEIGHT_PX}px`, overflowY: "auto" },
+                style: { maxHeight: COMBOBOX_LISTBOX_MAX_HEIGHT, overflowY: "auto" },
             }}
             onChange={(event) => {
                 if (isFreeform) {
