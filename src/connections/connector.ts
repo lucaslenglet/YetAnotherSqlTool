@@ -19,6 +19,13 @@ import {
 } from "../drivers/types";
 import { ConnectionStore } from "./connectionStore";
 import { acquireTokenFromVscodeAccount } from "../azure/vscodeEntraMfaUtils";
+import type { EnvironmentAccessRequest } from "./environmentConsent";
+import {
+    environmentReferenceFields,
+    redactConnectionErrors,
+    redactError,
+    resolveConnectionOptions,
+} from "./environmentReferences";
 
 /** Profile fields that describe the profile itself rather than how to connect. */
 const profileOnlyKeys = new Set([
@@ -59,7 +66,7 @@ export class Connector {
         }
 
         try {
-            const connection = await openConnection(profile);
+            const connection = await this.open(profile, { interactive: true });
             await this._store?.addRecentlyUsed(profile);
             return connection;
         } catch (error) {
@@ -67,6 +74,20 @@ export class Connector {
             this._passwords.delete(profile.id);
             throw error;
         }
+    }
+
+    /**
+     * Opens a connection with the profile as is (no password lookup or prompt), once the profile
+     * may read the environment variables it references.
+     */
+    public open(
+        profile: IConnectionProfile,
+        request: EnvironmentAccessRequest,
+    ): Promise<DriverConnection> {
+        return openConnection(profile, (p) => {
+            const consent = this._store?.environmentConsent;
+            return consent ? consent.ensureAllowed(p, request) : refuseEnvironment();
+        });
     }
 
     /** Keeps a password for this VS Code session (profiles that don't save their password). */
@@ -116,17 +137,49 @@ function needsPassword(profile: IConnectionProfile): boolean {
     );
 }
 
-/** Opens a connection with the profile as is: no password lookup or prompt. */
-export function openConnection(profile: IConnectionProfile): Promise<DriverConnection> {
-    const options = toConnectionOptions(profile);
+/**
+ * Opens a connection with the profile as is: no password lookup or prompt. `${env:NAME}`
+ * references are resolved here, after `allowEnvironment`, and only the driver sees the values.
+ */
+export async function openConnection(
+    profile: IConnectionProfile,
+    allowEnvironment: (profile: IConnectionProfile) => Promise<void> = refuseEnvironment,
+): Promise<DriverConnection> {
+    const typed = toConnectionOptions(profile);
+    if (environmentReferenceFields(typed).length > 0) {
+        await allowEnvironment(profile);
+    }
+    // Before any network attempt: an unset variable fails here.
+    const { options, redact } = resolveConnectionOptions(typed);
+    if (!redact) {
+        return connectDriver(profile, options);
+    }
+    try {
+        return redactConnectionErrors(await connectDriver(profile, options), redact);
+    } catch (error) {
+        throw redactError(error, redact);
+    }
+}
+
+function refuseEnvironment(): Promise<void> {
+    return Promise.reject(
+        new Error(vscode.l10n.t("Environment variables cannot be read for this connection.")),
+    );
+}
+
+function connectDriver(
+    profile: IConnectionProfile,
+    options: ConnectionOptionValues,
+): Promise<DriverConnection> {
     // Application scope: only the user's own settings, never a workspace's, can widen this list.
     const entraAllowedServers = vscode.workspace
         .getConfiguration(Constants.extensionName)
         .get<string[]>("entraId.allowedServers", []);
-    if (profile.authenticationType === Constants.azureMfa) {
+    if (options.authenticationType === Constants.azureMfa) {
+        const tenantId = options.tenantId === undefined ? undefined : String(options.tenantId);
         // Asked again for every physical connection: VS Code refreshes the token when it expires.
         const getAccessToken = (scope: string) =>
-            acquireTokenFromVscodeAccount(scope, profile.accountId, profile.tenantId);
+            acquireTokenFromVscodeAccount(scope, profile.accountId, tenantId);
         return getDriver(profile.provider).connect({
             options,
             getAccessToken,
