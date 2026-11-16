@@ -2,6 +2,9 @@
 // asset missing from the package, or blocked by the Content Security Policy, shows up there.
 
 import * as assert from "node:assert";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { Client } from "pg";
 import * as vscode from "vscode";
 import { allSessions, findWebviews, jsLiteral, Session, workbench, type Webview } from "./cdp";
 import { env, profile } from "./env";
@@ -10,6 +13,7 @@ import {
     errorNotifications,
     objectExplorerRows,
     pickFromCommand,
+    sleep,
     waitFor,
     waitForWebview,
 } from "./helpers";
@@ -277,5 +281,224 @@ describe("Webviews", () => {
         } finally {
             late.close();
         }
+    });
+});
+
+// A server with many databases: the "Database name" list is far taller than the window, so it fits
+// on no side of the field. Fluent's autoSize then resized it on every placement and it jumped
+// between sides; the list is now a fixed 300 px box that scrolls.
+describe("The Database name list of the connection dialog, on a server with many databases", () => {
+    const databaseCount = 80;
+    const names = Array.from(
+        { length: databaseCount },
+        (_, i) => `yast_e2e_dblist_${String(i).padStart(3, "0")}`,
+    );
+    const lastName = names[names.length - 1];
+    const pg = profile("pg");
+
+    const connect = async <T>(use: (client: Client) => Promise<T>): Promise<T> => {
+        const client = new Client({
+            host: pg.server,
+            port: pg.port,
+            user: pg.user,
+            password: pg.password,
+            database: pg.database,
+        });
+        await client.connect();
+        try {
+            return await use(client);
+        } finally {
+            await client.end();
+        }
+    };
+
+    before(async function () {
+        this.timeout(120000);
+        await connect(async (client) => {
+            for (const name of names) {
+                await client.query(`CREATE DATABASE "${name}"`);
+            }
+        });
+    });
+
+    after(async function () {
+        this.timeout(120000);
+        await vscode.commands.executeCommand("workbench.action.closeAllEditors");
+        await connect(async (client) => {
+            for (const name of names) {
+                await client.query(`DROP DATABASE IF EXISTS "${name}"`);
+            }
+        });
+    });
+
+    /** Finds the open list of the Database name field: other dropdowns of the form may be open too. */
+    const listOf = `${control}
+        const listbox = () => {
+            const id = control("Database name")?.getAttribute("aria-controls");
+            return id ? document.getElementById(id) : null;
+        };`;
+
+    /** Box of the open list, and what it holds. Null while no list is open. */
+    const listbox = (webview: Webview) =>
+        webview.evaluate<{
+            left: number;
+            top: number;
+            width: number;
+            height: number;
+            scrollHeight: number;
+            clientHeight: number;
+            windowHeight: number;
+        } | null>(`(() => {
+            ${listOf}
+            const list = listbox();
+            if (!list) return null;
+            const box = list.getBoundingClientRect();
+            return {
+                left: box.left, top: box.top, width: box.width, height: box.height,
+                scrollHeight: list.scrollHeight, clientHeight: list.clientHeight,
+                windowHeight: window.innerHeight,
+            };
+        })()`);
+
+    it("opens at most 300 px high, scrolls to the last database and stays where it is", async function () {
+        this.timeout(120000);
+        await vscode.commands.executeCommand("yast.addObjectExplorer");
+        const webview = await waitForWebview(
+            "connectionDialog",
+            `document.querySelector("#connectButton")`,
+        );
+        await pick(webview, "Database type", "PostgreSQL");
+        // The form is rebuilt for the engine: its port field is the one that tells.
+        await waitFor("the PostgreSQL form", () =>
+            webview.evaluate<boolean>(
+                `(() => { ${control} return control("Port")?.placeholder === "5432"; })()`,
+            ),
+        );
+        await fill(webview, "Server name", pg.server);
+        await fill(webview, "Port", String(pg.port));
+        await fill(webview, "User name", pg.user);
+        await fill(webview, "Password", pg.password);
+        // The databases are read when a text field loses the focus, not on every keystroke.
+        await webview.evaluate(`(() => {
+            ${control}
+            control("Password").dispatchEvent(new window.FocusEvent("focusout", { bubbles: true }));
+            return true;
+        })()`);
+
+        // The list fills in once the databases are read; the options exist only while it is open.
+        const openList = `(() => {
+            ${listOf}
+            const input = control("Database name");
+            if (!listbox()) input.click();
+            return [...(listbox()?.querySelectorAll('[role="option"]') ?? [])].map((o) => o.textContent.trim());
+        })()`;
+        await waitFor(
+            `"${lastName}" in the Database name list`,
+            () => webview.evaluate<string[]>(openList),
+            (options) => !!options && options.includes(lastName),
+            40000,
+        );
+        // Let the placement settle: it takes a few frames.
+        await sleep(500);
+
+        const first = await listbox(webview);
+        assert.ok(first, "the list is not open");
+        assert.ok(
+            first.scrollHeight > first.windowHeight,
+            `the list is too short to test anything: ${first.scrollHeight} px of content in a ${first.windowHeight} px window`,
+        );
+
+        // Where the list is, for about a second: every frame, to catch a jump.
+        const samples = await webview.evaluate<string[]>(`new Promise((resolve) => {
+            ${listOf}
+            const seen = [];
+            const end = Date.now() + 1000;
+            const sample = () => {
+                const box = listbox()?.getBoundingClientRect();
+                seen.push(box ? [box.left, box.top, box.width, box.height].join(",") : "closed");
+                if (Date.now() < end) setTimeout(sample, 16);
+                else resolve(seen);
+            };
+            sample();
+        })`);
+        assert.ok(samples && samples.length > 10, `only ${samples?.length} samples`);
+
+        // A real screenshot of the window, to look at when this fails.
+        const shot = await (
+            await workbench()
+        ).send<{ data: string }>("Page.captureScreenshot", {
+            format: "png",
+        });
+        fs.writeFileSync(
+            path.join(env.artifactsDir, "database-list-open.png"),
+            Buffer.from(shot.data, "base64"),
+        );
+
+        assert.ok(
+            first.height <= 300,
+            `the list is ${first.height} px high; ${first.scrollHeight} px of content in a ${first.windowHeight} px window`,
+        );
+        assert.ok(
+            first.scrollHeight > first.clientHeight,
+            `the list does not scroll: ${first.scrollHeight} px of content in a ${first.clientHeight} px box`,
+        );
+        assert.deepStrictEqual(
+            [...new Set(samples)],
+            [`${first.left},${first.top},${first.width},${first.height}`],
+            "the list moved or changed size while open",
+        );
+
+        // The last database is reachable by scrolling, and it is what the user sees there: the
+        // option itself is on top at its position, inside the box of the list.
+        const reached = await webview.evaluate<{
+            scrolled: boolean;
+            optionTop: number;
+            optionBottom: number;
+            listTop: number;
+            listBottom: number;
+            onTop: boolean;
+        }>(`(() => {
+            ${listOf}
+            const list = listbox();
+            const option = [...list.querySelectorAll('[role="option"]')]
+                .find((o) => o.textContent.trim() === ${jsLiteral(lastName)});
+            list.scrollTop = list.scrollHeight;
+            const box = option.getBoundingClientRect();
+            const listBox = list.getBoundingClientRect();
+            const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+            return {
+                scrolled: list.scrollTop > 0,
+                optionTop: box.top, optionBottom: box.bottom,
+                listTop: listBox.top, listBottom: listBox.bottom,
+                onTop: !!hit && option.contains(hit),
+            };
+        })()`);
+        assert.ok(reached);
+        assert.ok(reached.scrolled, "the list did not scroll");
+        assert.ok(
+            reached.optionTop >= reached.listTop - 1 &&
+                reached.optionBottom <= reached.listBottom + 1,
+            `the last database is outside the list: ${JSON.stringify(reached)}`,
+        );
+        assert.ok(
+            reached.onTop,
+            `the last database is hidden behind something: ${JSON.stringify(reached)}`,
+        );
+
+        // And it can be picked.
+        await webview.evaluate(`(() => {
+            ${listOf}
+            [...listbox().querySelectorAll('[role="option"]')]
+                .find((o) => o.textContent.trim() === ${jsLiteral(lastName)}).click();
+            return true;
+        })()`);
+        await waitFor(
+            "the picked database in the field",
+            () =>
+                webview.evaluate<string>(
+                    `(() => { ${control} return control("Database name").value; })()`,
+                ),
+            (value) => value === lastName,
+        );
     });
 });

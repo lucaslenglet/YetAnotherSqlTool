@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Connection dialog: the "Database name" list no longer jumps between two places, many times per second, on a server with many databases when it fits on no side of the field. The list is now at most 300 px high and scrolls.
+
 ## [0.1.2] - 2026-11-15
 
 ### Added

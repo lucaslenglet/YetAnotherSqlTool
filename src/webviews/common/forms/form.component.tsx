@@ -365,6 +365,13 @@ export const FormField = <
     );
 };
 
+/**
+ * Fluent's autoSize resizes the listbox to the space left, and each resize triggers a new placement:
+ * a list too long to fit on any side of the field (hundreds of databases) then jumps between sides
+ * forever. A fixed maximum height keeps the size independent of the position.
+ */
+const COMBOBOX_LISTBOX_MAX_HEIGHT_PX = 300;
+
 export const FormCombobox = <
     TForm,
     TState extends FormState<TForm, TState, TFormItemSpec>,
@@ -406,6 +413,10 @@ export const FormCombobox = <
                 optionDisplayName !== "" ? [formState[component.propertyName] as string] : []
             }
             autoComplete={isFreeform ? "off" : "on"}
+            positioning={{ autoSize: false }}
+            listbox={{
+                style: { maxHeight: `${COMBOBOX_LISTBOX_MAX_HEIGHT_PX}px`, overflowY: "auto" },
+            }}
             onChange={(event) => {
                 if (isFreeform) {
                     const newVal = event.target.value;
