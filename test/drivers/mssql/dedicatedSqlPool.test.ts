@@ -3,7 +3,11 @@ import { mssqlDriver } from "../../../src/drivers/mssql";
 import { databaseBatch } from "../../../src/drivers/mssql/connection";
 import { serverQueries } from "../../../src/drivers/mssql/objectExplorerQueries";
 import type { DriverConnection, ObjectNode } from "../../../src/drivers/types";
-import { FakeTdsServer, type FakeServerError } from "../../support/fakeTdsServer";
+import {
+    FakeTdsServer,
+    type FakeResultSet,
+    type FakeServerError,
+} from "../../support/fakeTdsServer";
 
 // Azure Synapse Analytics dedicated SQL pools (EngineEdition 6), with no pool at hand: the real
 // driver (mssql + tedious) talks to test/support/fakeTdsServer.ts, which answers like a pool
@@ -32,7 +36,53 @@ function poolRejection(sql: string): FakeServerError | undefined {
             "104017;The variable name '@statement' has already been declared.Variable names must be unique within a query batch or stored procedure.",
         );
     if (/^\s*USE\s/i.test(sql)) return error(104455, "USE statement is not supported.");
+    // A table value constructor as a derived table: the parse error reported in issue #43. The
+    // number is the one forum reports give for Synapse's "Parse error at line: ..., column: ...";
+    // Microsoft does not document it.
+    const constructor = /(?:\bFROM|\bJOIN|\bAPPLY|,)\s*\(\s*VALUES\b/i.exec(sql);
+    if (constructor) {
+        const before = sql.slice(0, constructor.index + constructor[0].indexOf("("));
+        const line = before.split("\n").length;
+        const column = before.length - before.lastIndexOf("\n");
+        return error(
+            103010,
+            `Parse error at line: ${line}, column: ${column}: Incorrect syntax near '('.`,
+        );
+    }
     return undefined;
+}
+
+/** Rows for the columns query: relation 0 has id and name, relation 2 has id; 1 and 3 have none. */
+function columnRows(sql: string): FakeResultSet | undefined {
+    if (!sql.includes("sys.all_columns")) return undefined;
+    const row = (idx: number, columnId: number, name: string, typeName: string, maxLength = 4) => [
+        idx,
+        columnId,
+        name,
+        idx === 2 ? 0 : 1,
+        typeName,
+        null,
+        0,
+        maxLength,
+        0,
+        0,
+    ];
+    return {
+        columns: [
+            "idx:int",
+            "columnId:int",
+            "name",
+            "isNullable:int",
+            "typeName",
+            "baseTypeName",
+            "isAliasType:int",
+            "maxLength:int",
+            "precision:int",
+            "scale:int",
+        ],
+        // Out of order on purpose: a pool query has no ORDER BY.
+        rows: [row(2, 1, "id", "int"), row(0, 2, "name", "nvarchar", 200), row(0, 1, "id", "int")],
+    };
 }
 
 async function startServer(engineEdition: 3 | 5 | 6): Promise<FakeTdsServer> {
@@ -206,6 +256,70 @@ describe("a dedicated SQL pool (EngineEdition 6)", () => {
         expect(sent.some((sql) => sql.includes("sp_executesql"))).toBe(false);
     });
 
+    it("reads the columns of relations without a table value constructor, and maps the rows to the relations asked", async () => {
+        const server = await startServer(6);
+        const connection = await connect(server);
+
+        server.answer = (sql) => poolRejection(sql) ?? columnRows(sql);
+
+        // Index 1 has no row (unknown relation); index 2 asks index 0's relation again.
+        const columns = await connection.listCompletionColumns(
+            POOL,
+            [
+                { schema: "dbo", name: "fact_sales" },
+                { schema: "dbo", name: "nope" },
+                { schema: "dbo", name: "fact_sales" },
+                { schema: "we]ird", name: "it's.here" },
+            ],
+            new AbortController().signal,
+        );
+
+        expect(columns).toEqual([
+            [
+                { name: "id", dataType: "int", nullable: true },
+                { name: "name", dataType: "nvarchar(100)", nullable: true },
+            ],
+            [],
+            [{ name: "id", dataType: "int", nullable: false }],
+            [],
+        ]);
+        const sent = server.logins
+            .filter((login) => login.database === POOL)
+            .flatMap((login) => login.requests)
+            .filter((sql) => sql.includes("sys.all_columns"));
+        expect(sent).toHaveLength(1);
+        const [query] = sent;
+        // Sent on the pool's own connection, one batch: one SELECT per relation joined by UNION ALL.
+        expect(query).toMatch(/^SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;\n/);
+        expect(query).not.toContain("sp_executesql");
+        expect(query.match(/\bUNION ALL\b/g)).toHaveLength(3);
+        expect(query).toContain("SELECT 0 AS idx, c.column_id AS columnId");
+        expect(query).toContain("SELECT 3 AS idx, c.column_id AS columnId");
+        expect(query).toContain("WHERE s.name = N'dbo' AND o.name = N'nope'");
+        expect(query).toContain("WHERE s.name = N'we]ird' AND o.name = N'it''s.here'");
+        // Catalog views joined on columns, no derived table: nothing that a pool is known to reject.
+        for (const unsupported of [
+            /VALUES/i,
+            /\bAPPLY\b/i,
+            /synonyms/i,
+            /OBJECT_ID\(/i,
+            /ORDER BY/i,
+            /\(\s*SELECT/i,
+        ]) {
+            expect(query).not.toMatch(unsupported);
+        }
+    });
+
+    it("refuses a table value constructor as a derived table, like a real pool", () => {
+        expect(poolRejection("SELECT 1\nFROM (VALUES (0, N'a')) AS r(idx, n)")).toEqual({
+            number: 103010,
+            error: "Parse error at line: 2, column: 6: Incorrect syntax near '('.",
+        });
+        expect(poolRejection("SELECT 1 FROM (SELECT 0 AS idx UNION ALL SELECT 1) AS r")).toBe(
+            undefined,
+        );
+    });
+
     it("changes the database of the session by logging in to it, since USE is not supported", async () => {
         const server = await startServer(6);
         const connection = await connect(server);
@@ -282,6 +396,31 @@ describe("other editions keep their behavior", () => {
 
         const sent = server.logins.flatMap((login) => login.requests);
         expect(sent).toContain("EXEC [pool].sys.sp_executesql @yast_statement");
+    });
+
+    it("Azure SQL Database (EngineEdition 5): columns keep the query that follows synonyms", async () => {
+        const server = await startServer(5);
+        const connection = await connect(server);
+        server.answer = columnRows;
+
+        await connection.listCompletionColumns(
+            POOL,
+            [
+                { schema: "dbo", name: "fact_sales" },
+                { schema: "dbo", name: "nope" },
+                { schema: "dbo", name: "fact_sales" },
+            ],
+            new AbortController().signal,
+        );
+
+        const query = server.logins
+            .filter((login) => login.database === POOL)
+            .flatMap((login) => login.requests)
+            .find((sql) => sql.includes("sys.all_columns"));
+        expect(query).toContain(
+            "FROM (VALUES (0, N'[dbo].[fact_sales]'), (1, N'[dbo].[nope]'), (2, N'[dbo].[fact_sales]')) AS r(idx, objectName)",
+        );
+        expect(query).toContain("FROM sys.synonyms s");
     });
 
     it("SQL Server (EngineEdition 3): Change Database runs USE on the session", async () => {
