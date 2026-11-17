@@ -183,6 +183,8 @@ export class FakeTdsServer {
         () => undefined;
     /** Returns the "Login failed" message for a login the server refuses after authenticating it (e.g. by its database). */
     refuseLogin: (login: FakeTdsLogin) => string | undefined = () => undefined;
+    /** Time the server takes to answer each query, so that queries of a client overlap. */
+    answerDelayMs = 0;
     /** When set, an accepted login is sent to this other server. */
     redirectTo: { host: string; port: number } | undefined;
 
@@ -217,6 +219,11 @@ export class FakeTdsServer {
 
     get port(): number {
         return (this.server!.address() as AddressInfo).port;
+    }
+
+    /** Client connections open right now. */
+    get openConnections(): number {
+        return this.sockets.size;
     }
 
     /** Tokens received, one per login that got as far as sending one. */
@@ -257,8 +264,24 @@ export class FakeTdsServer {
                     : userName
                 : this.identity.loginName;
             return {
-                columns: ["serverName", "version", "edition", "engineEdition:int", "loginName"],
-                rows: [[serverName, version, edition, engineEdition, loginName]],
+                columns: [
+                    "serverName",
+                    "version",
+                    "edition",
+                    "engineEdition:int",
+                    "loginName",
+                    "databaseName",
+                ],
+                rows: [
+                    [
+                        serverName,
+                        version,
+                        edition,
+                        engineEdition,
+                        loginName,
+                        login.database || "master",
+                    ],
+                ],
             };
         }
         if (/^\s*SELECT DB_NAME\(\)/i.test(sql))
@@ -848,12 +871,12 @@ class FakeTdsSession {
         }
         login.requests.push(sql);
         const answer = this.server.answer(sql, login) ?? this.server.defaultAnswer(sql, login);
+        const delay = this.server.answerDelayMs;
+        const send = (...tokens: Buffer[]) =>
+            delay > 0 ? setTimeout(() => this.send(...tokens), delay) : this.send(...tokens);
         if (answer && "error" in answer) {
             const error = errorToken(answer.number, answer.error, this.server.identity.serverName);
-            this.send(
-                error,
-                doneToken(isRpc ? TOKEN.DONE_PROC : TOKEN.DONE, DONE_ERROR | DONE_FINAL),
-            );
+            send(error, doneToken(isRpc ? TOKEN.DONE_PROC : TOKEN.DONE, DONE_ERROR | DONE_FINAL));
             return;
         }
         const result = answer;
@@ -873,6 +896,6 @@ class FakeTdsSession {
                 doneToken(TOKEN.DONE_PROC, DONE_FINAL),
             );
         else if (!result) tokens.push(doneToken(TOKEN.DONE, DONE_FINAL));
-        this.send(...tokens);
+        send(...tokens);
     }
 }

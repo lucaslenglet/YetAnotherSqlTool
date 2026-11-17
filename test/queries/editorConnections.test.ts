@@ -335,3 +335,64 @@ describe("color changed in the settings", () => {
         expect(connectionItem().color).toBe("#107c10");
     });
 });
+
+describe("metadata hint", () => {
+    /** Replaces the editor connections of this test with ones over `driverConnection`. */
+    function connectWith(driverConnection: object): EditorConnections {
+        connections.dispose();
+        const connector = { connect: async () => driverConnection } as unknown as Connector;
+        const config = { getConnections: async () => [] } as unknown as IConnectionConfig;
+        connections = new EditorConnections(connector, config);
+        return connections;
+    }
+
+    it("tells the connection that autocompletion will read the catalog of the database it logged in to", async () => {
+        const prepareMetadata = vi.fn();
+        const editors = connectWith({ ...connection, prepareMetadata });
+
+        expect(await editors.connect("file:///a.sql", profile("prod"))).toBe(true);
+
+        expect(prepareMetadata).toHaveBeenCalledTimes(1);
+        expect(prepareMetadata).toHaveBeenCalledWith();
+    });
+
+    it("does not when autocompletion is off", async () => {
+        const prepareMetadata = vi.fn();
+        const editors = connectWith({ ...connection, prepareMetadata });
+        const spy = vi.spyOn(vscode.workspace, "getConfiguration").mockReturnValue({
+            get: (key: string, fallback?: unknown) =>
+                key === "intelliSense.enableIntelliSense" ? false : fallback,
+        } as never);
+        try {
+            expect(await editors.connect("file:///a.sql", profile("prod"))).toBe(true);
+        } finally {
+            spy.mockRestore();
+        }
+
+        expect(prepareMetadata).not.toHaveBeenCalled();
+    });
+
+    it("closes a connection that fails after logging in, with what the hint opened", async () => {
+        const close = vi.fn(async () => undefined);
+        const editors = connectWith({
+            ...connection,
+            prepareMetadata: vi.fn(),
+            getCurrentDatabase: async () => {
+                throw new Error("connection lost");
+            },
+            close,
+        });
+
+        expect(await editors.connect("file:///a.sql", profile("prod"))).toBe(false);
+
+        expect(close).toHaveBeenCalledTimes(1);
+        expect(editors.isConnected("file:///a.sql")).toBe(false);
+    });
+
+    it("connects a driver connection that has no hint", async () => {
+        const editors = connectWith(connection);
+
+        expect(await editors.connect("file:///a.sql", profile("prod"))).toBe(true);
+        expect(editors.get("file:///a.sql")?.database).toBe("master");
+    });
+});
