@@ -184,7 +184,13 @@ export class MssqlConnection implements DriverConnection {
         relations: { schema: string; name: string }[],
         signal: AbortSignal,
     ): Promise<CompletionColumn[][]> {
-        return listCompletionColumns(this.runInDatabase, database, relations, signal);
+        return listCompletionColumns(
+            this.runInDatabase,
+            database,
+            relations,
+            signal,
+            this.engineEdition === DEDICATED_SQL_POOL_ENGINE_EDITION,
+        );
     }
 
     listDefaultSchemas(database: string, signal: AbortSignal): Promise<string[]> {

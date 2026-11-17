@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Connection dialog: the "Database name" list no longer jumps between two places, many times per second, on a server with many databases when it fits on no side of the field. The list is now at most 300 px high (less in a short window, so that it always fits above or below the field) and scrolls.
 - Azure Synapse Analytics dedicated SQL pools: the connection no longer fails on `@@SERVERNAME`; the Object Explorer shows the folders Microsoft's extension shows for a pool (no Triggers, Sequences, Synonyms, Keys, user-defined types...) and, like "Change Database", leaves out the databases the user cannot open, such as `master` for a user of the pool database only; autocompletion works; "Change Database" connects to the chosen database instead of running `USE`, which pools do not support.
+- Azure Synapse Analytics dedicated SQL pools: column suggestions after `table.` or `alias.` work. The query that reads the columns used a syntax the pool rejects (`Incorrect syntax near '('`); a pool now gets an equivalent query that reads only catalog views, and synonyms are not followed there, since pools have none. SQL Server and Azure SQL Database are unchanged.
 - SQL Server connection dialog: when the login to the server's default database is refused, as for a user of a single database, the "Database name" list is read from the database typed in the form (for a Microsoft Entra ID login, also when the database is typed after the list has failed).
 
 ## [0.1.2] - 2026-11-15

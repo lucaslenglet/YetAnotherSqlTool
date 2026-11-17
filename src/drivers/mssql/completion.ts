@@ -147,14 +147,28 @@ function signatureDetail(
 
 const quoteString = (text: string) => `N'${text.replace(/'/g, "''")}'`;
 
-export async function listCompletionColumns(
-    run: DatabaseQueryRunner,
-    database: string,
-    relations: { schema: string; name: string }[],
-    signal: AbortSignal,
-): Promise<CompletionColumn[][]> {
-    const result: CompletionColumn[][] = relations.map(() => []);
-    if (relations.length === 0) return result;
+/**
+ * One SELECT per relation, joined by UNION ALL, with no derived table: a dedicated SQL pool
+ * rejects a table value constructor in FROM, and nothing shows that it accepts any other derived
+ * table of literals. Same shape as the objects query, which runs on a pool: catalog views joined
+ * on columns, no ORDER BY (the rows are sorted by `columnId` afterwards), no synonyms (a pool has
+ * none), APPLY or OBJECT_ID. Names are sent as literals, so they need no quoting as identifiers.
+ */
+function dedicatedPoolColumnsQuery(relations: { schema: string; name: string }[]): string {
+    return relations
+        .map(
+            (r, index) => `
+        SELECT ${index} AS idx, c.column_id AS columnId, c.name, c.is_nullable AS isNullable, ${typeColumns("c", "t", "bt")}
+        FROM sys.schemas s
+        JOIN sys.all_objects o ON o.schema_id = s.schema_id
+        JOIN sys.all_columns c ON c.object_id = o.object_id
+        ${typeJoins("c", "t", "bt")}
+        WHERE s.name = ${quoteString(r.schema)} AND o.name = ${quoteString(r.name)}`,
+        )
+        .join("\n        UNION ALL");
+}
+
+function columnsQuery(relations: { schema: string; name: string }[]): string {
     const values = relations
         .map(
             (r, index) =>
@@ -162,9 +176,7 @@ export async function listCompletionColumns(
         )
         .join(", ");
     // A synonym gives the columns of its target when that target is in the same database.
-    const [rows] = await run(
-        database,
-        `
+    return `
         SELECT r.idx, c.name, c.is_nullable AS isNullable, ${typeColumns("c", "t", "bt")}
         FROM (VALUES ${values}) AS r(idx, objectName)
         CROSS APPLY (
@@ -175,9 +187,25 @@ export async function listCompletionColumns(
         ) o
         JOIN sys.all_columns c ON c.object_id = o.id
         ${typeJoins("c", "t", "bt")}
-        ORDER BY r.idx, c.column_id`,
+        ORDER BY r.idx, c.column_id`;
+}
+
+export async function listCompletionColumns(
+    run: DatabaseQueryRunner,
+    database: string,
+    relations: { schema: string; name: string }[],
+    signal: AbortSignal,
+    dedicatedSqlPool = false,
+): Promise<CompletionColumn[][]> {
+    const result: CompletionColumn[][] = relations.map(() => []);
+    if (relations.length === 0) return result;
+    const [rows] = await run(
+        database,
+        dedicatedSqlPool ? dedicatedPoolColumnsQuery(relations) : columnsQuery(relations),
         signal,
     );
+    // The pool query has no ORDER BY: columns by column_id, relations as asked.
+    if (dedicatedSqlPool) rows.sort((x, y) => x.idx - y.idx || x.columnId - y.columnId);
     for (const row of rows) {
         result[row.idx].push({
             name: row.name,
