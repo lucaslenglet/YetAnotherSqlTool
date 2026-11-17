@@ -590,12 +590,17 @@ export class ObjectExplorer {
     private async expandConstraints(parent: ObjectNode, context: Context): Promise<ObjectNode[]> {
         const db = quoteIdentifier(context.database);
         const parameters = this.objectParameters(context);
+        const rows = await this.runQuery(
+            context.database,
+            objectQueries.constraints(db),
+            parameters,
+        );
         const checks = sortByName(
-            await this.runQuery(context.database, objectQueries.checkConstraints(db), parameters),
+            rows.filter((r) => r.kind === "C"),
             (r) => r.name,
         );
         const defaults = sortByName(
-            await this.runQuery(context.database, objectQueries.defaultConstraints(db), parameters),
+            rows.filter((r) => r.kind === "D"),
             (r) => r.name,
         );
 

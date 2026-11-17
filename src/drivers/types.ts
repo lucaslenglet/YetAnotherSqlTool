@@ -324,6 +324,15 @@ export interface DriverConnection {
      */
     listDefaultSchemas(database: string, signal: AbortSignal): Promise<string[]>;
 
+    /**
+     * Hint that catalog reads (Object Explorer, autocompletion) of `database` will follow; omitted,
+     * the database the connection logged in to and the server-level reads. The driver may open its
+     * metadata connection now, in the background. Returns at once, never throws and never rejects:
+     * a failure is left for the next real read to report. Not called by short-lived connections
+     * (connection dialog), which never read the catalog.
+     */
+    prepareMetadata?(database?: string): void;
+
     close(): Promise<void>;
 }
 

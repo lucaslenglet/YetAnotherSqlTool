@@ -18,9 +18,9 @@ import { getUriKey } from "../../utils/utils";
 import { computeCompletions, type Suggestion, type SuggestionKind } from "./completionItems";
 import { CompletionMetadataCache } from "./completionMetadata";
 import { changesSchema } from "./schemaChanges";
+import { loadsCompletionMetadata, SETTING_ENABLE } from "./completionSettings";
 
 /** Settings ported from mssql.intelliSense.* (package.json). */
-const SETTING_ENABLE = "intelliSense.enableIntelliSense";
 const SETTING_SUGGESTIONS = "intelliSense.enableSuggestions";
 const SETTING_LOWER_CASE = "intelliSense.lowerCaseSuggestions";
 
@@ -84,7 +84,7 @@ export class SqlCompletionProvider implements vscode.CompletionItemProvider, vsc
         this.disposables.push(
             // Like sqltoolsservice, metadata loads as soon as an editor connects.
             connections.onDidChange((uri) => {
-                if (setting(SETTING_ENABLE, true)) this.cache.connectionChanged(uri);
+                if (loadsCompletionMetadata()) this.cache.connectionChanged(uri);
                 else this.cache.forget(uri);
             }),
             queries.onDidRunText(({ uri, text }) => this.onDidRunText(uri, text)),

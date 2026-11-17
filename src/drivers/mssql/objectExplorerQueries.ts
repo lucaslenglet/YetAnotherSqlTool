@@ -22,7 +22,8 @@ export const serverQueries = {
             CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(128)) AS version,
             CAST(SERVERPROPERTY('Edition') AS nvarchar(128)) AS edition,
             CAST(SERVERPROPERTY('EngineEdition') AS int) AS engineEdition,
-            SUSER_SNAME() AS loginName`,
+            SUSER_SNAME() AS loginName,
+            DB_NAME() AS databaseName`,
 
     databases: `SELECT name, database_id AS databaseId FROM sys.databases`,
 
@@ -167,14 +168,16 @@ export const objectQueries = {
         FROM ${db}.sys.foreign_keys f
         ${ofObject(db, "f.parent_object_id")}`,
 
-    checkConstraints: (db: string) => `
-        SELECT k.name
+    /**
+     * Check (kind C) and default (kind D) constraints, in one round trip. columnName is needed for
+     * the URN of a default constraint.
+     */
+    constraints: (db: string) => `
+        SELECT N'C' AS kind, k.name, CAST(NULL AS nvarchar(128)) AS columnName
         FROM ${db}.sys.check_constraints k
-        ${ofObject(db, "k.parent_object_id")}`,
-
-    /** columnName is needed for the URN of the default constraint. */
-    defaultConstraints: (db: string) => `
-        SELECT k.name, c.name AS columnName
+        ${ofObject(db, "k.parent_object_id")}
+        UNION ALL
+        SELECT N'D' AS kind, k.name, c.name AS columnName
         FROM ${db}.sys.default_constraints k
         JOIN ${db}.sys.columns c ON c.object_id = k.parent_object_id AND c.column_id = k.parent_column_id
         ${ofObject(db, "k.parent_object_id")}`,

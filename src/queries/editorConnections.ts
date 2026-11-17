@@ -22,6 +22,7 @@ import { Connector } from "../connections/connector";
 import { colorBarIcon, resolveConnectionColor } from "../connections/connectionColor";
 import type { IConnectionConfig } from "../connectionconfig/connectionconfig";
 import { getErrorMessage, getUriKey } from "../utils/utils";
+import { loadsCompletionMetadata } from "../languageFeatures/completion/completionSettings";
 
 export interface EditorConnection {
     profile: IConnectionProfile;
@@ -110,11 +111,20 @@ export class EditorConnections implements vscode.Disposable {
         this._connecting.add(uri);
         this.refreshStatusBar();
         this._onDidChange.fire(uri);
+        /** A connection not stored yet, to close if connecting fails past the login. */
+        let pending: DriverConnection | undefined;
         try {
             const profileForConnect = database ? { ...profile, database } : profile;
             const connection = await this._connector.connect(profileForConnect);
             if (!connection) {
                 return false;
+            }
+            pending = connection;
+            // Autocompletion reads the catalog of the session's database as soon as the editor is
+            // connected; right after connecting, that is the database the connection logged in to,
+            // so the hint needs no database and overlaps the getCurrentDatabase round trip below.
+            if (loadsCompletionMetadata()) {
+                connection.prepareMetadata?.();
             }
             await this.closeConnection(uri);
             this._connections.set(uri, {
@@ -122,9 +132,12 @@ export class EditorConnections implements vscode.Disposable {
                 connection,
                 database: await connection.getCurrentDatabase(),
             });
+            pending = undefined;
             this.changed(uri);
             return true;
         } catch (error) {
+            // Logged in, then failed (getCurrentDatabase): close the session and its metadata pool.
+            void pending?.close().catch(() => undefined);
             vscode.window.showErrorMessage(
                 LocalizedConstants.msgConnectionError2(getErrorMessage(error)),
             );

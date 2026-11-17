@@ -38,14 +38,23 @@ import { installRawValueReaders } from "./tediousRawValues";
 // EngineEdition values of Azure-hosted SQL Server flavors: SQL Database, Synapse, Managed Instance, Synapse serverless, Fabric.
 const CLOUD_ENGINE_EDITIONS = [5, 6, 8, 11, 12];
 
-/** Metadata pools are small and may close idle connections. */
-const METADATA_POOL_MAX = 2;
+/**
+ * Connections of a metadata pool. A dedicated SQL pool gets one: a new connection there costs
+ * seconds (two logins, see `prepareMetadata`) and takes one of the few queries the pool runs at
+ * a time, so a second catalog read waits behind the first one rather than for a login.
+ */
+function metadataPoolMax(engineEdition: number): number {
+    return engineEdition === DEDICATED_SQL_POOL_ENGINE_EDITION ? 1 : 2;
+}
 
 export class MssqlConnection implements DriverConnection {
     readonly serverInfo: ServerInfo;
     private readonly engineEdition: number;
+    /** DB_NAME() when the session opened, in the catalog's spelling; "" when the server gave none. */
+    private readonly loginDatabase: string;
     private readonly explorer: ObjectExplorer;
     private readonly metadataPools = new Map<string, Promise<sql.ConnectionPool>>();
+    private closed = false;
 
     private constructor(
         private readonly params: ConnectParams,
@@ -55,6 +64,7 @@ export class MssqlConnection implements DriverConnection {
         info: Row,
     ) {
         this.engineEdition = info.engineEdition;
+        this.loginDatabase = info.databaseName ?? "";
         this.serverInfo = {
             serverVersion: info.version,
             productName: "SQL Server",
@@ -197,7 +207,22 @@ export class MssqlConnection implements DriverConnection {
         return listDefaultSchemas(this.runInDatabase, database, signal);
     }
 
+    /**
+     * Opens the metadata pool of `database` (omitted: the database the connection logged in to)
+     * and runs a first query on it, in the background. mssql's connect() logs in once to test the
+     * server and drops that connection, so the first query logs in again: both happen here rather
+     * than while the user waits for a node. A failure is dropped: the next catalog read opens the
+     * pool again.
+     */
+    prepareMetadata(database?: string): void {
+        if (this.closed || this.metadataPools.has(this.metadataPoolKey(database))) return;
+        this.getMetadataPool(database)
+            .then((pool) => pool.request().query("SELECT 1"))
+            .catch(() => undefined);
+    }
+
     async close(): Promise<void> {
+        this.closed = true;
         const metadataPools = await Promise.all(
             [...this.metadataPools.values()].map((pool) => pool.catch(() => undefined)),
         );
@@ -252,13 +277,16 @@ export class MssqlConnection implements DriverConnection {
 
     /**
      * Normally one pool serves every database (queries use three-part names). Azure SQL Database cannot
-     * query another database from a connection, so there each database gets its own pool.
+     * query another database from a connection, so on cloud engines each database gets its own pool,
+     * and server-level reads (no database) share the pool of the database the connection logged in to.
      */
     private getMetadataPool(database: string | undefined): Promise<sql.ConnectionPool> {
+        // A pool opened after close() would never be closed.
+        if (this.closed) return Promise.reject(new Error("The connection is closed."));
         const key = this.metadataPoolKey(database);
         let pool = this.metadataPools.get(key);
         if (!pool) {
-            pool = openPool(this.params, key || undefined, METADATA_POOL_MAX);
+            pool = openPool(this.params, key || undefined, metadataPoolMax(this.engineEdition));
             // If opening fails, forget it so the next expand retries.
             pool.catch(() => this.metadataPools.delete(key));
             this.metadataPools.set(key, pool);
@@ -268,7 +296,7 @@ export class MssqlConnection implements DriverConnection {
 
     /** The database the metadata pool serving `database` logs in to; "" for the profile's own. */
     private metadataPoolKey(database: string | undefined): string {
-        return this.serverInfo.isCloud && database ? database : "";
+        return this.serverInfo.isCloud ? database || this.loginDatabase : "";
     }
 }
 
@@ -307,7 +335,8 @@ function serverMajorVersion(version: string): number {
 async function openPool(
     params: ConnectParams,
     database: string | undefined,
-    maxConnections = 1,
+    /** For a metadata pool: its size; it then opens connections on demand only. */
+    metadataMax?: number,
 ): Promise<sql.ConnectionPool> {
     const config = buildSqlConfig(
         params.options,
@@ -315,7 +344,7 @@ async function openPool(
         params.entraAllowedServers,
     );
     if (database) config.database = database;
-    if (maxConnections > 1) config.pool = { ...config.pool, min: 0, max: maxConnections };
+    if (metadataMax !== undefined) config.pool = { ...config.pool, min: 0, max: metadataMax };
 
     const pool = new sql.ConnectionPool(config);
     // Errors of idle connections are reported on the pool; without a listener Node would crash.

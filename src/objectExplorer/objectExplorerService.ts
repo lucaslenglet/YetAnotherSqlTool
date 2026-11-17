@@ -398,6 +398,8 @@ export class ObjectExplorerService {
             return false;
         }
 
+        // The first expand (Databases) reads the catalog: open that connection now, not then.
+        connection.prepareMetadata?.();
         const sessionId = uuid();
         this._sessions.set(sessionId, connection);
         node.updateToConnectedState({
