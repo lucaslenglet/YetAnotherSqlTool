@@ -1,0 +1,215 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+export interface ExecutionPlanViewport {
+    x: number;
+    y: number;
+    zoom: number;
+}
+
+export interface ExecutionPlanViewportPoint {
+    x: number;
+    y: number;
+}
+
+export interface ExecutionPlanViewportSize {
+    width: number;
+    height: number;
+}
+
+/**
+ * Returns a viewport with a new zoom while keeping the flow coordinate beneath the supplied
+ * screen-space anchor fixed. Execution plans use the canvas origin so top-aligned nodes remain
+ * visible as the scale changes.
+ */
+export function getViewportForExecutionPlanZoom(
+    viewport: ExecutionPlanViewport,
+    zoom: number,
+    anchor: ExecutionPlanViewportPoint = { x: 0, y: 0 },
+): ExecutionPlanViewport | undefined {
+    if (viewport.zoom <= 0 || zoom <= 0) {
+        return undefined;
+    }
+
+    const scale = zoom / viewport.zoom;
+    return {
+        x: anchor.x - (anchor.x - viewport.x) * scale,
+        y: anchor.y - (anchor.y - viewport.y) * scale,
+        zoom,
+    };
+}
+
+/**
+ * Returns the smallest viewport translation that fully reveals a node. The zoom level is
+ * preserved, and no viewport is returned when the node is already visible.
+ */
+export function getViewportToRevealExecutionPlanNode(
+    viewport: ExecutionPlanViewport,
+    nodePosition: ExecutionPlanViewportPoint,
+    nodeSize: ExecutionPlanViewportSize,
+    viewportSize: ExecutionPlanViewportSize,
+    padding: number,
+): ExecutionPlanViewport | undefined {
+    if (
+        viewport.zoom <= 0 ||
+        viewportSize.width <= 0 ||
+        viewportSize.height <= 0 ||
+        nodeSize.width < 0 ||
+        nodeSize.height < 0
+    ) {
+        return undefined;
+    }
+
+    const safePadding = Math.max(0, padding);
+    const visibleLeft = Math.min(safePadding, viewportSize.width / 2);
+    const visibleTop = Math.min(safePadding, viewportSize.height / 2);
+    const visibleRight = Math.max(visibleLeft, viewportSize.width - safePadding);
+    const visibleBottom = Math.max(visibleTop, viewportSize.height - safePadding);
+
+    const nodeLeft = viewport.x + nodePosition.x * viewport.zoom;
+    const nodeTop = viewport.y + nodePosition.y * viewport.zoom;
+    const nodeRight = nodeLeft + nodeSize.width * viewport.zoom;
+    const nodeBottom = nodeTop + nodeSize.height * viewport.zoom;
+
+    let deltaX = 0;
+    let deltaY = 0;
+
+    if (nodeLeft < visibleLeft) {
+        deltaX = visibleLeft - nodeLeft;
+    } else if (nodeRight > visibleRight) {
+        deltaX = visibleRight - nodeRight;
+    }
+
+    if (nodeTop < visibleTop) {
+        deltaY = visibleTop - nodeTop;
+    } else if (nodeBottom > visibleBottom) {
+        deltaY = visibleBottom - nodeBottom;
+    }
+
+    if (deltaX === 0 && deltaY === 0) {
+        return undefined;
+    }
+
+    return {
+        x: viewport.x + deltaX,
+        y: viewport.y + deltaY,
+        zoom: viewport.zoom,
+    };
+}
+
+export interface ExecutionPlanBounds {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+}
+
+/** Pixels one wheel "line" scrolls, for wheels that report lines instead of pixels. */
+const EXECUTION_PLAN_WHEEL_LINE_HEIGHT = 16;
+
+// WheelEvent.DOM_DELTA_LINE and DOM_DELTA_PAGE; WheelEvent isn't defined outside the browser.
+const WHEEL_DELTA_LINE = 1;
+const WHEEL_DELTA_PAGE = 2;
+
+/** The parts of a wheel event that decide how far it scrolls the plan. */
+export interface ExecutionPlanWheelInput {
+    deltaX: number;
+    deltaY: number;
+    deltaMode: number;
+    shiftKey: boolean;
+}
+
+/**
+ * Converts a wheel event's deltas to screen pixels. Shift+wheel scrolls sideways where the browser
+ * doesn't already. The remap happens before scaling, so a page of Shift+wheel moves one canvas
+ * width rather than one canvas height.
+ */
+export function getExecutionPlanWheelDelta(
+    wheel: ExecutionPlanWheelInput,
+    canvasSize: ExecutionPlanViewportSize,
+): ExecutionPlanViewportPoint {
+    let { deltaX, deltaY } = wheel;
+    if (wheel.shiftKey && deltaX === 0) {
+        deltaX = deltaY;
+        deltaY = 0;
+    }
+    // Page-mode deltas count canvas pages, so each axis scales by its own dimension
+    const toPixels = (delta: number, pageSize: number) => {
+        switch (wheel.deltaMode) {
+            case WHEEL_DELTA_LINE:
+                return delta * EXECUTION_PLAN_WHEEL_LINE_HEIGHT;
+            case WHEEL_DELTA_PAGE:
+                return delta * pageSize;
+            default:
+                return delta;
+        }
+    };
+    return { x: toPixels(deltaX, canvasSize.width), y: toPixels(deltaY, canvasSize.height) };
+}
+
+/**
+ * Scrolls the plan by a wheel delta in screen pixels, the way a scroll area would: the plan stops at
+ * its edges, and an axis where the whole plan already fits doesn't move. No viewport is returned
+ * when the plan can't move in the wheel's direction, so the wheel can scroll the page instead.
+ */
+export function getViewportForExecutionPlanScroll(
+    viewport: ExecutionPlanViewport,
+    delta: ExecutionPlanViewportPoint,
+    planBounds: ExecutionPlanBounds,
+    viewportSize: ExecutionPlanViewportSize,
+): ExecutionPlanViewport | undefined {
+    if (viewport.zoom <= 0) {
+        return undefined;
+    }
+
+    const x = scrollExecutionPlanAxis(
+        viewport.x,
+        delta.x,
+        planBounds.left,
+        planBounds.right,
+        viewportSize.width,
+        viewport.zoom,
+    );
+    const y = scrollExecutionPlanAxis(
+        viewport.y,
+        delta.y,
+        planBounds.top,
+        planBounds.bottom,
+        viewportSize.height,
+        viewport.zoom,
+    );
+    if (x === viewport.x && y === viewport.y) {
+        return undefined;
+    }
+    return { x, y, zoom: viewport.zoom };
+}
+
+/**
+ * Moves one axis of the viewport by a wheel delta without passing the plan's edges. It only moves
+ * in the delta's direction, so a plan already panned past an edge doesn't jump back.
+ */
+function scrollExecutionPlanAxis(
+    offset: number,
+    delta: number,
+    planStart: number,
+    planEnd: number,
+    viewportSize: number,
+    zoom: number,
+): number {
+    // The offset that lines the plan's far edge up with the viewport's far edge, and its near edge
+    // with the viewport's near edge
+    const farEdgeOffset = viewportSize - planEnd * zoom;
+    const nearEdgeOffset = -planStart * zoom;
+    if (farEdgeOffset >= nearEdgeOffset) {
+        return offset;
+    }
+    if (delta > 0) {
+        return offset <= farEdgeOffset ? offset : Math.max(offset - delta, farEdgeOffset);
+    }
+    if (delta < 0) {
+        return offset >= nearEdgeOffset ? offset : Math.min(offset - delta, nearEdgeOffset);
+    }
+    return offset;
+}

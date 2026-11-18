@@ -859,6 +859,7 @@ export let parameters = l10n.t("Parameters");
 export let loading = l10n.t("Loading");
 export let executionPlan = l10n.t("Execution Plan");
 export let executionPlanFileFilter = l10n.t("SQL Plan Files");
+export let executionPlanDocumentFileFilter = l10n.t("Execution Plan Files");
 export let compareExecutionPlans = l10n.t("Compare Execution Plans");
 export let compareExecutionPlansEditor = (index: number) =>
     l10n.t({
@@ -882,6 +883,12 @@ export let executionPlanComparisonFileContainsNoPlans = l10n.t(
     "The selected file does not contain an execution plan.",
 );
 export let openExecutionPlan = l10n.t("Open execution plan");
+export let executionPlanNotSupported = (engine: string) =>
+    l10n.t({
+        message: "Execution plans are not available for {0} connections.",
+        args: [engine],
+        comment: ["{0} is the database engine, such as PostgreSQL"],
+    });
 export let scriptCopiedToClipboard = l10n.t("Script copied to clipboard");
 export let copied = l10n.t("Copied");
 export let failedToOpenTextInEditor = (errorMessage: string) =>

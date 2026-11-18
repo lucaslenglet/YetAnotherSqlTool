@@ -13,6 +13,7 @@
  */
 
 import type { CategoryValue, ConnectionProviderOptions, ObjectMetadata } from "vscode-mssql";
+import type { ExecutionPlanGraph } from "../sharedInterfaces/executionPlan";
 import type { SqlToken } from "../sql/lexer";
 
 export type DriverId = "mssql" | "pg";
@@ -176,7 +177,15 @@ export type ExecuteEvent =
           isError: boolean;
           rowsAffected?: number;
           position?: TextPosition;
-      };
+      }
+    /**
+     * A plan document, reported by `executeForPlan` only: one event per document (SQL Server: one
+     * showplan XML per statement or batch; PostgreSQL: one EXPLAIN JSON per statement). `content`
+     * is the text `Driver.executionPlan.parse` reads. When the driver also shows the document as a
+     * result set (the grid of Microsoft's extension shows the showplan XML), the event comes right
+     * after that result set's `resultSetEnd`.
+     */
+    | { type: "executionPlan"; content: string };
 
 /**
  * Receives the events of `execute` / `describeObject`. A promise returned for a `rows` event asks
@@ -193,6 +202,39 @@ export interface Batch {
     text: string;
     /** 0-based line of the batch's first line in the original script. */
     startLine: number;
+}
+
+// ---------------------------------------------------------------------------
+// Execution plans
+// ---------------------------------------------------------------------------
+
+/**
+ * "estimated": the statements are compiled, not run (SQL Server `SET SHOWPLAN_XML ON`,
+ * PostgreSQL `EXPLAIN`). "actual": the statements run, with their effects, and the plan carries
+ * run-time counters (`SET STATISTICS XML ON`, `EXPLAIN ANALYZE`).
+ */
+export type ExecutionPlanKind = "estimated" | "actual";
+
+/**
+ * Execution plans of an engine. A driver that has it also implements
+ * `DriverConnection.executeForPlan`.
+ */
+export interface ExecutionPlanSupport {
+    /** Extension of a saved plan document, without the dot: "sqlplan" (showplan XML), "json". */
+    readonly fileExtension: string;
+    /** VS Code language id of a plan document opened in an editor: "xml", "json". */
+    readonly documentLanguage: string;
+    /**
+     * Converts a plan document (the `content` of an `executionPlan` event, or a saved file) into
+     * the graphs Microsoft's execution plan page displays, one per statement: same shape as the
+     * `graphs` of sqltoolsservice's `queryExecutionPlan/getExecutionPlan`. For an actual plan, the
+     * operators also carry the run-time counters vscode-mssql adds to those graphs
+     * (`liveQueryStatistics`: actual and estimated rows, elapsed time), which the page shows under
+     * each operator; the statement root is a node of its own with no cost (the page adds the
+     * root's cost to its subtree cost). Pure and synchronous: no connection is involved. Throws a
+     * readable Error when the document is not a plan.
+     */
+    parse(content: string): ExecutionPlanGraph[];
 }
 
 /** Scripts an Object Explorer node can be turned into (vscode-mssql's ScriptOperation). */
@@ -288,6 +330,25 @@ export interface DriverConnection {
     execute(batch: Batch, onEvent: ExecuteEventHandler, signal: AbortSignal): Promise<void>;
 
     /**
+     * Runs one batch for its execution plans. Same events, errors and cancellation as `execute`,
+     * plus one `executionPlan` event per plan document. Defined exactly when the driver has
+     * `Driver.executionPlan`.
+     *   - "estimated": nothing is run. A statement the engine cannot plan is reported with an
+     *     informational message, not an error.
+     *   - "actual": every statement runs. SQL Server returns the rows of each statement and its
+     *     plan; PostgreSQL's `EXPLAIN ANALYZE` returns the plan only, so statements it applies to
+     *     report no rows, and the other statements run as `execute` runs them.
+     * The session is left as it was found (no plan option still on), also after an error or a
+     * cancellation.
+     */
+    executeForPlan?(
+        batch: Batch,
+        kind: ExecutionPlanKind,
+        onEvent: ExecuteEventHandler,
+        signal: AbortSignal,
+    ): Promise<void>;
+
+    /**
      * Information about an object, as SSMS's Alt+F1 (sp_help): general info, columns, identity,
      * indexes, constraints, references. `objectName` is the text the user selected, as typed
      * (possibly schema-qualified and quoted); undefined lists the objects of the current database.
@@ -374,6 +435,9 @@ export interface Driver {
 
     /** Keywords, data types and functions of the engine's SQL dialect. */
     readonly language: SqlLanguage;
+
+    /** Execution plans; undefined for an engine without them (no plan command is offered). */
+    readonly executionPlan?: ExecutionPlanSupport;
 
     /** Range of the statement at `position` (what "Execute Current Statement" runs); undefined when there is none. */
     getStatementAt(script: string, position: TextPosition): TextRange | undefined;

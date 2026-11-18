@@ -35,6 +35,7 @@ Related document: `docs/vscode-mssql-analysis.md`, what is taken from Microsoft'
 | 19 | Connection color, in the spirit of SSMS: a profile's `color` (`#RRGGBB`, "Color" field of the connection dialog: palette of the connection groups or any color) is the text color of the connection and database items of the status bar and a bar in the gutter of every SQL editor using the connection; a color changed in the settings applies to connected editors without reconnecting. No inheritance from the group color |
 | 20 | Environment variables in connections: `${env:NAME}` in any text field of a profile sent to the driver, resolved from the extension host's environment in `openConnection` only (the values live in the driver's options; errors of the connection have them replaced by the typed text); `$${env:NAME}` escape; unset variable fails before any network attempt; a password holding a reference is kept as typed in settings, never in `SecretStorage`, and never prompted. References of profiles that are not in the user's settings (workspace settings, recent entries, dialog forms loaded from them) need a modal confirmation, remembered per engine, server, port, authentication, encryption options and references (`src/connections/environmentConsent.ts`) |
 | 21 | Import of the connections and groups of Microsoft's SQL Server extension (`yast.importMssqlConnections`, also an item of the empty Connections view): reads `mssql.connections` and `mssql.connectionGroups` of the user settings (read only), checked multi-select of the profiles (those already in YAST unchecked), group tree kept (groups recognized by id, then by name under the same parent, so a second run creates nothing), options and authentication types YAST does not handle left out or refused and listed per profile in the output channel. The logic is a pure function (`src/connections/mssqlImport.ts`). Passwords cannot be imported: a typed password is now saved to `SecretStorage` after a successful connection when "Save Password" is on |
+| 22 | Execution plans, estimated and actual (per editor), in Microsoft's graphical page, for SQL Server and PostgreSQL: Query Plan tab of the results, `yast.showEstimatedPlan` / `enableActualPlan` / `disableActualPlan` with Microsoft's buttons, plan documents reported by the drivers (`executeForPlan`, `executionPlan` event) and converted by them (`Driver.executionPlan.parse`). SQL Server: sqltoolsservice's showplan conversion ported to TypeScript, identical to its output on 138 captured graphs (`docs/reference/mssql-execution-plans.json`), plus the actual-plan counters vscode-mssql adds; the plan run holds one physical connection so that an estimated plan can never run on a replaced one. PostgreSQL: `EXPLAIN (FORMAT JSON)` (`ANALYZE` for the actual plan) converted to the same graph, every node type of `explain.c` mapped to an icon, costs attributed so that percentages add up to 100, warnings for spills, missing workers and wrong estimates; captures of PostgreSQL 12, 17 and 18 (`docs/reference/pg-explain-plans.json`) |
 
 ## Features required before publication
 
@@ -59,9 +60,8 @@ All done (steps 10 to 17 above).
 
 ## Planned features (after publication)
 
-- [ ] **Execution plan**: estimated and actual plans in Microsoft's graphical view, SQL Server
-      first, then PostgreSQL through `EXPLAIN`. Pre-analysis in
-      `docs/execution-plan-analysis.md`.
+- [ ] **Execution plan, next steps**: open `.sqlplan` (and saved `EXPLAIN` JSON) files from disk,
+      compare two plans. See `docs/execution-plan-analysis.md`.
 - [ ] **Table structure editor** like the Table Designer of Microsoft's extension.
 - [ ] **Jailer-style data extraction**: extract a consistent subset of
       data by following foreign keys.
@@ -96,6 +96,38 @@ All done (steps 10 to 17 above).
 - `Ctrl+R` in the results view also applies when another extension's webview view has the
   focus while our results are visible (VS Code has no context key for a focused webview
   view); it does nothing in a results tab opened in the editor area.
+
+## Known execution plan limitations
+
+- no plan comparison, no live query statistics, no opening of plan files from disk (a showplan
+  XML or `EXPLAIN (FORMAT JSON)` cell of a result does open its plan);
+- SQL Server: the reference is sqltoolsservice running on Linux in en-US: missing-index
+  scripts have LF line breaks and times a narrow no-break space before AM/PM (CRLF and a plain
+  space in Microsoft's extension on Windows), numbers are always written the en-US way; the
+  plan XML is the server's text, so "Open XML" and saved `.sqlplan` files differ textually
+  from Microsoft's re-serialized ones (same plan); a plan with an operator the SQL Server 2022
+  showplan schema does not know fails to load, as in sqltoolsservice;
+- the lines under the operators of an actual plan are Microsoft's: an operator without run-time
+  counters (Compute Scalar) reads "Unavailable" and the percentage is rounded down. The page
+  draws the badges of a node at the same place, so on SQL Server a warning on a parallel
+  operator is under the parallelism badge (PostgreSQL plans put the warning on top). On
+  PostgreSQL the percentage reads low below a `LIMIT` or a join that stops early, and nodes
+  that return no rows by nature (`INSERT` / `UPDATE` / `DELETE` without `RETURNING`, BitmapAnd,
+  BitmapOr) have no rows line;
+- Azure Synapse dedicated SQL pools support neither `SET SHOWPLAN_XML` nor
+  `SET STATISTICS XML`: an estimated plan is refused, an actual plan runs the batch without a
+  plan;
+- PostgreSQL: an actual plan runs the statement with `EXPLAIN ANALYZE` (its effects stay) and
+  returns its plan, not its rows; `DECLARE CURSOR` is then run as written, without a plan. An
+  estimated plan does not send statements `EXPLAIN` does not apply to (`SET`, DDL, transaction
+  control), so a later statement that depends on them fails or is planned differently, and it
+  does not run an `EXPLAIN ANALYZE` written in the script;
+- PostgreSQL: percentages come from the planner's costs, not from time; under a `LIMIT` or a
+  join that stops early, the costs of the children are scaled down to what their parent
+  charged; in an estimated plan the repetitions of the inner side of a nested loop are counted
+  on the loop node (an actual plan knows the loop counts); no CPU time (that highlight is
+  empty) and no recommendations; PostgreSQL 12 or later, PostgreSQL 18 checked on captured
+  plans only, Foreign Scan and Custom Scan nodes never seen in a real plan.
 
 ## Known autocompletion limitations
 

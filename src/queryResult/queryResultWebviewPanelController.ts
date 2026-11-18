@@ -35,6 +35,7 @@ export class QueryResultWebviewPanelController extends WebviewPanelController<
                 tabStates: {
                     resultPaneTab: qr.QueryResultPaneTabs.Messages,
                 },
+                executionPlanState: {},
                 fontSettings: {},
                 isExecuting: false,
             },

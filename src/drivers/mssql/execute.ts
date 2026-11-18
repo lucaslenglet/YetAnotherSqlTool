@@ -4,6 +4,7 @@ import {
     type Batch,
     type CellValue,
     type ExecuteEventHandler,
+    type ExecutionPlanKind,
 } from "../types";
 import { formatCell, toColumnInfo, type MssqlColumn } from "./formatting";
 
@@ -88,6 +89,213 @@ export async function executeBatch(
     await reporter.settled();
     if (connectionError) throw connectionError;
     if (canceled) reporter.reportCanceled();
+}
+
+/** Name of the single column of the result set that carries a showplan (sqltoolsservice's YukonXmlShowPlanColumn). */
+export const SHOWPLAN_COLUMN = "Microsoft SQL Server 2005 XML Showplan";
+
+/**
+ * Runs one batch for its execution plans, as sqltoolsservice does: `SET SHOWPLAN_XML ON` (the
+ * statements are compiled, not run) or `SET STATISTICS XML ON` (they run, and each one's plan
+ * follows its results), each alone in a batch before the user's, and the matching OFF after it,
+ * also after an error or a cancellation. Each plan result set is reported as usual (the grid shows
+ * it), followed by an `executionPlan` event with the text of its cell.
+ */
+export async function executeBatchForPlan(
+    pool: sql.ConnectionPool,
+    batch: Batch,
+    kind: ExecutionPlanKind,
+    onEvent: ExecuteEventHandler,
+    signal: AbortSignal,
+): Promise<void> {
+    // Canceled before it starts: nothing is sent, the cancellation is reported as by `execute`.
+    if (signal.aborted) return executeBatch(pool, batch, onEvent, signal);
+
+    // ON, the batch and OFF run on ONE physical connection, taken from the pool once. The pool
+    // replaces a broken connection with a new one, which has the option off: an estimated plan
+    // sent there would run the batch. A pinned connection is never replaced; once broken, the
+    // batch is not sent at all.
+    const session = await PinnedConnection.acquire(pool);
+    try {
+        await runPinned(session, batch, kind, onEvent, signal);
+    } finally {
+        session.release();
+    }
+}
+
+/** Message when the session's connection broke during a plan run (after the option was turned on). */
+export const PLAN_CONNECTION_LOST_MESSAGE =
+    "The connection to the server was lost during the execution plan run; nothing was sent on another connection.";
+
+async function runPinned(
+    session: PinnedConnection,
+    batch: Batch,
+    kind: ExecutionPlanKind,
+    onEvent: ExecuteEventHandler,
+    signal: AbortSignal,
+): Promise<void> {
+    const pool = session.asPool();
+    const option = kind === "estimated" ? "SHOWPLAN_XML" : "STATISTICS XML";
+    // The SET batches run to completion even when the user cancels: the session must not keep
+    // the option on, and turning it on takes no time.
+    const setOption = async (value: "ON" | "OFF"): Promise<boolean> => {
+        let failed = false;
+        await executeBatch(
+            pool,
+            { text: `SET ${option} ${value}`, startLine: batch.startLine },
+            (event) => {
+                if (event.type === "message" && event.isError) {
+                    failed = true;
+                    onEvent({ ...event, position: undefined });
+                }
+            },
+            new AbortController().signal,
+        );
+        return !failed;
+    };
+
+    // If the option cannot be turned on, the batch must not run: an estimated plan would execute it.
+    let turnedOn: boolean;
+    try {
+        turnedOn = await setOption("ON");
+    } catch (error) {
+        if (session.isUsable()) throw error;
+        const reason = error instanceof Error ? error.message : String(error);
+        throw new Error(`${PLAN_CONNECTION_LOST_MESSAGE} ${reason}`);
+    }
+    if (!turnedOn) return;
+    if (!session.isUsable()) {
+        onEvent({ type: "message", text: PLAN_CONNECTION_LOST_MESSAGE, isError: true });
+        return;
+    }
+
+    let plan: { xml?: string } | undefined;
+    const forward: ExecuteEventHandler = (event) => {
+        if (event.type === "resultSetStart") {
+            const [first] = event.columns;
+            const isPlan =
+                event.columns.length === 1 &&
+                first.columnName.toLowerCase() === SHOWPLAN_COLUMN.toLowerCase();
+            plan = isPlan ? {} : undefined;
+        } else if (
+            event.type === "rows" &&
+            plan &&
+            plan.xml === undefined &&
+            event.rows.length > 0
+        ) {
+            const cell = event.rows[0][0];
+            // A NULL cell carries no plan.
+            plan.xml = cell.isNull ? undefined : cell.displayValue;
+            if (cell.isNull) plan = undefined;
+        }
+        const result = onEvent(event);
+        if (event.type === "resultSetEnd" && plan) {
+            if (plan.xml !== undefined) onEvent({ type: "executionPlan", content: plan.xml });
+            plan = undefined;
+        }
+        return result;
+    };
+
+    let failure: unknown;
+    try {
+        await executeBatch(pool, batch, forward, signal);
+    } catch (error) {
+        failure = error;
+    }
+    // A broken connection is dropped by the pool, and a new one has the option off.
+    if (session.isUsable()) {
+        try {
+            await setOption("OFF");
+        } catch (error) {
+            // The connection broke meanwhile: the batch's own error says more.
+            failure ??= error;
+        }
+    }
+    if (failure && !session.isUsable()) {
+        // Lost before or while the batch was sent: tedious refuses a request on a closed connection.
+        const reason = failure instanceof Error ? failure.message : String(failure);
+        throw new Error(`${PLAN_CONNECTION_LOST_MESSAGE} ${reason}`);
+    }
+    if (failure) throw failure;
+}
+
+/** What mssql's tedious connection exposes that the pin looks at. */
+interface TediousConnection {
+    closed?: boolean;
+    hasError?: boolean;
+    state?: unknown;
+    STATE?: { LOGGED_IN: unknown };
+}
+
+/** The members of mssql's ConnectionPool that its Request uses (not in the type definitions). */
+interface PoolInternals {
+    config: unknown;
+    connected: boolean;
+    collation?: unknown;
+    acquire(requester: unknown): Promise<unknown>;
+    release(connection: unknown): void;
+}
+
+/**
+ * One physical connection of a pool, held for a sequence of requests. mssql's Request takes its
+ * connection from its parent's `acquire` (as for a Transaction): this parent always gives the same
+ * one, and refuses once it is broken, instead of letting the pool open another.
+ */
+class PinnedConnection {
+    private constructor(
+        private readonly pool: PoolInternals,
+        private readonly connection: TediousConnection,
+    ) {}
+
+    static async acquire(pool: sql.ConnectionPool): Promise<PinnedConnection> {
+        const internals = pool as unknown as PoolInternals;
+        const connection = (await internals.acquire(pool)) as TediousConnection;
+        return new PinnedConnection(internals, connection);
+    }
+
+    /** False once the connection is closed or failed: it is never reopened. */
+    isUsable(): boolean {
+        const c = this.connection;
+        return !c.closed && !c.hasError && (c.STATE === undefined || c.state === c.STATE.LOGGED_IN);
+    }
+
+    release(): void {
+        // A broken one stays free until the next acquire, where the pool validates it, destroys it
+        // and opens another.
+        this.pool.release(this.connection);
+    }
+
+    /** A Request parent (the pool's interface as mssql's Request uses it) bound to this connection. */
+    asPool(): sql.ConnectionPool {
+        const pool = this.pool;
+        const pinned = {
+            get config() {
+                return pool.config;
+            },
+            get connected() {
+                return pool.connected;
+            },
+            get collation() {
+                return pool.collation;
+            },
+            acquire: (
+                _request: unknown,
+                callback: (error: Error | null, connection?: unknown, config?: unknown) => void,
+            ) => {
+                if (!this.isUsable()) {
+                    setImmediate(
+                        callback,
+                        new sql.ConnectionError(PLAN_CONNECTION_LOST_MESSAGE, "ECONNCLOSED"),
+                    );
+                } else {
+                    setImmediate(callback, null, this.connection, pool.config);
+                }
+                return pinned;
+            },
+            release: () => pinned,
+        };
+        return pinned as unknown as sql.ConnectionPool;
+    }
 }
 
 /** Turns the raw events of one request into ExecuteEvents, keeping the current result set's state. */

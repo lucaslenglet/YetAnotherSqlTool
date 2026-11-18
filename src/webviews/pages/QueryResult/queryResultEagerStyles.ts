@@ -5,6 +5,7 @@
 
 // Keep styles for lazy experiences eager so switching views never waits on a stylesheet request.
 import "../../index.css";
+import "../ExecutionPlan/executionPlanEagerStyles";
 
 // Monaco editor styles used by the results text view.
 import "monaco-editor/esm/vs/editor/standalone/browser/standalone-tokens.css";

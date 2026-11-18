@@ -1,7 +1,8 @@
-# Execution plan: pre-analysis
+# Execution plan: analysis and what was built
 
-Status: not started. This is a sizing of the work, written before any code, to pick the
-feature up later. Step 1 (SQL Server) is the only one studied in detail.
+Status: steps 1 and 2 are done (SQL Server and PostgreSQL, estimated and actual plans in
+Microsoft's page). Step 3 (plan files, comparison) is not started. The first sections are the
+sizing written before any code, kept as written; the last three describe what was built.
 
 References read (local clones kept outside the project, read-only):
 - vscode-mssql, commit `fa3aee0` (the project's upstream reference, see
@@ -88,3 +89,85 @@ A feature the size of the Object Explorer, delivered in 2 or 3 PRs:
 
 Open question: where the converter lives in the `Driver` interface (for example an optional
 `executionPlan` capability), so that step 2 plugs PostgreSQL in the same way.
+
+## SQL Server: what was built
+
+**The converter** (`src/drivers/mssql/executionPlan/`, `Driver.executionPlan.parse`) is a port
+of sqltoolsservice's `ExecutionPlan/ShowPlan` code, not a fresh reading of the XML.
+sqltoolsservice reads a plan with `XmlSerializer` into the classes `xsd.exe` generated
+(`showplanxml.cs`), then walks them by .NET reflection: the order of a class's properties
+(its own, then its base class's), their CLR types, the `...Specified` flags and the element
+names of choice groups decide which properties a node gets, in which order, and how each
+value is formatted. YAST rebuilds that object model:
+- `tools/gen-showplan-schema.mjs` extracts the metadata of `showplanxml.cs` (no code) into
+  `showplanSchema.generated.ts`, and the English strings of `sr.strings` the ported code
+  uses into `showplanStrings.generated.ts`;
+- `xml.ts` reads the XML (no dependency); `deserialize.ts` does what `XmlSerializer` does;
+  `clr.ts` keeps the CLR type of each value and formats it as .NET does (en-US);
+- `objectModel.ts`, `operationTable.ts`, `planParser.ts` and `index.ts` port
+  `PropertyFactory`, the type converters, `ObjectWrapperTypeConverter`, `OperationTable`, the
+  parsers, `Node`, `Edge`, `XmlPlanNodeBuilder` and `ExecutionPlanGraphUtils`.
+
+The output is checked against sqltoolsservice: `tools/sts-plan-probe.js` records, for 114
+queries (estimated and actual plans) and for sqltoolsservice's own fixtures, the input XML
+and the graphs `getExecutionPlan` returned, in `docs/reference/mssql-execution-plans.json`;
+`test/drivers/mssql/executionPlanReference.test.ts` replays every one and compares exactly.
+The reference is sqltoolsservice on Linux: missing-index scripts have LF line breaks (CRLF
+on Windows) and times a narrow no-break space before AM/PM (ICU). `topOperationsData`, which
+the page does not use, is not produced.
+
+**Running for a plan** (`MssqlConnection.executeForPlan`): as sqltoolsservice,
+`SET SHOWPLAN_XML ON` (estimated) or `SET STATISTICS XML ON` (actual) alone in a batch, the
+user's batch, then `OFF`, also after an error or a cancellation. The three run on one
+physical connection taken from the session pool for the whole run: if it breaks, the pool
+would open a new one, where the option is off and an estimated plan would run the batch, so
+nothing is sent on another connection. Other requests on the session wait for the run. A
+dedicated SQL pool supports neither option: an estimated plan is refused without sending
+anything, an actual plan runs the batch without a plan.
+
+## The page and the commands: what was built
+
+- **Page** (`src/webviews/pages/ExecutionPlan/`): Microsoft's, copied. Two files differ from
+  upstream: the Compare button and its reducer are gone, and "Open XML" reads "Open JSON" when
+  the document is not showplan XML. `executionPlanModel.ts` is byte-identical to upstream.
+  Only `@xyflow/react` was needed (`@dagrejs/dagre` is used by upstream's Schema Designer, not
+  by this page at the reference commit). The webview CSP did not change.
+- **Query Plan tab** of the results: upstream's, with three differences: the tab also shows
+  when the plan failed to load, the "no results" splash is skipped for a plan run, and a grid
+  cell that holds a plan document finds its plan by its result set (a PostgreSQL document
+  carries the statement text, so the cell text is not the document).
+- **Seam**: `src/services/executionPlanService.ts` keeps Microsoft's `ExecutionPlanService`
+  interface and calls `Driver.executionPlan.parse` where upstream sends
+  `queryExecutionPlan/getExecutionPlan`. `QueryRunner.run(..., executionPlan)` goes through
+  `DriverConnection.executeForPlan` and fires `onExecutionPlan`; `QueryManager` converts and
+  fills `executionPlanState`, and keeps the per-editor actual plan
+  (`yast.executionPlan.urisWithActualPlanEnabled`, upstream's context key under our prefix).
+- **Commands**: `yast.showEstimatedPlan`, `yast.enableActualPlan`, `yast.disableActualPlan`,
+  `yast.toggleActualPlan`, with upstream's icons and positions, offered when the driver of the
+  editor's connection has `executionPlan` (`yast.executionPlan.urisWithPlanSupport`).
+- **Actual-plan counters**: vscode-mssql adds, after sqltoolsservice, the actual and estimated
+  rows and the elapsed time the page writes under each operator
+  (`queryResult/liveExecutionPlanStatistics.ts`). In YAST that step belongs to `parse`.
+
+## PostgreSQL: what was built
+
+`src/drivers/pg/executionPlan/`:
+- `explain.ts` classifies each statement of the batch from the lexer's tokens (EXPLAIN applies
+  or not, already an EXPLAIN, with or without ANALYZE) and builds the EXPLAIN prefix:
+  `(FORMAT JSON, VERBOSE, SETTINGS)` for an estimated plan,
+  `(ANALYZE, BUFFERS, VERBOSE, SETTINGS, WAL, FORMAT JSON)` for an actual one, with the options
+  the server version has.
+- `executeForPlan.ts` reuses the statement loop of `execute`. An estimated plan sends nothing
+  but EXPLAIN: statements it does not apply to are skipped with a message, and an
+  `EXPLAIN ANALYZE` written by the user is not run. An actual plan really runs the statement
+  (no wrapping transaction: SQL Server's actual plan runs the query too) and gets its plan
+  instead of its rows. The plan document is the EXPLAIN JSON plus the statement under
+  `Query Text` (the key `auto_explain` uses), so that `parse` needs no connection.
+- `parse.ts`, `operators.ts`, `properties.ts` convert the document: a statement node at the
+  root, one node per plan node, an icon for each of the 42 node types of `explain.c`, every key
+  of a node as a property, parallelism and warning badges. Costs are attributed top-down from
+  the top operator's Total Cost so that percentages add up to 100 and none is negative (the
+  header comment of `parse.ts` explains how, and what an actual plan changes).
+- `tools/pg-plan-capture.mjs` records real plans of PostgreSQL 12, 17 and 18 in
+  `docs/reference/pg-explain-plans.json`; the unit tests replay all of them and check the
+  invariants.

@@ -4,6 +4,11 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { NotificationType, RequestType } from "vscode-jsonrpc";
+import {
+    ExecutionPlanReducers,
+    ExecutionPlanState,
+    ExecutionPlanWebviewState,
+} from "./executionPlan";
 
 export interface ISlickRange {
     fromCell: number;
@@ -26,6 +31,7 @@ export enum QueryResultSaveAsTrigger {
 export enum QueryResultPaneTabs {
     Results = "results",
     Messages = "messages",
+    ExecutionPlan = "executionPlan",
 }
 
 export enum QueryResultViewMode {
@@ -65,14 +71,16 @@ export interface GridSettings {
     rightAlignNumbers?: boolean;
 }
 
-export interface QueryResultWebviewState {
+export interface QueryResultWebviewState extends ExecutionPlanWebviewState {
     uri?: string;
     title?: string;
     resultSetSummaries: Record<number, Record<number, ResultSetSummary>>;
     messages: IMessage[];
     tabStates?: QueryResultTabStates;
+    isExecutionPlan?: boolean;
     selection?: ISlickRange[];
     gridSelections?: Record<string, ISlickRange[]>;
+    executionPlanState: ExecutionPlanState;
     fontSettings: FontSettings;
     gridSettings?: GridSettings;
     autoSizeColumnsMode?: ResultsGridAutoSizeStyle;
@@ -109,12 +117,19 @@ export interface SelectionSummary {
     resultId?: number;
 }
 
-export interface QueryResultReducers {
+export interface QueryResultReducers extends Omit<ExecutionPlanReducers, "getExecutionPlan"> {
     setResultTab: {
         tabId: QueryResultPaneTabs;
     };
     setResultViewMode: {
         viewMode: QueryResultViewMode;
+    };
+    /**
+     * Gets the execution plan graph from the provider for given uri
+     * @param uri  the uri for which to get graphs for
+     */
+    getExecutionPlan: {
+        uri: string;
     };
     /**
      * Opens a file of type with with specified content
@@ -401,6 +416,22 @@ export interface OpenInNewTabParams {
 }
 export namespace OpenInNewTabRequest {
     export const type = new RequestType<OpenInNewTabParams, void, void>("openInNewTab");
+}
+
+/**
+ * YAST: the plan of the results that a grid cell showed, found by its result set. A driver may
+ * show a plan document in the grid in another form than the one it reports (PostgreSQL adds the
+ * query text to the reported JSON), so the cell text does not always equal a plan's document.
+ * Returns the index of the plan in `executionPlanState.executionPlanGraphs`, or -1.
+ */
+export interface GetExecutionPlanIndexOfCellParams {
+    uri: string;
+    content: string;
+}
+export namespace GetExecutionPlanIndexOfCellRequest {
+    export const type = new RequestType<GetExecutionPlanIndexOfCellParams, number, void>(
+        "queryResult/getExecutionPlanIndexOfCell",
+    );
 }
 
 export interface GetWebviewLocationParams {

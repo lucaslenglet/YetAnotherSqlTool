@@ -19,6 +19,9 @@ import { DatabaseSearch24Regular, ErrorCircle24Regular, OpenRegular } from "@flu
 import * as qr from "../../../sharedInterfaces/queryResult";
 import { locConstants } from "../../common/locConstants";
 import { getGridCount, hasResultsOrMessages } from "./queryResultUtils";
+import { ExecutionPlanGraph } from "../../../sharedInterfaces/executionPlan";
+import { ApiStatus } from "../../../sharedInterfaces/webview";
+import { QueryExecutionPlanTab } from "./queryExecutionPlanTab";
 import { QueryResultCommandsContext } from "./queryResultStateProvider";
 import { useQueryResultSelector } from "./queryResultSelector";
 import { WebviewAction } from "../../../sharedInterfaces/webview";
@@ -138,6 +141,14 @@ export const QueryResultPane = ({ GridView }: QueryResultPaneProps) => {
     const tabStates = useQueryResultSelector<qr.QueryResultTabStates | undefined>(
         (s) => s.tabStates,
     );
+    const isExecutionPlan = useQueryResultSelector<boolean | undefined>((s) => s.isExecutionPlan);
+    const executionPlanGraphs = useQueryResultSelector<ExecutionPlanGraph[] | undefined>(
+        (s) => s.executionPlanState?.executionPlanGraphs,
+    );
+    // A plan the driver could not convert shows its error in the Query Plan tab.
+    const executionPlanFailed = useQueryResultSelector<boolean>(
+        (s) => s.executionPlanState?.loadState === ApiStatus.Error,
+    );
     const { keyBindings } = useVscodeWebview();
 
     useEffect(() => {
@@ -161,6 +172,16 @@ export const QueryResultPane = ({ GridView }: QueryResultPaneProps) => {
             ) {
                 context.setResultTab(qr.QueryResultPaneTabs.Messages);
                 handled = true;
+            } else if (
+                eventMatchesShortcut(
+                    event,
+                    keyBindings[WebviewAction.QueryResultSwitchToQueryPlanTab]?.keyCombination,
+                )
+            ) {
+                if (isExecutionPlan) {
+                    context.setResultTab(qr.QueryResultPaneTabs.ExecutionPlan);
+                    handled = true;
+                }
             }
             if (handled) {
                 event.preventDefault();
@@ -172,7 +193,7 @@ export const QueryResultPane = ({ GridView }: QueryResultPaneProps) => {
         return () => {
             document.removeEventListener("keydown", handler, true);
         };
-    }, [tabStates?.resultPaneTab, getGridCount, context, resultSetSummaries]);
+    }, [tabStates?.resultPaneTab, getGridCount, context, resultSetSummaries, isExecutionPlan]);
 
     const getWebviewLocation = async () => {
         const res = await context.extensionRpc.sendRequest(qr.GetWebviewLocationRequest.type, {
@@ -208,7 +229,8 @@ export const QueryResultPane = ({ GridView }: QueryResultPaneProps) => {
         );
     }
 
-    if (!uri || !hasResultsOrMessages(resultSetSummaries, messages)) {
+    // YAST: a driver may report plans without any result set or message; the plan tab must show.
+    if (!uri || (!hasResultsOrMessages(resultSetSummaries, messages) && !isExecutionPlan)) {
         return (
             <div className={classes.root}>
                 <div className={classes.noResultsContainer}>
@@ -273,6 +295,20 @@ export const QueryResultPane = ({ GridView }: QueryResultPaneProps) => {
                         key={qr.QueryResultPaneTabs.Messages}>
                         {locConstants.queryResult.messages}
                     </Tab>
+                    {isExecutionPlan &&
+                        (Object.keys(resultSetSummaries).length > 0 ||
+                            (executionPlanGraphs?.length ?? 0) > 0 ||
+                            executionPlanFailed) && (
+                            <Tab
+                                value={qr.QueryResultPaneTabs.ExecutionPlan}
+                                title={locConstants.queryResult.queryPlanTooltip(
+                                    keyBindings[WebviewAction.QueryResultSwitchToQueryPlanTab]
+                                        .label,
+                                )}
+                                key={qr.QueryResultPaneTabs.ExecutionPlan}>
+                                {`${locConstants.queryResult.queryPlan(executionPlanGraphs?.length || 0)}`}
+                            </Tab>
+                        )}
                 </TabList>
 
                 <Toolbar aria-label={locConstants.queryResult.resultsToolbar}>
@@ -321,6 +357,22 @@ export const QueryResultPane = ({ GridView }: QueryResultPaneProps) => {
                     }}
                     aria-hidden={tabStates!.resultPaneTab !== qr.QueryResultPaneTabs.Messages}>
                     <QueryMessageTab />
+                </div>
+
+                <div
+                    className={classes.tabContent}
+                    style={{
+                        display:
+                            tabStates!.resultPaneTab === qr.QueryResultPaneTabs.ExecutionPlan
+                                ? "block"
+                                : "none",
+                        visibility:
+                            tabStates!.resultPaneTab === qr.QueryResultPaneTabs.ExecutionPlan
+                                ? "visible"
+                                : "hidden",
+                    }}
+                    aria-hidden={tabStates!.resultPaneTab !== qr.QueryResultPaneTabs.ExecutionPlan}>
+                    <QueryExecutionPlanTab />
                 </div>
             </div>
             <QueryResultSummaryFooter />

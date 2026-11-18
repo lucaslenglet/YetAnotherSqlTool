@@ -3,8 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-// Adapted from vscode-mssql: execution plans, live query statistics, the legacy
-// grid switch and telemetry removed. The results of the active editor are shown
+// Adapted from vscode-mssql: live query statistics, the legacy grid switch and
+// telemetry removed. The results of the active editor are shown
 // in the "Query Results" view of the bottom panel, or in their own editor tab.
 
 import * as vscode from "vscode";
@@ -20,6 +20,7 @@ import {
     registerCommonRequestHandlers,
 } from "./utils";
 import { getUriKey } from "../utils/utils";
+import { ApiStatus } from "../sharedInterfaces/webview";
 import type { QueryManager } from "../queries/queryManager";
 
 export const QUERY_RESULT_VIEW_ID = "yastQueryResult";
@@ -44,6 +45,7 @@ export class QueryResultWebviewController extends WebviewViewController<
             tabStates: {
                 resultPaneTab: qr.QueryResultPaneTabs.Messages,
             },
+            executionPlanState: {},
             fontSettings: {},
             gridSettings: {},
             autoSizeColumnsMode: qr.ResultsGridAutoSizeStyle.HeadersAndData,
@@ -146,6 +148,8 @@ export class QueryResultWebviewController extends WebviewViewController<
             resultSetSummaries: {},
             messages: [],
             tabStates: undefined,
+            isExecutionPlan: false,
+            executionPlanState: {},
             isExecuting: false,
             executionElapsedMilliseconds: undefined,
             rowsAffected: undefined,
@@ -177,7 +181,7 @@ export class QueryResultWebviewController extends WebviewViewController<
         this.showSplashScreen();
     }
 
-    public addQueryResultState(uri: string, title: string): void {
+    public addQueryResultState(uri: string, title: string, isExecutionPlan?: boolean): void {
         const currentState: qr.QueryResultWebviewState = {
             resultSetSummaries: {},
             messages: [],
@@ -187,6 +191,15 @@ export class QueryResultWebviewController extends WebviewViewController<
             },
             uri: uri,
             title: title,
+            isExecutionPlan: isExecutionPlan,
+            executionPlanState: isExecutionPlan
+                ? {
+                      loadState: ApiStatus.Loading,
+                      executionPlanGraphs: [],
+                      totalCost: 0,
+                      xmlPlans: {},
+                  }
+                : {},
             fontSettings: this.getFontSettings(),
             gridSettings: this.getGridSettingsConfig(),
             autoSizeColumnsMode: this.getAutoSizeColumnsConfig(),

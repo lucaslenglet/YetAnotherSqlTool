@@ -3,9 +3,9 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-// Adapted from vscode-mssql: execution plan, grid mode switch and telemetry removed.
+// Adapted from vscode-mssql: plan comparison, grid mode switch and telemetry removed.
 // Requests about rows, copy and selection go to the QueryManager instead of
-// sqltoolsservice.
+// sqltoolsservice, and plans are read by the driver of the editor's results.
 
 import * as Constants from "../constants/constants";
 import * as vscode from "vscode";
@@ -14,6 +14,15 @@ import { QueryResultWebviewPanelController } from "./queryResultWebviewPanelCont
 import { QueryResultWebviewController } from "./queryResultWebViewController";
 import store, { QueryResultSingletonStore } from "./singletonStore";
 import { formatXml } from "../utils/utils";
+import {
+    openExecutionPlanWebview,
+    saveExecutionPlan,
+    showPlanXml,
+    showQuery,
+    updateTotalCost,
+} from "../controllers/sharedExecutionPlanUtils";
+import { ExecutionPlanService } from "../services/executionPlanService";
+import type { ExecutionPlanSupport } from "../drivers/types";
 
 export const MAX_VIEW_COLUMN = 9;
 
@@ -250,8 +259,32 @@ export function registerCommonRequestHandlers(
         }
         return state;
     });
+    /** Execution plans of the engine the results come from. */
+    const planSupport = (state: qr.QueryResultWebviewState): ExecutionPlanSupport | undefined =>
+        queries().getExecutionPlanSupport(state.uri);
+    const openQueryEditor = (content: string, sourceUri?: string) =>
+        queries().openQueryEditor(content, sourceUri);
+
     webviewController.registerReducer("openFileThroughLink", async (state, payload) => {
-        // XML and JSON cells open in a new untitled editor, formatted.
+        // Plans from this result open in its Query Plan tab from the webview. Any other plan
+        // document of the engine (a showplan XML read from the server...) opens in its own
+        // execution plan viewer; other XML and JSON cells open in a new untitled editor, formatted.
+        const support = planSupport(state);
+        if (
+            support &&
+            payload.type === support.documentLanguage &&
+            isPlan(support, payload.content)
+        ) {
+            openExecutionPlanWebview(
+                webviewViewController.getContext(),
+                new ExecutionPlanService(support),
+                openQueryEditor,
+                support,
+                payload.content,
+                Constants.queryPlan,
+            );
+            return state;
+        }
         let formattedText = payload.content;
         if (payload.type === "xml") {
             formattedText = formatXml(payload.content);
@@ -269,9 +302,47 @@ export function registerCommonRequestHandlers(
         await vscode.window.showTextDocument(doc);
         return state;
     });
+    webviewController.registerReducer("saveExecutionPlan", async (state, payload) => {
+        const support = planSupport(state);
+        return support
+            ? ((await saveExecutionPlan(state, payload, support)) as qr.QueryResultWebviewState)
+            : state;
+    });
+    webviewController.registerReducer("showPlanXml", async (state, payload) => {
+        const support = planSupport(state);
+        return support
+            ? ((await showPlanXml(state, payload, support)) as qr.QueryResultWebviewState)
+            : state;
+    });
+    webviewController.registerReducer("showQuery", async (state, payload) => {
+        return (await showQuery(
+            state,
+            payload,
+            openQueryEditor,
+            state.uri,
+        )) as qr.QueryResultWebviewState;
+    });
+    webviewController.registerReducer("updateTotalCost", async (state, payload) => {
+        return (await updateTotalCost(state, payload)) as qr.QueryResultWebviewState;
+    });
+    webviewController.onRequest(qr.GetExecutionPlanIndexOfCellRequest.type, async (params) =>
+        queries().getExecutionPlanIndexOfCell(params.uri, params.content),
+    );
     webviewController.onRequest(qr.ShowFilterDisabledMessageRequest.type, async () => {
         webviewViewController.showFilterDisabledMessage();
     });
+}
+
+/**
+ * Whether a cell's text is a plan document of the engine (vscode-mssql checks that XML starts
+ * with "<ShowPlanXML"): the driver's converter must read it.
+ */
+function isPlan(support: ExecutionPlanSupport, content: string): boolean {
+    try {
+        return support.parse(content).length > 0;
+    } catch {
+        return false;
+    }
 }
 
 export function recordLength(record: object): number {

@@ -1,6 +1,7 @@
 import { buildConnectionString, parseConnectionString } from "./connectionString";
 import type { Batch, ConnectParams, Driver } from "../types";
 import { PgConnection } from "./connection";
+import { pgExecutionPlan } from "./executionPlan";
 import { pgLanguage } from "./language";
 import { getPgConnectionOptions } from "./options";
 import { quoteIdentifier, toSqlLiteral } from "./sqlText";
@@ -31,6 +32,7 @@ export const pgDriver: Driver = {
     splitBatches,
     tokenize: tokenizePg,
     language: pgLanguage,
+    executionPlan: pgExecutionPlan,
     getStatementAt: getPgStatementAt,
     parseConnectionString,
     buildConnectionString,

@@ -186,9 +186,9 @@ PostgreSQL, and literals according to the type of each column. Each driver there
 provides the quoting.
 
 **To remove:**
-- Execution plan (`webviews/pages/ExecutionPlan`, `@xyflow/react`): closely tied to SQL
-  Server. A PostgreSQL version based on `EXPLAIN` can be made later. Since planned again:
-  see `execution-plan-analysis.md`.
+- Execution plan (`webviews/pages/ExecutionPlan`, `@xyflow/react`): removed at first, then
+  ported with a converter per driver in place of sqltoolsservice: see
+  `execution-plan-analysis.md`.
 - Live statistics, Copilot, telemetry.
 
 ## What we write ourselves

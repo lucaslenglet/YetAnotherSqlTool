@@ -21,6 +21,7 @@ import type {
     DriverConnection,
     DriverId,
     ExecuteEvent,
+    ExecutionPlanKind,
     TextPosition,
 } from "../drivers/types";
 import { QUERY_CANCELED_MESSAGE } from "../drivers/types";
@@ -43,6 +44,17 @@ export interface QueryCompleteEvent {
     totalElapsedMilliseconds: number;
     hasError: boolean;
     isCanceled: boolean;
+}
+
+/** A plan document reported by the driver during a run for plans (`executeForPlan`). */
+export interface ExecutionPlanEvent {
+    batchId: number;
+    /** Result set the driver also showed the document in (the event follows its end), if any. */
+    resultId?: number;
+    /** Plans of the batch so far, this one included: tells apart plans without result set. */
+    planIndex: number;
+    /** The document, as `Driver.executionPlan.parse` reads it. */
+    content: string;
 }
 
 export interface BatchStartEvent {
@@ -86,6 +98,8 @@ export class QueryRunner implements vscode.Disposable {
     private _storageError: unknown;
     /** Engine of the last run: INSERT and IN exports follow its SQL syntax. */
     public dialect: DriverId = "mssql";
+    /** Plans the last run asked for (vscode-mssql's QueryRunner.executionPlanOptions). */
+    public executionPlanKind: ExecutionPlanKind | undefined;
 
     private readonly _onStart = new vscode.EventEmitter<void>();
     public readonly onStart = this._onStart.event;
@@ -101,6 +115,8 @@ export class QueryRunner implements vscode.Disposable {
     public readonly onMessage = this._onMessage.event;
     private readonly _onComplete = new vscode.EventEmitter<QueryCompleteEvent>();
     public readonly onComplete = this._onComplete.event;
+    private readonly _onExecutionPlan = new vscode.EventEmitter<ExecutionPlanEvent>();
+    public readonly onExecutionPlan = this._onExecutionPlan.event;
 
     /**
      * `newRowStore` gives each result set its store; the default one stays in memory (the
@@ -122,15 +138,21 @@ export class QueryRunner implements vscode.Disposable {
 
     /**
      * Runs `text`, which starts at `start` in the editor (0-based line and column).
-     * Resolves when every batch is done, failed or was canceled.
+     * Resolves when every batch is done, failed or was canceled. With `executionPlan`, each batch
+     * goes through the driver's `executeForPlan`, which also reports the plans (onExecutionPlan).
      */
     public run(
         driver: Driver,
         connection: DriverConnection,
         text: string,
         start: { line: number; column: number },
+        executionPlan?: ExecutionPlanKind,
     ): Promise<void> {
-        return this.runWith(driver, async (signal) => {
+        const executeForPlan = connection.executeForPlan?.bind(connection);
+        if (executionPlan && !executeForPlan) {
+            return Promise.reject(new Error(`${driver.id} has no execution plans`));
+        }
+        return this.runWith(driver, executionPlan, async (signal) => {
             let hasError = false;
             const batches = driver.splitBatches(text);
             if (batches.length === 0) {
@@ -142,12 +164,11 @@ export class QueryRunner implements vscode.Disposable {
                 });
             }
             for (let batchId = 0; batchId < batches.length && !signal.aborted; batchId++) {
-                const batchHasError = await this.runBatch(
-                    batchId,
-                    batches[batchId],
-                    connection,
-                    start,
-                    signal,
+                const batch = batches[batchId];
+                const batchHasError = await this.runBatch(batchId, batch, start, (onEvent) =>
+                    executionPlan
+                        ? executeForPlan!(batch, executionPlan, onEvent, signal)
+                        : connection.execute(batch, onEvent, signal),
                 );
                 hasError ||= batchHasError;
             }
@@ -164,7 +185,7 @@ export class QueryRunner implements vscode.Disposable {
         connection: DriverConnection,
         objectName: string | undefined,
     ): Promise<void> {
-        return this.runWith(driver, (signal) =>
+        return this.runWith(driver, undefined, (signal) =>
             this.runCall(0, undefined, undefined, (onEvent) =>
                 connection.describeObject(objectName, onEvent, signal),
             ),
@@ -174,6 +195,7 @@ export class QueryRunner implements vscode.Disposable {
     /** What every run has in common: state, events, timing, cancel. `body` returns whether an error occurred. */
     private async runWith(
         driver: Driver,
+        executionPlan: ExecutionPlanKind | undefined,
         body: (signal: AbortSignal) => Promise<boolean>,
     ): Promise<void> {
         if (this._isExecuting) {
@@ -184,6 +206,7 @@ export class QueryRunner implements vscode.Disposable {
         this._storageError = undefined;
         this.disposeResultSets();
         this.dialect = driver.id;
+        this.executionPlanKind = executionPlan;
         this._abort = new AbortController();
         const signal = this._abort.signal;
         const startTime = Date.now();
@@ -249,9 +272,8 @@ export class QueryRunner implements vscode.Disposable {
     private async runBatch(
         batchId: number,
         batch: Batch,
-        connection: DriverConnection,
         start: { line: number; column: number },
-        signal: AbortSignal,
+        execute: (onEvent: (event: ExecuteEvent) => void | Promise<void>) => Promise<void>,
     ): Promise<boolean> {
         const batchLines = batch.text.split("\n");
         const firstLine = start.line + batch.startLine;
@@ -277,9 +299,7 @@ export class QueryRunner implements vscode.Disposable {
                     (position.line === 0 ? firstColumn : 0) + lineText.replace(/\r$/, "").length,
             };
         };
-        return this.runCall(batchId, selection, toAbsolute, (onEvent) =>
-            connection.execute(batch, onEvent, signal),
-        );
+        return this.runCall(batchId, selection, toAbsolute, execute);
     }
 
     /**
@@ -298,11 +318,16 @@ export class QueryRunner implements vscode.Disposable {
         const resultSets: StoredResultSet[] = [];
         this._resultSets[batchId] = resultSets;
         let current: StoredResultSet | undefined;
+        /** The result set that just ended, which a plan event right after belongs to. */
+        let ended: StoredResultSet | undefined;
+        let planCount = 0;
         let hasError = false;
         let hasOutput = false;
 
         try {
             await call((event): void | Promise<void> => {
+                const previous = ended;
+                ended = undefined;
                 switch (event.type) {
                     case "resultSetStart": {
                         hasOutput = true;
@@ -351,7 +376,18 @@ export class QueryRunner implements vscode.Disposable {
                         current.summary.rowCount = current.rows.rowCount;
                         current.summary.complete = true;
                         this._onResultSetComplete.fire(current.summary);
+                        ended = current;
                         current = undefined;
+                        break;
+                    }
+                    case "executionPlan": {
+                        hasOutput = true;
+                        this._onExecutionPlan.fire({
+                            batchId,
+                            resultId: previous?.summary.id,
+                            planIndex: planCount++,
+                            content: event.content,
+                        });
                         break;
                     }
                     case "message": {
@@ -647,6 +683,7 @@ export class QueryRunner implements vscode.Disposable {
         this._onResultSetComplete.dispose();
         this._onMessage.dispose();
         this._onComplete.dispose();
+        this._onExecutionPlan.dispose();
     }
 }
 

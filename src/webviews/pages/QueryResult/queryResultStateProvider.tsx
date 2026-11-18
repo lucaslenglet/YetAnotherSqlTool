@@ -7,7 +7,9 @@ import { ReactNode, createContext, useCallback, useEffect, useMemo, useRef, useS
 import { getCoreRPCs } from "../../common/utils";
 import { useVscodeWebview } from "../../common/vscodeWebviewProvider";
 import { CoreRPCs } from "../../../sharedInterfaces/webview";
+import { ExecutionPlanProvider } from "../../../sharedInterfaces/executionPlan";
 import {
+    GetExecutionPlanIndexOfCellRequest,
     GridContextMenuAction,
     QueryResultPaneTabs,
     QueryResultReducers,
@@ -23,6 +25,7 @@ import ColumnMenuPopup, {
     FilterValue,
 } from "./table/plugins/ColumnMenuPopup";
 import { TableColumnResizeDialog } from "./table/TableColumnResizeDialog";
+import { ExecutionPlanRevealRequest } from "../ExecutionPlan/executionPlanPage";
 
 export interface ColumnFilterPopupOptions {
     columnId: string;
@@ -47,7 +50,9 @@ type ResizeColumnDialogState = {
     onDismiss: () => void;
 };
 
-export interface QueryResultReactProvider extends CoreRPCs {
+// Plan comparison is not ported (see docs/execution-plan-analysis.md).
+export interface QueryResultReactProvider
+    extends Omit<ExecutionPlanProvider, "getExecutionPlan" | "compareExecutionPlan">, CoreRPCs {
     extensionRpc: WebviewRpc<QueryResultReducers>;
     setResultTab: (tabId: QueryResultPaneTabs) => void;
     setResultViewMode: (viewMode: QueryResultViewMode) => void;
@@ -68,11 +73,20 @@ export interface QueryResultReactProvider extends CoreRPCs {
     ) => void;
     hideHeaderContextMenu: () => void;
     /**
-     * Opens a file of type with with specified content.
+     * Gets the execution plan graph from the provider for a result set
+     * @param uri the uri of the query result state this request is associated with
+     */
+    getExecutionPlan(uri: string): void;
+
+    /**
+     * Opens a file of type with with specified content. A plan from this result opens its Query
+     * Plan tab scrolled to that plan instead.
      * @param content the content of the file
      * @param type the type of file to open
      */
     openFileThroughLink(content: string, type: string): void;
+    /** The plan the Query Plan tab should scroll to after a plan link is opened. */
+    executionPlanRevealRequest?: ExecutionPlanRevealRequest;
     /**
      * Opens the resize column dialog
      * @param options options for the resize dialog
@@ -91,8 +105,33 @@ interface QueryResultProviderProps {
     children: ReactNode;
 }
 
+/**
+ * Finds the first plan in this result parsed from the given XML. Every plan keeps the XML of the
+ * result set it came from, so this is the plan a link to that XML refers to.
+ * @returns the plan's index, or -1 when the XML is not one of this result's plans.
+ */
+function findExecutionPlanGraphIndex(
+    state: QueryResultWebviewState | undefined,
+    content: string,
+): number {
+    if (!state?.isExecutionPlan) {
+        return -1;
+    }
+    return (
+        state.executionPlanState?.executionPlanGraphs?.findIndex(
+            (graph) => graph.graphFile?.graphFileContent === content,
+        ) ?? -1
+    );
+}
+
 const QueryResultStateProvider: React.FC<QueryResultProviderProps> = ({ children }) => {
-    const { extensionRpc } = useVscodeWebview<QueryResultWebviewState, QueryResultReducers>();
+    const { extensionRpc, getSnapshot } = useVscodeWebview<
+        QueryResultWebviewState,
+        QueryResultReducers
+    >();
+    const [executionPlanRevealRequest, setExecutionPlanRevealRequest] = useState<
+        ExecutionPlanRevealRequest | undefined
+    >(undefined);
     const [copyIndicatorVisible, setCopyIndicatorVisible] = useState(false);
     const copyIndicatorTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     // Grid context menu state
@@ -193,7 +232,75 @@ const QueryResultStateProvider: React.FC<QueryResultProviderProps> = ({ children
             },
 
             openFileThroughLink: (content: string, type: string) => {
+                const revealPlan = (graphIndex: number) => {
+                    setExecutionPlanRevealRequest({ graphIndex });
+                    extensionRpc.action("setResultTab", {
+                        tabId: QueryResultPaneTabs.ExecutionPlan,
+                    });
+                };
+                const snapshot = getSnapshot();
+                const graphIndex = findExecutionPlanGraphIndex(snapshot, content);
+                if (graphIndex >= 0) {
+                    revealPlan(graphIndex);
+                    return;
+                }
+                // YAST: the grid may show a plan document in another form than the plan's own
+                // (PostgreSQL); the extension then finds the plan by the cell's result set.
+                if (snapshot?.isExecutionPlan && snapshot.uri) {
+                    void extensionRpc
+                        .sendRequest(GetExecutionPlanIndexOfCellRequest.type, {
+                            uri: snapshot.uri,
+                            content,
+                        })
+                        .then(
+                            (index) =>
+                                index >= 0
+                                    ? revealPlan(index)
+                                    : extensionRpc.action("openFileThroughLink", { content, type }),
+                            () => extensionRpc.action("openFileThroughLink", { content, type }),
+                        );
+                    return;
+                }
                 extensionRpc.action("openFileThroughLink", { content, type });
+            },
+            executionPlanRevealRequest,
+
+            // Execution Plan commands
+
+            /**
+             * Gets the execution plan for a specific query result
+             * @param uri the uri of the query result state this request is associated with
+             */
+            getExecutionPlan: (uri: string) => {
+                extensionRpc.action("getExecutionPlan", { uri });
+            },
+            /**
+             * Saves the execution plan for a specific query result
+             * @param sqlPlanContent the content of the SQL plan to save
+             */
+            saveExecutionPlan: (sqlPlanContent: string) => {
+                extensionRpc.action("saveExecutionPlan", { sqlPlanContent });
+            },
+            /**
+             * Shows the XML representation of the execution plan for a specific query result
+             * @param sqlPlanContent the content of the SQL plan to show
+             */
+            showPlanXml: (sqlPlanContent: string) => {
+                extensionRpc.action("showPlanXml", { sqlPlanContent });
+            },
+            /**
+             * Shows the query for a specific query result
+             * @param query the query to show
+             */
+            showQuery: (query: string) => {
+                extensionRpc.action("showQuery", { query });
+            },
+            /**
+             * Updates the total cost for a specific query result
+             * @param addedCost the cost to add to the total
+             */
+            updateTotalCost: (addedCost: number) => {
+                extensionRpc.action("updateTotalCost", { addedCost });
             },
             openResizeDialog: (options: Partial<ResizeColumnDialogState>) => {
                 setResizeDialogState((state) => ({
@@ -205,10 +312,12 @@ const QueryResultStateProvider: React.FC<QueryResultProviderProps> = ({ children
         }),
         [
             extensionRpc,
+            getSnapshot,
             copyIndicatorVisible,
             showCopyIndicator,
             hideFilterPopup,
             hideHeaderContextMenu,
+            executionPlanRevealRequest,
         ],
     );
 
