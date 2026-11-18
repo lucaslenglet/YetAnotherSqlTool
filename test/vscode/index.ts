@@ -18,6 +18,7 @@ const suites = [
     "importConnections.e2e.js",
     "shortcuts.e2e.js",
     "largeResults.e2e.js",
+    "executionPlan.e2e.js",
     "webviews.e2e.js",
     "highlighting.e2e.js",
     "completion.e2e.js",

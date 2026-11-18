@@ -1,7 +1,7 @@
 /**
  * Commands of SQL editors: connect, change connection or database, run and cancel
- * queries, new query from the Object Explorer. Handlers follow vscode-mssql's
- * mainController.
+ * queries, execution plans, new query from the Object Explorer. Handlers follow vscode-mssql's
+ * mainController (and its SqlOutputContentProvider for the actual plan).
  */
 
 import * as vscode from "vscode";
@@ -20,6 +20,13 @@ import { QueryManager } from "./queryManager";
 import { TreeNodeInfo } from "../objectExplorer/nodes/treeNodeInfo";
 import { ObjectExplorerUtils } from "../objectExplorer/objectExplorerUtils";
 import { getUriKey } from "../utils/utils";
+import { getDriver } from "../drivers";
+
+/**
+ * Context key listing the connected editors whose engine has execution plans: the plan buttons
+ * and commands are offered there only (`resource in yast.executionPlan.urisWithPlanSupport`).
+ */
+export const planSupportContextKey = "yast.executionPlan.urisWithPlanSupport";
 
 export function registerQueryCommands(
     context: vscode.ExtensionContext,
@@ -114,6 +121,36 @@ export function registerQueryCommands(
         }
     });
 
+    register(Constants.cmdShowEstimatedPlan, async () => {
+        const editor = sqlEditor();
+        if (editor) {
+            await queries.showEstimatedPlan(editor, () => connectEditor(editor));
+        }
+    });
+
+    register(Constants.cmdEnableActualPlan, () => {
+        const editor = sqlEditor();
+        if (editor) {
+            queries.setActualPlanEnabled(getUriKey(editor.document.uri), true);
+        }
+    });
+
+    register(Constants.cmdDisableActualPlan, () => {
+        const editor = sqlEditor();
+        if (editor) {
+            queries.setActualPlanEnabled(getUriKey(editor.document.uri), false);
+        }
+    });
+
+    register(Constants.cmdToggleActualPlan, () => {
+        // Like vscode-mssql: nothing to do without an active editor.
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            const uri = getUriKey(editor.document.uri);
+            queries.setActualPlanEnabled(uri, !queries.isActualPlanEnabled(uri));
+        }
+    });
+
     register(Constants.cmdToggleQueryResultPanel, () => {
         // Like vscode-mssql: nothing to do when the active editor is not a SQL one.
         const editor = vscode.window.activeTextEditor;
@@ -167,6 +204,31 @@ export function registerQueryCommands(
     };
     register(Constants.cmdNewQuery, () => newQuery());
     register(Constants.cmdObjectExplorerNewQuery, (node?: TreeNodeInfo) => newQuery(node));
+}
+
+/** Keeps `planSupportContextKey` up to date as editors connect, disconnect or change connection. */
+export function registerExecutionPlanContext(
+    context: vscode.ExtensionContext,
+    connections: EditorConnections,
+): void {
+    const supported = new Set<string>();
+    const update = (uri: string) => {
+        const editorConnection = connections.get(uri);
+        const hasPlans =
+            editorConnection !== undefined &&
+            getDriver(editorConnection.profile.provider).executionPlan !== undefined &&
+            editorConnection.connection.executeForPlan !== undefined;
+        if (hasPlans === supported.has(uri)) {
+            return;
+        }
+        if (hasPlans) {
+            supported.add(uri);
+        } else {
+            supported.delete(uri);
+        }
+        void vscode.commands.executeCommand("setContext", planSupportContextKey, [...supported]);
+    };
+    context.subscriptions.push(connections.onDidChange(update));
 }
 
 /**

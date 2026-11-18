@@ -7,6 +7,7 @@ import type {
     ConnectParams,
     DriverConnection,
     ExecuteEventHandler,
+    ExecutionPlanKind,
     ObjectNode,
     ScriptDatabaseOptions,
     ScriptOperation,
@@ -25,7 +26,7 @@ import {
     listDefaultSchemas,
     type DatabaseQueryRunner,
 } from "./completion";
-import { executeBatch } from "./execute";
+import { executeBatch, executeBatchForPlan } from "./execute";
 import { DEDICATED_SQL_POOL_ENGINE_EDITION, ObjectExplorer, type Row } from "./objectExplorer";
 import { serverQueries } from "./objectExplorerQueries";
 import { ScriptCatalog } from "./scriptCatalog";
@@ -37,6 +38,9 @@ import { installRawValueReaders } from "./tediousRawValues";
 
 // EngineEdition values of Azure-hosted SQL Server flavors: SQL Database, Synapse, Managed Instance, Synapse serverless, Fabric.
 const CLOUD_ENGINE_EDITIONS = [5, 6, 8, 11, 12];
+
+export const DEDICATED_POOL_NO_PLAN_MESSAGE =
+    "Execution plans are not available on an Azure Synapse Analytics dedicated SQL pool: it supports neither SET SHOWPLAN_XML nor SET STATISTICS XML. EXPLAIN, in the query, shows the plan of a statement.";
 
 /**
  * Connections of a metadata pool. A dedicated SQL pool gets one: a new connection there costs
@@ -55,6 +59,12 @@ export class MssqlConnection implements DriverConnection {
     private readonly explorer: ObjectExplorer;
     private readonly metadataPools = new Map<string, Promise<sql.ConnectionPool>>();
     private closed = false;
+    /**
+     * The running executeForPlan, if any. Its SET ... ON, batch and SET ... OFF are three requests
+     * on the session: anything else sent on the session waits until it is over, so that it neither
+     * runs with a plan option on nor gets a plan instead of its result.
+     */
+    private planRun: Promise<void> = Promise.resolve();
 
     private constructor(
         private readonly params: ConnectParams,
@@ -105,11 +115,13 @@ export class MssqlConnection implements DriverConnection {
     }
 
     async getCurrentDatabase(): Promise<string> {
+        await this.planRun;
         const result = await this.sessionPool.request().query("SELECT DB_NAME() AS name");
         return result.recordset[0].name;
     }
 
     async listDatabases(): Promise<string[]> {
+        await this.planRun;
         const result = await this.sessionPool
             .request()
             .query(
@@ -121,6 +133,7 @@ export class MssqlConnection implements DriverConnection {
     }
 
     async changeDatabase(database: string): Promise<void> {
+        await this.planRun;
         if (this.engineEdition === DEDICATED_SQL_POOL_ENGINE_EDITION) {
             // Dedicated SQL pools do not support USE: the session logs in to the database instead.
             const previous = this.sessionPool;
@@ -167,15 +180,41 @@ export class MssqlConnection implements DriverConnection {
         return scriptDatabase({ catalog, openDataPool }, options, write, signal, onProgress);
     }
 
-    execute(batch: Batch, onEvent: ExecuteEventHandler, signal: AbortSignal): Promise<void> {
+    async execute(batch: Batch, onEvent: ExecuteEventHandler, signal: AbortSignal): Promise<void> {
+        await this.planRun;
         return executeBatch(this.sessionPool, batch, onEvent, signal);
     }
 
-    describeObject(
+    async executeForPlan(
+        batch: Batch,
+        kind: ExecutionPlanKind,
+        onEvent: ExecuteEventHandler,
+        signal: AbortSignal,
+    ): Promise<void> {
+        if (this.engineEdition === DEDICATED_SQL_POOL_ENGINE_EDITION) {
+            // Dedicated SQL pools reject SET SHOWPLAN_XML and SET STATISTICS XML (sqltoolsservice
+            // then runs the batch without a plan). An estimated plan must not run the batch: nothing
+            // is sent. An actual plan runs it, as sqltoolsservice does, without a plan.
+            if (kind === "estimated") {
+                onEvent({ type: "message", text: DEDICATED_POOL_NO_PLAN_MESSAGE, isError: true });
+                return;
+            }
+            onEvent({ type: "message", text: DEDICATED_POOL_NO_PLAN_MESSAGE, isError: false });
+            return this.execute(batch, onEvent, signal);
+        }
+        const run = this.planRun.then(() =>
+            executeBatchForPlan(this.sessionPool, batch, kind, onEvent, signal),
+        );
+        this.planRun = run.catch(() => undefined);
+        return run;
+    }
+
+    async describeObject(
         objectName: string | undefined,
         onEvent: ExecuteEventHandler,
         signal: AbortSignal,
     ): Promise<void> {
+        await this.planRun;
         // Same path as a typed query, so grids and messages are exactly sp_help's.
         return executeBatch(
             this.sessionPool,

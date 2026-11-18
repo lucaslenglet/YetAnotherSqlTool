@@ -3,6 +3,7 @@ import { buildConnectionString, parseConnectionString } from "./connectionString
 import { splitBatches } from "./batches";
 import { MssqlConnection } from "./connection";
 import { getMssqlConnectionOptions } from "./connectionOptions";
+import { parseShowPlanXml, SHOWPLAN_FILE_EXTENSION } from "./executionPlan";
 import { mssqlLanguage } from "./language";
 import { formatIdentifier, quoteIdentifier, toSqlLiteral } from "./sqlText";
 import { getMssqlStatementAt, tokenizeMssql } from "./statements";
@@ -16,6 +17,11 @@ export const mssqlDriver: Driver = {
     splitBatches,
     tokenize: tokenizeMssql,
     language: mssqlLanguage,
+    executionPlan: {
+        fileExtension: SHOWPLAN_FILE_EXTENSION,
+        documentLanguage: "xml",
+        parse: parseShowPlanXml,
+    },
     getStatementAt: getMssqlStatementAt,
     parseConnectionString,
     buildConnectionString,

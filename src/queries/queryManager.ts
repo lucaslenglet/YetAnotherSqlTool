@@ -3,7 +3,9 @@
  *
  * Follows vscode-mssql's SqlOutputContentProvider: one QueryRunner per editor,
  * whose events update that editor's QueryResultWebviewState. Frequent updates
- * (rows arriving, messages) are throttled so the webview is not flooded.
+ * (rows arriving, messages) are throttled so the webview is not flooded. Execution plans
+ * reported by the driver are converted (ExecutionPlanService) for the Query Plan tab, and the
+ * actual plan is turned on per editor, as there.
  */
 
 import * as vscode from "vscode";
@@ -11,8 +13,18 @@ import * as Constants from "../constants/constants";
 import * as LocalizedConstants from "../constants/locConstants";
 import * as qr from "../sharedInterfaces/queryResult";
 import { getDriver } from "../drivers";
-import type { Driver, DriverConnection } from "../drivers/types";
-import { OperationCanceledError, QueryRunner, formatClock } from "./queryRunner";
+import type {
+    Driver,
+    DriverConnection,
+    ExecutionPlanKind,
+    ExecutionPlanSupport,
+} from "../drivers/types";
+import {
+    ExecutionPlanEvent,
+    OperationCanceledError,
+    QueryRunner,
+    formatClock,
+} from "./queryRunner";
 import { createRowStore, type RowStore } from "./rowStore";
 import { EditorConnections } from "./editorConnections";
 import { QueryResultWebviewController } from "../queryResult/queryResultWebViewController";
@@ -20,6 +32,9 @@ import { buildSelectionSummaryStatusBarStrings } from "../queryResult/selectionS
 import { countResultSets, getInMemoryGridDataProcessingThreshold } from "../queryResult/utils";
 import store from "../queryResult/singletonStore";
 import { getEditorEOL, getErrorMessage, getUriKey } from "../utils/utils";
+import { ApiStatus } from "../sharedInterfaces/webview";
+import { ExecutionPlanService } from "../services/executionPlanService";
+import { getPlanGraphFileType } from "../controllers/sharedExecutionPlanUtils";
 import {
     copyResultsAs,
     runCopyOperation,
@@ -33,6 +48,38 @@ type CopyAsParams = Pick<qr.CopyAsCsvRequest, "uri" | "batchId" | "resultId" | "
 
 /** Delay between two webview updates while a query streams (vscode-mssql uses 100 ms). */
 const STATE_UPDATE_DELAY_MS = 100;
+
+/** Context key listing the editors whose actual plan is on (vscode-mssql's, under our prefix). */
+export const actualPlanContextKey = "yast.executionPlan.urisWithActualPlanEnabled";
+
+/**
+ * Which plan a run asks for: "estimated" (Show Estimated Plan), "editor" (the actual plan when
+ * it is on for the editor: Run Query, Execute Current Statement) or "none".
+ */
+type RunPlan = "estimated" | "editor" | "none";
+
+/**
+ * Picks the tab to show when a run completes (vscode-mssql's getCompletedRunTab). Failed runs
+ * show Messages. Estimated plan runs show the Query Plan tab. Every other run, including one that
+ * captures actual plans, shows Results when it returned any result sets, matching SSMS.
+ */
+function getCompletedRunTab(
+    state: qr.QueryResultWebviewState,
+    isEstimatedPlan: boolean,
+    hasError: boolean,
+): qr.QueryResultPaneTabs {
+    if (hasError) {
+        return qr.QueryResultPaneTabs.Messages;
+    }
+    if (isEstimatedPlan) {
+        return state.isExecutionPlan
+            ? qr.QueryResultPaneTabs.ExecutionPlan
+            : qr.QueryResultPaneTabs.Messages;
+    }
+    return countResultSets(state.resultSetSummaries) > 0
+        ? qr.QueryResultPaneTabs.Results
+        : qr.QueryResultPaneTabs.Messages;
+}
 
 /** The selection summary being computed for an editor; a newer selection supersedes it. */
 interface SummaryRequest {
@@ -51,6 +98,10 @@ export class QueryManager implements vscode.Disposable {
     /** Fires after an editor ran text (finished, failed or canceled); autocompletion watches for DDL. */
     public readonly onDidRunText = this._onDidRunText.event;
     private readonly _summaryRequests = new Map<string, SummaryRequest>();
+    /** Editors whose runs capture the actual plan (vscode-mssql's _actualPlanStatuses). */
+    private readonly _actualPlanUris = new Set<string>();
+    /** Whether the current run of an editor reported an error (vscode-mssql's batch.hasError). */
+    private readonly _runHasError = new Map<string, boolean>();
 
     /** `newRowStore` gives each result set its store (by default in memory only). */
     constructor(
@@ -70,7 +121,18 @@ export class QueryManager implements vscode.Disposable {
      * Asks for a connection first when the editor has none.
      */
     public runQuery(editor: vscode.TextEditor, connect: () => Promise<boolean>): Promise<void> {
-        return this.runText(editor, connect, "document");
+        return this.runText(editor, connect, "document", "editor");
+    }
+
+    /**
+     * Shows the estimated plan of the editor's selection, or of the whole document when nothing
+     * is selected (vscode-mssql's onRunQuery with includeEstimatedExecutionPlanXml).
+     */
+    public showEstimatedPlan(
+        editor: vscode.TextEditor,
+        connect: () => Promise<boolean>,
+    ): Promise<void> {
+        return this.runText(editor, connect, "document", "estimated");
     }
 
     /**
@@ -81,7 +143,7 @@ export class QueryManager implements vscode.Disposable {
         editor: vscode.TextEditor,
         connect: () => Promise<boolean>,
     ): Promise<void> {
-        return this.runText(editor, connect, "statement");
+        return this.runText(editor, connect, "statement", "editor");
     }
 
     /** `scope` is what runs when nothing is selected. */
@@ -89,6 +151,7 @@ export class QueryManager implements vscode.Disposable {
         editor: vscode.TextEditor,
         connect: () => Promise<boolean>,
         scope: "document" | "statement",
+        plan: RunPlan,
     ): Promise<void> {
         // vscode-mssql's checks, before anything else.
         if (editor.document.getText().trim() === "") {
@@ -105,7 +168,7 @@ export class QueryManager implements vscode.Disposable {
             void vscode.window.showInformationMessage(LocalizedConstants.msgNoQueryTextToExecute);
             return;
         }
-        await this.runOnEditor(editor, connect, (runner, driver, connection) => {
+        await this.runOnEditor(editor, connect, plan, (runner, driver, connection, planKind) => {
             const selection = editor.selection;
             let range: vscode.Range | undefined;
             if (!selection.isEmpty) {
@@ -132,10 +195,16 @@ export class QueryManager implements vscode.Disposable {
             const start = (range ?? selection).start;
             const uri = getUriKey(editor.document.uri);
             return runner
-                .run(driver, connection, text, {
-                    line: start.line,
-                    column: start.character,
-                })
+                .run(
+                    driver,
+                    connection,
+                    text,
+                    {
+                        line: start.line,
+                        column: start.character,
+                    },
+                    planKind,
+                )
                 .finally(() => this._onDidRunText.fire({ uri, text }));
         });
     }
@@ -149,7 +218,7 @@ export class QueryManager implements vscode.Disposable {
         objectName: string | undefined,
         connect: () => Promise<boolean>,
     ): Promise<void> {
-        await this.runOnEditor(editor, connect, (runner, driver, connection) =>
+        await this.runOnEditor(editor, connect, "none", (runner, driver, connection) =>
             runner.runObjectInformation(driver, connection, objectName),
         );
     }
@@ -161,7 +230,13 @@ export class QueryManager implements vscode.Disposable {
     private async runOnEditor(
         editor: vscode.TextEditor,
         connect: () => Promise<boolean>,
-        run: (runner: QueryRunner, driver: Driver, connection: DriverConnection) => Promise<void>,
+        plan: RunPlan,
+        run: (
+            runner: QueryRunner,
+            driver: Driver,
+            connection: DriverConnection,
+            planKind: ExecutionPlanKind | undefined,
+        ) => Promise<void>,
     ): Promise<void> {
         const uri = getUriKey(editor.document.uri);
         if (this.isRunning(uri)) {
@@ -182,18 +257,31 @@ export class QueryManager implements vscode.Disposable {
             return;
         }
 
+        const driver = getDriver(editorConnection.profile.provider);
+        const plansAvailable =
+            driver.executionPlan !== undefined &&
+            editorConnection.connection.executeForPlan !== undefined;
+        let planKind: ExecutionPlanKind | undefined;
+        if (plan === "estimated") {
+            if (!plansAvailable) {
+                void vscode.window.showInformationMessage(
+                    LocalizedConstants.executionPlanNotSupported(driver.displayName),
+                );
+                return;
+            }
+            planKind = "estimated";
+        } else if (plan === "editor" && plansAvailable && this._actualPlanUris.has(uri)) {
+            planKind = "actual";
+        }
+
         const runner = this.getOrCreateRunner(uri, getEditorTitle(editor.document));
         // Filters, widths and scroll positions belong to the previous results.
         store.deleteUriState(uri);
-        this._results.addQueryResultState(uri, runner.title);
+        this._results.addQueryResultState(uri, runner.title, planKind !== undefined);
 
         this._connections.setRunning(uri, true);
         try {
-            await run(
-                runner,
-                getDriver(editorConnection.profile.provider),
-                editorConnection.connection,
-            );
+            await run(runner, driver, editorConnection.connection, planKind);
         } finally {
             this._connections.setRunning(uri, false);
             // USE (SQL Server) can change the session's database.
@@ -240,13 +328,175 @@ export class QueryManager implements vscode.Disposable {
         entry.runner.dispose();
         clearTimeout(this._pendingUpdates.get(uri));
         this._pendingUpdates.delete(uri);
+        this._runHasError.delete(uri);
         this.supersedeSummary(uri);
         store.deleteUriState(uri);
+    }
+
+    // -- execution plans --------------------------------------------------------------
+
+    public isActualPlanEnabled(uri: string): boolean {
+        return this._actualPlanUris.has(uri);
+    }
+
+    /** Turns the actual plan on or off for the runs of an editor (vscode-mssql's onToggleActualPlan). */
+    public setActualPlanEnabled(uri: string, enabled: boolean): void {
+        if (enabled) {
+            this._actualPlanUris.add(uri);
+        } else {
+            this._actualPlanUris.delete(uri);
+        }
+        this.updateActualPlanContext();
+    }
+
+    private updateActualPlanContext(): void {
+        void vscode.commands.executeCommand("setContext", actualPlanContextKey, [
+            ...this._actualPlanUris,
+        ]);
+    }
+
+    /**
+     * Execution plans of the engine of an editor's last run (the plans of its results come from
+     * there, even if the editor changed connection since).
+     */
+    public getExecutionPlanSupport(uri: string | undefined): ExecutionPlanSupport | undefined {
+        const runner = uri ? this._runners.get(uri)?.runner : undefined;
+        if (runner) {
+            return getDriver(runner.dialect).executionPlan;
+        }
+        const editorConnection = uri ? this._connections.get(uri) : undefined;
+        return editorConnection
+            ? getDriver(editorConnection.profile.provider).executionPlan
+            : undefined;
+    }
+
+    /**
+     * The plan of the editor's results that a grid cell showed, found by the result set the
+     * driver showed its document in (GetExecutionPlanIndexOfCellRequest): the index of its first
+     * graph in `executionPlanGraphs`, or -1 when the cell is not one of these result sets.
+     */
+    public async getExecutionPlanIndexOfCell(uri: string, content: string): Promise<number> {
+        const runner = this._runners.get(uri)?.runner;
+        if (!runner || !this._results.hasQueryResultState(uri)) {
+            return -1;
+        }
+        const planState = this._results.getQueryResultState(uri).executionPlanState;
+        for (const [key, document] of Object.entries(planState?.xmlPlans ?? {})) {
+            const match = /^(\d+),(\d+)$/.exec(key);
+            if (!match) {
+                continue;
+            }
+            const subset = await runner.getRows(Number(match[1]), Number(match[2]), 0, 1);
+            if (subset.rows[0]?.[0]?.displayValue === content) {
+                return (
+                    planState.executionPlanGraphs?.findIndex(
+                        (graph) => graph.graphFile?.graphFileContent === document,
+                    ) ?? -1
+                );
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Opens a new SQL editor with `content`, connected like the editor `sourceUri` when it is
+     * connected (vscode-mssql's SqlDocumentService.newQuery with ConnectionStrategy.CopyFromUri).
+     */
+    public async openQueryEditor(content: string, sourceUri?: string): Promise<void> {
+        const doc = await vscode.workspace.openTextDocument({
+            language: Constants.languageId,
+            content,
+        });
+        const editor = await vscode.window.showTextDocument(doc);
+        const source = sourceUri ? this._connections.get(sourceUri) : undefined;
+        if (source) {
+            await this._connections.connect(
+                getUriKey(editor.document.uri),
+                source.profile,
+                source.database,
+            );
+        }
+    }
+
+    /**
+     * Converts a plan document of a run and adds its graphs to the editor's Query Plan tab
+     * (vscode-mssql's onExecutionPlan listener). A document the converter rejects shows its
+     * error in the tab, as a failed sqltoolsservice request does.
+     */
+    private async addExecutionPlan(
+        uri: string,
+        runner: QueryRunner,
+        event: ExecutionPlanEvent,
+    ): Promise<void> {
+        const support = getDriver(runner.dialect).executionPlan;
+        if (!support) {
+            return;
+        }
+        let planGraphs: Awaited<ReturnType<ExecutionPlanService["getExecutionPlan"]>> | undefined;
+        let parseError: unknown;
+        try {
+            planGraphs = await new ExecutionPlanService(support).getExecutionPlan({
+                graphFileContent: event.content,
+                graphFileType: getPlanGraphFileType(support),
+            });
+        } catch (e) {
+            parseError = e;
+        }
+
+        // Read the state after the conversion: plans of the same run are added in order.
+        if (!this._results.hasQueryResultState(uri)) {
+            return;
+        }
+        const resultWebviewState = this._results.getQueryResultState(uri);
+        const planState = resultWebviewState.executionPlanState;
+        const xmlPlans = { ...planState.xmlPlans };
+        xmlPlans[
+            event.resultId !== undefined
+                ? `${event.batchId},${event.resultId}`
+                : `${event.batchId},plan${event.planIndex}`
+        ] = event.content;
+        // Like createExecutionPlanGraphs: the first document in error stops the loading.
+        if (planState.loadState === ApiStatus.Error) {
+            planState.xmlPlans = xmlPlans;
+            return;
+        }
+        resultWebviewState.isExecutionPlan = true;
+        if (planGraphs) {
+            const existingGraphs = [...(planState.executionPlanGraphs ?? []), ...planGraphs.graphs];
+            resultWebviewState.executionPlanState = {
+                ...planState,
+                errorMessage: planGraphs.errorMessage,
+                executionPlanGraphs: existingGraphs,
+                loadState: ApiStatus.Loaded,
+                totalCost: existingGraphs.reduce(
+                    (acc, graph) => acc + graph.root.cost + graph.root.subTreeCost,
+                    0,
+                ),
+                xmlPlans,
+            };
+        } else {
+            resultWebviewState.executionPlanState = {
+                ...planState,
+                loadState: ApiStatus.Error,
+                errorMessage: getErrorMessage(parseError),
+                xmlPlans,
+            };
+        }
+
+        // Plans can be converted after the run has completed, so an estimated plan run also
+        // opens the Query Plan tab here (when no error took the Messages tab).
+        if (runner.executionPlanKind === "estimated" && !(this._runHasError.get(uri) ?? false)) {
+            resultWebviewState.tabStates.resultPaneTab = qr.QueryResultPaneTabs.ExecutionPlan;
+        }
+        this.updateNow(uri);
     }
 
     /** Called when an editor closes: its results go unless they are shown in their own tab. */
     public onDidCloseTextDocument(doc: vscode.TextDocument): void {
         const uri = getUriKey(doc.uri);
+        if (this._actualPlanUris.delete(uri)) {
+            this.updateActualPlanContext();
+        }
         if (!this._results.hasPanel(uri)) {
             this._results.deleteQueryResultState(uri);
             this.cleanupRunner(uri);
@@ -276,7 +526,9 @@ export class QueryManager implements vscode.Disposable {
         const listeners = [
             runner.onStart(() => {
                 const s = state();
+                this._runHasError.set(uri, false);
                 s.tabStates.resultPaneTab = qr.QueryResultPaneTabs.Messages;
+                s.isExecutionPlan = false;
                 s.initializationError = undefined;
                 s.isExecuting = true;
                 s.executionStartTime = Date.now();
@@ -312,8 +564,12 @@ export class QueryManager implements vscode.Disposable {
             runner.onResultSetAvailable((resultSet) => {
                 const s = state();
                 (s.resultSetSummaries[resultSet.batchId] ??= {})[resultSet.id] = { ...resultSet };
-                // The first result set brings the Results tab to the front.
-                if (countResultSets(s.resultSetSummaries) === 1) {
+                // The first result set brings the Results tab to the front, unless this run shows
+                // an estimated plan instead.
+                if (
+                    countResultSets(s.resultSetSummaries) === 1 &&
+                    runner.executionPlanKind !== "estimated"
+                ) {
                     s.tabStates.resultPaneTab = qr.QueryResultPaneTabs.Results;
                 }
                 this.updateNow(uri);
@@ -332,6 +588,9 @@ export class QueryManager implements vscode.Disposable {
             }),
             runner.onMessage((message) => {
                 const s = state();
+                if (message.isError) {
+                    this._runHasError.set(uri, true);
+                }
                 s.messages.push(message);
                 if (typeof message.rowsAffected === "number") {
                     s.rowsAffected = message.rowsAffected;
@@ -353,12 +612,14 @@ export class QueryManager implements vscode.Disposable {
                     });
                 }
                 // Like SSMS: Messages after an error or when nothing came back, else Results.
-                s.tabStates.resultPaneTab =
-                    !e.hasError && countResultSets(s.resultSetSummaries) > 0
-                        ? qr.QueryResultPaneTabs.Results
-                        : qr.QueryResultPaneTabs.Messages;
+                s.tabStates.resultPaneTab = getCompletedRunTab(
+                    s,
+                    runner.executionPlanKind === "estimated",
+                    e.hasError,
+                );
                 this.updateNow(uri);
             }),
+            runner.onExecutionPlan((e) => this.addExecutionPlan(uri, runner, e)),
         ];
         this._runners.set(uri, { runner, listeners });
         return runner;

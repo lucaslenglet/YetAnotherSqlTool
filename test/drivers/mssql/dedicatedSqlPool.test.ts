@@ -1,8 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { mssqlDriver } from "../../../src/drivers/mssql";
-import { databaseBatch } from "../../../src/drivers/mssql/connection";
+import {
+    DEDICATED_POOL_NO_PLAN_MESSAGE,
+    databaseBatch,
+} from "../../../src/drivers/mssql/connection";
 import { serverQueries } from "../../../src/drivers/mssql/objectExplorerQueries";
-import type { DriverConnection, ObjectNode } from "../../../src/drivers/types";
+import type { DriverConnection, ExecuteEvent, ObjectNode } from "../../../src/drivers/types";
 import {
     FakeTdsServer,
     type FakeResultSet,
@@ -330,6 +333,49 @@ describe("a dedicated SQL pool (EngineEdition 6)", () => {
         expect(server.logins.at(-1)).toMatchObject({ database: "pool2", accepted: true });
         const sent = server.logins.flatMap((login) => login.requests);
         expect(sent.some((sql) => /^\s*USE\s/i.test(sql))).toBe(false);
+    });
+
+    // A pool supports neither SET SHOWPLAN_XML nor SET STATISTICS XML.
+    it("refuses an estimated plan without sending anything", async () => {
+        const server = await startServer(6);
+        const connection = await connect(server);
+        const before = server.logins.flatMap((login) => login.requests).length;
+
+        const events: ExecuteEvent[] = [];
+        await connection.executeForPlan!(
+            { text: "DELETE FROM dbo.fact_sales", startLine: 0 },
+            "estimated",
+            (event) => void events.push(event),
+            new AbortController().signal,
+        );
+
+        expect(events).toEqual([
+            { type: "message", text: DEDICATED_POOL_NO_PLAN_MESSAGE, isError: true },
+        ]);
+        expect(server.logins.flatMap((login) => login.requests)).toHaveLength(before);
+    });
+
+    it("runs the batch of an actual plan without a plan, as sqltoolsservice does", async () => {
+        const server = await startServer(6);
+        const connection = await connect(server);
+
+        const events: ExecuteEvent[] = [];
+        await connection.executeForPlan!(
+            { text: "SELECT 1 AS one", startLine: 0 },
+            "actual",
+            (event) => void events.push(event),
+            new AbortController().signal,
+        );
+
+        expect(events[0]).toEqual({
+            type: "message",
+            text: DEDICATED_POOL_NO_PLAN_MESSAGE,
+            isError: false,
+        });
+        expect(events.some((e) => e.type === "executionPlan")).toBe(false);
+        const sent = server.logins.flatMap((login) => login.requests);
+        expect(sent).toContain("SELECT 1 AS one");
+        expect(sent.some((sql) => /\bSET\s+(SHOWPLAN_XML|STATISTICS XML)/i.test(sql))).toBe(false);
     });
 });
 

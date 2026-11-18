@@ -29,6 +29,8 @@ npm run notices             # regenerate ThirdPartyNotices.txt from what esbuild
 npx vsce package --no-dependencies   # build the .vsix (.vscodeignore is a whitelist: check with `npx vsce ls --no-dependencies`)
 node tools/gen-mssql-connection-options.js  # regenerate src/drivers/mssql/connectionOptions.generated.ts
 node tools/gen-sql-language.mjs             # regenerate src/drivers/*/language.generated.ts (Docker + the vscode-mssql clone)
+node tools/gen-showplan-schema.mjs <sqltoolsservice clone>  # regenerate src/drivers/mssql/executionPlan/*.generated.ts
+node tools/sts-plan-probe.js docs/reference <sqltoolsservice>/test/Microsoft.SqlTools.ServiceLayer.UnitTests/ShowPlan  # recapture docs/reference/mssql-execution-plans.json (MSSQL_SERVER, MSSQL_SA_PASSWORD: a SQL Server of your own, see the tool)
 ```
 
 F5 builds and opens `dev-workspace/`, whose settings pre-define connections to the databases
@@ -77,6 +79,14 @@ copied from Microsoft stays close to upstream.
   copy, selection summaries and exports from it, asynchronously and in chunks, to the results
   webview (`src/queryResult/`). Never hold all the rows of a result set in memory. It also runs driver calls that are not text of the
   editor (`describeObject`, Alt+F1) with the same life cycle.
+- **Execution plans**: Microsoft's page (`src/webviews/pages/ExecutionPlan/`, the Query Plan
+  tab of the results) is fed by the drivers. `DriverConnection.executeForPlan` runs a batch for
+  its plans and reports each plan document in an `executionPlan` event; `QueryManager` hands
+  it to `Driver.executionPlan.parse` (through Microsoft's `ExecutionPlanService` seam), which
+  returns the graphs sqltoolsservice would. SQL Server: a port of sqltoolsservice's showplan
+  code (`src/drivers/mssql/executionPlan/`); PostgreSQL: `EXPLAIN (FORMAT JSON)` converted to
+  the same shape (`src/drivers/pg/executionPlan/`). Nothing in the page or in `src/queries/` is
+  engine-specific. See `docs/execution-plan-analysis.md`.
 - **Build** (`scripts/build.mjs`): `extension-toolkit/*` is aliased to `src/vendor/` (Microsoft's
   internal package, vendored); `vscode-mssql` is types only (`typings/`) and the build fails if
   it is required at runtime. Vitest uses the same aliases and maps `vscode` to `test/vscodeMock.ts`.
@@ -101,6 +111,16 @@ copied from Microsoft stays close to upstream.
   catalog queries of `src/drivers/mssql/scriptCatalog.ts`, record their rows again with
   `RECORD_SCRIPT_CATALOG=1 npm run test:integration` (`test/fixtures/scripting/mssql-catalog.json`,
   replayed by the unit tests).
+- SQL Server plan graphs must stay identical to `docs/reference/mssql-execution-plans.json`
+  (sqltoolsservice's output for the same showplan XML, replayed by
+  `test/drivers/mssql/executionPlanReference.test.ts`); never relax that comparison to make a
+  change pass. The page adds a root's cost to its subtree cost, so the root of every graph is
+  a statement node without cost of its own, on PostgreSQL too.
+- A SQL Server plan run (`executeBatchForPlan`) pins one physical connection of the session
+  pool through mssql's internal Request-parent protocol, so that an estimated plan can never
+  run its batch on a replaced connection, where `SHOWPLAN_XML` is off;
+  `test/drivers/mssql/executionPlanConnectionLoss.test.ts` guards it when `mssql` is upgraded.
+  In an estimated plan nothing may reach the server outside `EXPLAIN` / `SHOWPLAN_XML`.
 - vitest tests mock `vscode`; only `npm run test:vscode` sees activation errors, commands missing
   from `package.json`, files left out of the package and webview load/CSP errors. Its suites read
   the UI through the DevTools protocol (`test/vscode/cdp.ts`); do not add test hooks to `src/`.

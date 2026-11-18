@@ -342,6 +342,31 @@ export async function run(): Promise<void> {
             (text) => /Invalid object name/.test(text),
         );
         await shot("messages");
+
+        // 5. The actual plan of the first query, in a Query Plan tab tall enough for all of it.
+        await vscode.window.showTextDocument(editor.document);
+        await vscode.commands.executeCommand("yast.enableActualPlan");
+        await vscode.commands.executeCommand("yast.runQuery");
+        const plan = await waitForWebview(
+            "queryResult",
+            `[...document.querySelectorAll('[role="tab"]')].some((t) => t.textContent.startsWith("Query Plan (1)"))`,
+        );
+        await selectResultsTab(plan, "Query Plan");
+        // All the width and most of the height for the plan.
+        await vscode.commands.executeCommand("workbench.action.closeSidebar");
+        await setPanelTop(200);
+        await waitFor(
+            "the rows line of the actual plan under its operators",
+            () => plan.text(),
+            (text) => / of \d+/.test(text) && /Elapsed: /.test(text),
+        );
+        // The whole plan in view, as the plan's own "Zoom to Fit" button shows it.
+        await plan.evaluate(
+            `document.querySelector('#executionPlanResultsTab button[aria-label="Zoom to Fit"]')?.click()`,
+        );
+        await sleep(800);
+        await shot("execution-plan");
+        await vscode.commands.executeCommand("yast.disableActualPlan");
     } finally {
         closeAllSessions();
     }

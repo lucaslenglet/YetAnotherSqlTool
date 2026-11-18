@@ -10,7 +10,7 @@ import { registerObjectExplorer } from "./objectExplorer/objectExplorerCommands"
 import { EditorConnections } from "./queries/editorConnections";
 import { QueryManager } from "./queries/queryManager";
 import { ResultFiles } from "./queries/resultFiles";
-import { registerQueryCommands } from "./queries/queryCommands";
+import { registerExecutionPlanContext, registerQueryCommands } from "./queries/queryCommands";
 import { QueryResultWebviewController } from "./queryResult/queryResultWebViewController";
 import { SqlCodeLensProvider } from "./queryResult/sqlCodeLensProvider";
 import { ScriptingService } from "./scripting/scriptingService";
@@ -63,6 +63,7 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.languages.registerCodeLensProvider({ language: Constants.languageId }, codeLens),
     );
     registerQueryCommands(context, store, connections, queries);
+    registerExecutionPlanContext(context, connections);
     registerSemanticHighlighting(context, {
         // A profile without a provider is a SQL Server one.
         providerOf: (uri) => {

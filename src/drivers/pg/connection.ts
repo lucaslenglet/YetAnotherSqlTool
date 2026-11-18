@@ -6,6 +6,7 @@ import type {
     ConnectParams,
     DriverConnection,
     ExecuteEventHandler,
+    ExecutionPlanKind,
     ObjectNode,
     ScriptDatabaseOptions,
     ScriptOperation,
@@ -21,6 +22,7 @@ import {
 } from "./clients";
 import { listCompletionColumns, listCompletionObjects, listDefaultSchemas } from "./completion";
 import { executeScript } from "./execute";
+import { executeScriptForPlan, majorVersion } from "./executionPlan";
 import { describePgObject } from "./objectInfo";
 import { scriptDatabase } from "./scriptDatabase";
 import { scriptObject } from "./scripting";
@@ -140,6 +142,27 @@ export class PgConnection implements DriverConnection {
                 cancel: () => this.cancelBackend(session),
             },
             batch,
+            onEvent,
+            signal,
+        );
+    }
+
+    executeForPlan(
+        batch: Batch,
+        kind: ExecutionPlanKind,
+        onEvent: ExecuteEventHandler,
+        signal: AbortSignal,
+    ): Promise<void> {
+        const session = this.session;
+        return executeScriptForPlan(
+            {
+                client: session,
+                typeNames: this.typeNames,
+                cancel: () => this.cancelBackend(session),
+            },
+            batch,
+            kind,
+            majorVersion(this.serverInfo.serverVersion),
             onEvent,
             signal,
         );

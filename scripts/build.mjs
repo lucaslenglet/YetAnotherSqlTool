@@ -84,6 +84,7 @@ export function createConfigs({ prod = false } = {}) {
             connectionDialog: "src/webviews/pages/ConnectionDialog/index.tsx",
             connectionGroup: "src/webviews/pages/ConnectionGroup/index.tsx",
             queryResult: "src/webviews/pages/QueryResult/index.tsx",
+            executionPlan: "src/webviews/pages/ExecutionPlan/index.tsx",
         },
         bundle: true,
         platform: "browser",

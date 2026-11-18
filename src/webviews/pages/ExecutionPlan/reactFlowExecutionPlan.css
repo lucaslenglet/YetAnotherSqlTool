@@ -1,0 +1,429 @@
+.execution-plan-flow-canvas {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+    overflow: hidden;
+    background: var(--vscode-editor-background);
+    color: var(--vscode-editor-foreground);
+}
+
+.execution-plan-flow-announcement {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.execution-plan-flow-node {
+    position: relative;
+    box-sizing: border-box;
+    border: 1px solid transparent;
+    /* Transparent so edges and their labels show where they meet the icon inside the box */
+    background: transparent;
+    color: var(--vscode-editor-foreground);
+    cursor: default;
+    font-family: var(--vscode-editor-font-family, Monaco, Menlo, Consolas, monospace);
+    font-size: 10px;
+    outline: none;
+}
+
+/*
+ * Hover highlights only the icon. The node box reaches past the points where edges and their row
+ * counts meet the icon, and the hover color is opaque in most themes, so filling the box hid them.
+ */
+.execution-plan-flow-node:hover .execution-plan-flow-icon-container {
+    border-radius: 4px;
+    background: var(--vscode-list-hoverBackground);
+}
+
+.execution-plan-flow-node.selected {
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.execution-plan-flow-node.selected:focus {
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.execution-plan-flow-node.highlighted {
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.execution-plan-flow-selection-outline {
+    position: absolute;
+    top: -1px;
+    left: 50%;
+    z-index: 3;
+    box-sizing: border-box;
+    border: 1px solid transparent;
+    pointer-events: none;
+    transform: translateX(-50%);
+}
+
+.execution-plan-flow-node.selected:focus > .execution-plan-flow-selection-outline {
+    border-color: var(--vscode-focusBorder, #007fd4);
+    box-shadow: 0 0 0 1px var(--vscode-focusBorder, #007fd4);
+}
+
+/* Panels drawn over the canvas position themselves against the plan's container. */
+.execution-plan-flow-overlay {
+    display: contents;
+}
+
+/* The match of the operator selected in the other plan, drawn apart from this plan's own focus. */
+.execution-plan-flow-node.linked > .execution-plan-flow-selection-outline {
+    border: 1px dashed var(--vscode-focusBorder, #007fd4);
+    background: color-mix(in srgb, var(--vscode-focusBorder, #007fd4) 10%, transparent);
+}
+
+.execution-plan-flow-node.highlighted > .execution-plan-flow-selection-outline {
+    border-color: var(--vscode-inputValidation-errorBorder);
+    box-shadow: 0 0 0 2px var(--vscode-inputValidation-errorBorder);
+}
+
+.execution-plan-flow-icon-container {
+    position: absolute;
+    top: 17px;
+    left: 25px;
+    width: 30px;
+    height: 30px;
+}
+
+.execution-plan-flow-icon {
+    display: block;
+    width: 30px;
+    height: 30px;
+}
+
+.execution-plan-flow-badge {
+    position: absolute;
+    right: -5px;
+    bottom: 0;
+    width: 12px;
+    height: 12px;
+}
+
+.execution-plan-flow-cost {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    max-width: 76px;
+    padding: 1px 8px 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 15px;
+    background: transparent;
+    color: var(--vscode-editor-foreground);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transform: translateX(-50%);
+}
+
+/* The row count rides on the edge carrying those rows, on its own background so lines never cut it. */
+.execution-plan-flow-row-count {
+    position: absolute;
+    padding: 0 5px;
+    border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border, transparent));
+    border-radius: 8px;
+    background: var(--vscode-editor-background);
+    color: var(--vscode-editor-foreground);
+    font-family: var(--vscode-editor-font-family, Monaco, Menlo, Consolas, monospace);
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+    line-height: 14px;
+    white-space: nowrap;
+    /* The label layer ignores the pointer, so the label opts back in to show its exact-count
+       tooltip. Clicks still reach the edge through React, opening the edge's tooltip as before. */
+    pointer-events: all;
+    cursor: pointer;
+    /* Fits a shortened count like 999.9K, so labels keep one size as counts change */
+    min-width: 6ch;
+    text-align: center;
+}
+
+.execution-plan-flow-label {
+    position: absolute;
+    top: 49px;
+    left: 50%;
+    width: max-content;
+    max-width: 200px;
+    overflow: hidden;
+    text-align: center;
+    text-overflow: ellipsis;
+    line-height: 14px;
+    white-space: nowrap;
+    transform: translateX(-50%);
+}
+
+.execution-plan-flow-label > div {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.execution-plan-flow-collapse {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 2;
+    width: 14px;
+    height: 14px;
+    padding: 0;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+}
+
+.execution-plan-flow-collapse:focus-visible {
+    border-color: var(--vscode-focusBorder);
+    outline: 1px solid var(--vscode-focusBorder);
+}
+
+.execution-plan-flow-collapse img {
+    display: block;
+    width: 12px;
+    height: 12px;
+}
+
+/*
+ * Edges meet the operator icon, at its vertical center, rather than the sides of the node box.
+ * Keep in sync with EXECUTION_PLAN_NODE_HANDLES.
+ */
+.execution-plan-flow-handle.react-flow__handle-left {
+    top: 32px;
+    left: 23px;
+}
+
+.execution-plan-flow-handle.react-flow__handle-right {
+    top: 32px;
+    right: auto;
+    left: 57px;
+}
+
+.execution-plan-flow-handle {
+    width: 1px;
+    min-width: 1px;
+    height: 1px;
+    min-height: 1px;
+    border: 0;
+    opacity: 0;
+}
+
+.execution-plan-flow-arrow {
+    pointer-events: none;
+}
+
+.execution-plan-comparison-group {
+    position: absolute;
+    z-index: 1;
+    box-sizing: border-box;
+    border: 2px solid var(--execution-plan-comparison-color);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--execution-plan-comparison-color) 8%, transparent);
+    pointer-events: none;
+}
+
+.execution-plan-comparison-group-0 {
+    --execution-plan-comparison-color: var(--vscode-charts-blue);
+}
+
+.execution-plan-comparison-group-1 {
+    --execution-plan-comparison-color: var(--vscode-charts-green);
+}
+
+.execution-plan-comparison-group-2 {
+    --execution-plan-comparison-color: var(--vscode-charts-purple);
+}
+
+.execution-plan-comparison-group-3 {
+    --execution-plan-comparison-color: var(--vscode-charts-orange);
+}
+
+/* Edges sit back in a muted color and come forward when hovered or selected. */
+.execution-plan-flow-canvas .execution-plan-flow-edge {
+    color: var(--vscode-descriptionForeground);
+    transition: color 150ms ease;
+}
+
+.execution-plan-flow-canvas .react-flow__edge:hover .execution-plan-flow-edge,
+.execution-plan-flow-canvas .react-flow__edge.selected .execution-plan-flow-edge {
+    color: var(--vscode-editor-foreground);
+}
+
+.execution-plan-flow-canvas .react-flow__edge .execution-plan-flow-edge .react-flow__edge-path {
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/*
+ * An edge rows are moving along turns accent blue and shows only its moving dashes and arrowhead,
+ * so the motion stands out against the gray edges around it.
+ */
+.execution-plan-flow-canvas .react-flow__edge.animated .execution-plan-flow-edge {
+    color: var(--vscode-charts-blue, var(--vscode-focusBorder));
+}
+
+.execution-plan-flow-canvas
+    .react-flow__edge.animated
+    .execution-plan-flow-edge
+    .react-flow__edge-path {
+    stroke-opacity: 0;
+}
+
+/* React Flow dashes every path of an animated edge. Live plans draw their own flow instead. */
+.execution-plan-flow-canvas .react-flow__edge.animated path {
+    stroke-dasharray: none;
+    animation: none;
+}
+
+/*
+ * Live plans animate the edges rows are moving along. Rows flow from child to parent, toward the
+ * start of the path, so the dash offset grows. Each cycle moves one dash pattern (8 + 6), so the
+ * loop is seamless. A fixed thin stroke keeps the counters readable as row counts grow.
+ */
+.execution-plan-flow-canvas .react-flow__edge.animated .execution-plan-flow-dashes {
+    stroke: currentColor;
+    stroke-linecap: butt;
+    stroke-dasharray: 8 6;
+    animation: execution-plan-flow 800ms linear infinite;
+}
+
+@keyframes execution-plan-flow {
+    from {
+        stroke-dashoffset: 0;
+    }
+    to {
+        stroke-dashoffset: 14;
+    }
+}
+
+/* Edges thicken as live row counts grow; ease the change instead of jumping. */
+.execution-plan-flow-canvas .react-flow__edge-path {
+    transition: stroke-width 300ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .execution-plan-flow-canvas .react-flow__edge.animated .execution-plan-flow-dashes {
+        animation: none;
+    }
+}
+
+.execution-plan-flow-tooltip {
+    position: fixed;
+    z-index: 10;
+    box-sizing: border-box;
+    width: 520px;
+    max-width: calc(100vw - 16px);
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--vscode-editorWidget-border);
+    border-radius: 4px;
+    background: var(--vscode-editorHoverWidget-background);
+    color: var(--vscode-editorHoverWidget-foreground);
+    box-shadow: 0 2px 8px var(--vscode-widget-shadow);
+    font-size: 12px;
+    line-height: 15px;
+}
+
+.execution-plan-flow-tooltip-header {
+    position: relative;
+    display: flex;
+    min-height: 22px;
+    padding: 3px 24px 3px 6px;
+    border-bottom: 1px solid var(--vscode-editorWidget-border);
+    align-items: center;
+    justify-content: center;
+    background: var(--vscode-editorHoverWidget-background);
+}
+
+.execution-plan-flow-tooltip-title {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-family: var(--vscode-editor-font-family, Monaco, Menlo, Consolas, monospace);
+    font-weight: 600;
+    line-height: 15px;
+    text-align: center;
+}
+
+.execution-plan-flow-tooltip-close {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    width: 22px;
+    min-width: 22px;
+    height: 22px;
+}
+
+.execution-plan-flow-tooltip-body {
+    padding: 3px 6px 4px;
+}
+
+.execution-plan-flow-tooltip-description {
+    margin-bottom: 3px;
+    padding: 2px 0 4px;
+    border-bottom: 1px solid var(--vscode-editorWidget-border);
+    color: var(--vscode-descriptionForeground);
+    line-height: 15px;
+}
+
+.execution-plan-flow-tooltip-metrics {
+    margin: 0;
+}
+
+.execution-plan-flow-tooltip-metric {
+    display: grid;
+    min-height: 15px;
+    padding: 1px 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--vscode-editorWidget-border) 65%, transparent);
+    grid-template-columns: minmax(225px, 52%) minmax(0, 48%);
+    gap: 8px;
+    line-height: 15px;
+}
+
+.execution-plan-flow-tooltip-metric:last-child {
+    border-bottom: 0;
+}
+
+.execution-plan-flow-tooltip-metric > dd {
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.execution-plan-flow-tooltip-metric > dt,
+.execution-plan-flow-tooltip-footer > strong {
+    color: var(--vscode-editorHoverWidget-foreground);
+    font-weight: 600;
+}
+
+.execution-plan-flow-tooltip-sql-metric > dd {
+    text-align: left;
+    line-height: 15px;
+    white-space: normal;
+}
+
+.execution-plan-flow-tooltip-footer {
+    margin-top: 2px;
+    padding-top: 2px;
+    border-top: 1px solid var(--vscode-editorWidget-border);
+    overflow-wrap: anywhere;
+    line-height: 15px;
+}
+
+.execution-plan-flow-tooltip-sql {
+    display: block;
+    margin-top: 1px;
+    overflow-wrap: anywhere;
+    line-height: 15px;
+}

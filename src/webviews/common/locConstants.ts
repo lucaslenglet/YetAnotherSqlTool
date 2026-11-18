@@ -910,6 +910,12 @@ export class LocConstants {
             findNodes: l10n.t("Find Nodes"),
             savePlan: l10n.t("Save Plan"),
             openXml: l10n.t("Open XML"),
+            openPlanDocument: (format: string) =>
+                l10n.t({
+                    message: "Open {0}",
+                    args: [format],
+                    comment: ["{0} is the format of the plan document, such as JSON"],
+                }),
             openQuery: l10n.t("Open Query"),
             zoomIn: l10n.t("Zoom In"),
             zoomOut: l10n.t("Zoom Out"),

@@ -214,6 +214,38 @@
                 "category": "%yast.category%"
             },
             {
+                "command": "yast.showEstimatedPlan",
+                "title": "%yast.showEstimatedPlan%",
+                "category": "%yast.category%",
+                "icon": {
+                    "dark": "media/executionPlan_dark.svg",
+                    "light": "media/executionPlan_light.svg"
+                }
+            },
+            {
+                "command": "yast.enableActualPlan",
+                "title": "%yast.enableActualPlan%",
+                "category": "%yast.category%",
+                "icon": {
+                    "dark": "media/enableActualExecutionPlan_dark.svg",
+                    "light": "media/enableActualExecutionPlan_light.svg"
+                }
+            },
+            {
+                "command": "yast.disableActualPlan",
+                "title": "%yast.disableActualPlan%",
+                "category": "%yast.category%",
+                "icon": {
+                    "dark": "media/disableActualExecutionPlan_dark.svg",
+                    "light": "media/disableActualExecutionPlan_light.svg"
+                }
+            },
+            {
+                "command": "yast.toggleActualPlan",
+                "title": "%yast.toggleActualPlan%",
+                "category": "%yast.category%"
+            },
+            {
                 "command": "yast.newQuery",
                 "title": "%yast.newQuery%",
                 "category": "%yast.category%"
@@ -334,6 +366,22 @@
                 },
                 {
                     "command": "yast.scriptDatabase",
+                    "when": "false"
+                },
+                {
+                    "command": "yast.showEstimatedPlan",
+                    "when": "editorLangId == sql && resource in yast.executionPlan.urisWithPlanSupport"
+                },
+                {
+                    "command": "yast.enableActualPlan",
+                    "when": "editorLangId == sql && resource in yast.executionPlan.urisWithPlanSupport && resource not in yast.executionPlan.urisWithActualPlanEnabled"
+                },
+                {
+                    "command": "yast.disableActualPlan",
+                    "when": "editorLangId == sql && resource in yast.executionPlan.urisWithPlanSupport && resource in yast.executionPlan.urisWithActualPlanEnabled"
+                },
+                {
+                    "command": "yast.toggleActualPlan",
                     "when": "false"
                 }
             ],
@@ -516,6 +564,21 @@
                     "command": "yast.changeDatabase",
                     "when": "editorLangId == sql && !isInDiffEditor && resource in yast.connections && resource not in yast.runningQueries",
                     "group": "navigation@5"
+                },
+                {
+                    "command": "yast.showEstimatedPlan",
+                    "when": "editorLangId == sql && !isInDiffEditor && resource in yast.executionPlan.urisWithPlanSupport && resource not in yast.runningQueries",
+                    "group": "navigation@10"
+                },
+                {
+                    "command": "yast.enableActualPlan",
+                    "when": "editorLangId == sql && !isInDiffEditor && resource in yast.executionPlan.urisWithPlanSupport && (resource not in yast.executionPlan.urisWithActualPlanEnabled) && (resource not in yast.runningQueries)",
+                    "group": "navigation@11"
+                },
+                {
+                    "command": "yast.disableActualPlan",
+                    "when": "editorLangId == sql && !isInDiffEditor && resource in yast.executionPlan.urisWithPlanSupport && (resource in yast.executionPlan.urisWithActualPlanEnabled) && (resource not in yast.runningQueries)",
+                    "group": "navigation@12"
                 }
             ],
             "editor/context": [
@@ -877,6 +940,7 @@
                         "_comment": "Use 'ctrlcmd' to represent 'ctrl' on Windows/Linux and 'cmd' on macOS.",
                         "event.queryResults.switchToResultsTab": "ctrl+alt+R",
                         "event.queryResults.switchToMessagesTab": "ctrl+alt+Y",
+                        "event.queryResults.switchToQueryPlanTab": "ctrl+alt+E",
                         "event.queryResults.prevGrid": "ctrlcmd+up",
                         "event.queryResults.nextGrid": "ctrlcmd+down",
                         "event.queryResults.switchToTextView": "",
@@ -1294,6 +1358,7 @@
         "@monaco-editor/react": "^4.7.0",
         "@tanstack/react-virtual": "^3.14.26",
         "@vscode/l10n": "^0.0.18",
+        "@xyflow/react": "^12.10.1",
         "fflate": "0.8.3",
         "lodash": "^4.18.1",
         "monaco-editor": "^0.53.0",

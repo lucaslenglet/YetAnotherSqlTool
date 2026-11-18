@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Execution plans for SQL Server and PostgreSQL, in the graphical view of Microsoft's SQL Server extension. **Estimated Plan** (title bar of a connected SQL editor) shows the plan of the selection or of the whole script without running it; **Enable Actual Plan** makes the next runs of that editor return their plan with their results. The plan is the **Query Plan** tab of the results: operators with their cost, row counts, warnings and parallelism, tooltips, a properties pane, find node, highlight expensive operations, missing-index recommendations (SQL Server), save the plan, open its XML or JSON, open its query. SQL Server plans are the ones Microsoft's extension draws for the same showplan XML. PostgreSQL plans come from `EXPLAIN (FORMAT JSON)`: an actual plan runs the statement with `EXPLAIN ANALYZE` (its effects stay) and shows its plan instead of its rows; sorts and hashes that spill to disk, missing parallel workers and row estimates off by a factor of 100 are flagged. Clicking a showplan XML or `EXPLAIN (FORMAT JSON)` cell of a result opens its plan.
+
 ## [0.1.3] - 2026-11-17
 
 ### Added

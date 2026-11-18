@@ -30,11 +30,23 @@ export interface ExecutionSession {
     cancel(): Promise<void>;
 }
 
+/** Runs one statement of a script. "failed" means the rest of the script must not run. */
+export type StatementRunner = (
+    session: ExecutionSession,
+    statement: StatementSpan,
+    script: string,
+    emit: ExecuteEventHandler,
+    getCommandTag: () => string,
+    wasCanceled: () => boolean,
+) => Promise<"done" | "failed">;
+
+/** `runner` replaces how each statement runs (execution plans); the rest is the same loop. */
 export async function executeScript(
     session: ExecutionSession,
     batch: Batch,
     onEvent: ExecuteEventHandler,
     signal: AbortSignal,
+    runner: StatementRunner = runStatement,
 ): Promise<void> {
     let canceled = false;
     const onAbort = () => {
@@ -59,7 +71,7 @@ export async function executeScript(
                 onEvent(canceledMessage());
                 return;
             }
-            const outcome = await runStatement(
+            const outcome = await runner(
                 session,
                 statement,
                 batch.text,
@@ -77,15 +89,14 @@ export async function executeScript(
     }
 }
 
-/** "failed" means the rest of the script must not run. */
-async function runStatement(
-    session: ExecutionSession,
-    statement: StatementSpan,
-    script: string,
-    emit: ExecuteEventHandler,
-    getCommandTag: () => string,
-    wasCanceled: () => boolean,
-): Promise<"done" | "failed"> {
+export const runStatement: StatementRunner = async (
+    session,
+    statement,
+    script,
+    emit,
+    getCommandTag,
+    wasCanceled,
+) => {
     const cursor: any = session.client.query(
         new Cursor(statement.text, [], { rowMode: "array", types: rawTextTypes }),
     );
@@ -137,7 +148,7 @@ async function runStatement(
         }
         return "failed";
     }
-}
+};
 
 // ---------------------------------------------------------------------------
 // Columns and cells
@@ -185,7 +196,7 @@ export function toCells(row: (string | null)[]): CellValue[] {
     );
 }
 
-async function refreshTypeNames(session: ExecutionSession): Promise<void> {
+export async function refreshTypeNames(session: ExecutionSession): Promise<void> {
     try {
         const names = await loadTypeNames(session.client);
         session.typeNames.clear();
