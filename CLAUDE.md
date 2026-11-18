@@ -77,6 +77,11 @@ copied from Microsoft stays close to upstream.
   copy, selection summaries and exports from it, asynchronously and in chunks, to the results
   webview (`src/queryResult/`). Never hold all the rows of a result set in memory. It also runs driver calls that are not text of the
   editor (`describeObject`, Alt+F1) with the same life cycle.
+- **Server dashboard** (`src/dashboard/`): `Driver.openDashboard` opens a `DashboardSession`
+  (own connection, charts, notices, `sample()`); the rest is engine-neutral:
+  `dashboardSampler.ts` (pure, no `vscode`) turns counters into rates, schedules refreshes and
+  keeps the history; the controller pushes the small state and sends only the new points
+  (`dashboard/points`) to the page, whose uPlot charts redraw without a React render.
 - **Build** (`scripts/build.mjs`): `extension-toolkit/*` is aliased to `src/vendor/` (Microsoft's
   internal package, vendored); `vscode-mssql` is types only (`typings/`) and the build fails if
   it is required at runtime. Vitest uses the same aliases and maps `vscode` to `test/vscodeMock.ts`.

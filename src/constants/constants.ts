@@ -116,6 +116,7 @@ export const cmdScriptDelete = "yast.scriptDelete";
 export const cmdScriptExecute = "yast.scriptExecute";
 export const cmdScriptAlter = "yast.scriptAlter";
 export const cmdScriptDatabase = "yast.scriptDatabase";
+export const cmdOpenDashboard = "yast.openDashboard";
 export const cmdToggleSqlCmd = "yast.toggleSqlCmd";
 export const cmdCopyObjectName = "yast.copyObjectName";
 export const cmdCopyConnectionString = "yast.copyConnectionString";

@@ -1,6 +1,7 @@
 import { buildConnectionString, parseConnectionString } from "./connectionString";
 import type { Batch, ConnectParams, Driver } from "../types";
 import { PgConnection } from "./connection";
+import { openPgDashboard } from "./dashboard";
 import { pgLanguage } from "./language";
 import { getPgConnectionOptions } from "./options";
 import { quoteIdentifier, toSqlLiteral } from "./sqlText";
@@ -28,6 +29,7 @@ export const pgDriver: Driver = {
     displayName: "PostgreSQL",
     getConnectionOptions: getPgConnectionOptions,
     connect: (params: ConnectParams) => PgConnection.open(params),
+    openDashboard: openPgDashboard,
     splitBatches,
     tokenize: tokenizePg,
     language: pgLanguage,

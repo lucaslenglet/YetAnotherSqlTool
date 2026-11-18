@@ -336,6 +336,75 @@ export interface DriverConnection {
     close(): Promise<void>;
 }
 
+// ---------------------------------------------------------------------------
+// Server dashboard
+// ---------------------------------------------------------------------------
+
+export interface DashboardSeries {
+    /** Key of the series in `DashboardSample.values`; unique in the dashboard. */
+    id: string;
+    /** Legend text, e.g. "Active". */
+    label: string;
+    /**
+     * "gauge": a value of the moment, plotted as read (sessions, a cache hit ratio).
+     * "counter": a total that only grows (commits since the statistics were reset): the extension
+     * plots its rate, (value - previous value) / seconds between the two samples, and drops the
+     * point when the total went down (server restart, statistics reset).
+     */
+    kind: "gauge" | "counter";
+}
+
+export interface DashboardChart {
+    /** Unique in the dashboard. */
+    id: string;
+    /** e.g. "Sessions", "Transactions". */
+    title: string;
+    /**
+     * How plotted values are written: plain numbers (1,234 or 1.2k), sizes in bytes (1.2 MB) or
+     * percentages. A "percent" value goes from 0 to 100 and is written with its "%" sign.
+     */
+    format: "number" | "bytes" | "percent";
+    /**
+     * Text written right after a formatted value, with its own leading space when it needs one:
+     * "/s" for a chart of counters, " s" for seconds. Empty when there is none, as for "percent".
+     */
+    unit: string;
+    series: DashboardSeries[];
+}
+
+export interface DashboardSample {
+    /**
+     * When the values were read, in milliseconds since the Unix epoch, on the server's clock and
+     * from the same round trip as the values: rates are computed from differences of it.
+     */
+    time: number;
+    /** Value of each series by `DashboardSeries.id`; undefined when it could not be read. */
+    values: Record<string, number | undefined>;
+}
+
+/**
+ * A dashboard's own connection to a server. It is named "YAST dashboard" on the server
+ * (`application_name` / `Application Name`) and is neither a query session nor a metadata
+ * connection.
+ */
+export interface DashboardSession {
+    /** The charts of this server, in display order. They depend on the engine and on what the server is. */
+    readonly charts: readonly DashboardChart[];
+    /**
+     * What the login cannot see, in sentences for the user, with the permission that lifts each
+     * limit (e.g. sessions of other logins without `pg_read_all_stats` / `VIEW SERVER STATE`).
+     * Empty when the data is complete.
+     */
+    readonly notices: readonly string[];
+    /**
+     * Reads every series in one round trip, on in-memory statistics views only. Rejects with a
+     * readable Error when the read fails or `signal` is aborted; the session stays usable unless
+     * the connection is lost. Never called again before the previous call settled.
+     */
+    sample(signal: AbortSignal): Promise<DashboardSample>;
+    close(): Promise<void>;
+}
+
 /** Vocabulary of an engine's SQL dialect, for highlighting and autocompletion. Names are upper case. */
 export interface SqlLanguage {
     /** Reserved and non-reserved keywords (SELECT, ILIKE, TOP...). */
@@ -362,6 +431,14 @@ export interface Driver {
 
     /** Opens a connection. Rejects with a readable Error on failure (bad password, unreachable...). */
     connect(params: ConnectParams): Promise<DriverConnection>;
+
+    /**
+     * Opens the connection of a server dashboard and works out its charts. Undefined for an engine
+     * without a dashboard (no Dashboard item is offered). Rejects with a readable Error like
+     * `connect`, and also when this particular server has no dashboard (e.g. an Azure Synapse
+     * dedicated SQL pool).
+     */
+    openDashboard?(params: ConnectParams): Promise<DashboardSession>;
 
     /**
      * Splits a script into batches. SQL Server: on "GO" lines (with optional repeat count).

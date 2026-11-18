@@ -332,11 +332,13 @@ function serverMajorVersion(version: string): number {
     return Number.parseInt(version, 10) || 0;
 }
 
-async function openPool(
+export async function openPool(
     params: ConnectParams,
     database: string | undefined,
     /** For a metadata pool: its size; it then opens connections on demand only. */
     metadataMax?: number,
+    /** Skips the `SELECT 1` mssql sends before each query taken from the pool: a second round trip. */
+    checkSocketOnly = false,
 ): Promise<sql.ConnectionPool> {
     const config = buildSqlConfig(
         params.options,
@@ -345,6 +347,7 @@ async function openPool(
     );
     if (database) config.database = database;
     if (metadataMax !== undefined) config.pool = { ...config.pool, min: 0, max: metadataMax };
+    if (checkSocketOnly) config.validateConnection = "socket";
 
     const pool = new sql.ConnectionPool(config);
     // Errors of idle connections are reported on the pool; without a listener Node would crash.

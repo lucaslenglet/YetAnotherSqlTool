@@ -159,5 +159,14 @@
     "yast.intelliSense.enableIntelliSense": "Should IntelliSense be enabled",
     "yast.intelliSense.enableSuggestions": "Should IntelliSense suggestions be enabled",
     "yast.intelliSense.lowerCaseSuggestions": "Should IntelliSense suggestions be lowercase",
-    "yast.untrustedWorkspaces.description": "Connections and connection groups saved in the workspace settings are ignored until the workspace is trusted."
+    "yast.untrustedWorkspaces.description": "Connections and connection groups saved in the workspace settings are ignored until the workspace is trusted.",
+    "yast.openDashboard": "Dashboard",
+    "yast.dashboard.refreshInterval": "Starts the server dashboard with Auto refresh on, at this interval in seconds. 0 opens it without auto refresh: it reads the statistics once, then only when Refresh is clicked.",
+    "yast.dashboard.refreshInterval.enumDescriptions.0": "Off: one sample when the dashboard opens, then on demand",
+    "yast.dashboard.refreshInterval.enumDescriptions.1": "Every second",
+    "yast.dashboard.refreshInterval.enumDescriptions.2": "Every 2 seconds",
+    "yast.dashboard.refreshInterval.enumDescriptions.5": "Every 5 seconds",
+    "yast.dashboard.refreshInterval.enumDescriptions.10": "Every 10 seconds",
+    "yast.dashboard.refreshInterval.enumDescriptions.30": "Every 30 seconds",
+    "yast.dashboard.refreshInterval.enumDescriptions.60": "Every minute"
 }

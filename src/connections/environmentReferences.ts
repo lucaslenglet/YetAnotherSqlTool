@@ -8,7 +8,7 @@
  */
 
 import * as vscode from "vscode";
-import type { ConnectionOptionValues, DriverConnection } from "../drivers/types";
+import type { ConnectionOptionValues } from "../drivers/types";
 
 /** A reference, or its escape when the first group matched. */
 const REFERENCE = /(\$?)\$\{env:([A-Za-z_][A-Za-z0-9_]*)\}/g;
@@ -124,11 +124,14 @@ export function redactError(error: unknown, redact: (text: string) => string): u
     return typeof error === "string" ? redact(error) : error;
 }
 
-/** A connection whose failures never show a value read from the environment. */
-export function redactConnectionErrors(
-    connection: DriverConnection,
+/**
+ * A connection (or dashboard session) whose failures never show a value read from the
+ * environment.
+ */
+export function redactConnectionErrors<T extends object>(
+    connection: T,
     redact: (text: string) => string,
-): DriverConnection {
+): T {
     return new Proxy(connection, {
         get(target, property) {
             const member: unknown = Reflect.get(target, property, target);

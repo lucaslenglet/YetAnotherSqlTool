@@ -5,6 +5,7 @@
 import * as assert from "node:assert";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { Client } from "pg";
 import * as vscode from "vscode";
 import { closeAllSessions, workbench, type Webview } from "../vscode/cdp";
 import { env, profile } from "../vscode/env";
@@ -263,6 +264,36 @@ async function setPanelTop(top: number): Promise<void> {
     await sleep(500);
 }
 
+// -- the dashboard ----------------------------------------------------------------------------
+
+/** Orders on the PostgreSQL server for a while, in waves, so that the charts are not flat. */
+async function shopActivity(ms: number): Promise<void> {
+    const p = profile("pg");
+    const client = new Client({
+        host: p.server,
+        port: p.port,
+        user: p.user,
+        password: p.password,
+        database: p.database,
+    });
+    await client.connect();
+    try {
+        await client.query("CREATE TEMP TABLE activity (id serial, v text)");
+        const end = Date.now() + ms;
+        for (let i = 0; Date.now() < end; i++) {
+            const n = 5 + Math.round(25 * Math.abs(Math.sin(i / 8)));
+            for (let k = 0; k < n; k++) {
+                await client.query(
+                    "BEGIN; INSERT INTO activity (v) SELECT md5(random()::text) FROM generate_series(1, 40); SELECT count(*) FROM customers; COMMIT;",
+                );
+            }
+            await sleep(150);
+        }
+    } finally {
+        await client.end();
+    }
+}
+
 // -- the scenario -----------------------------------------------------------------------------
 
 export async function run(): Promise<void> {
@@ -342,6 +373,25 @@ export async function run(): Promise<void> {
             (text) => /Invalid object name/.test(text),
         );
         await shot("messages");
+        await vscode.commands.executeCommand("workbench.action.closeAllEditors");
+        await vscode.commands.executeCommand("workbench.action.closePanel");
+
+        // 5. The server dashboard of PostgreSQL after a minute of auto refresh under activity.
+        // From the palette: this window uses native menus, which the scenario cannot click.
+        await pickFromCommand("yast.openDashboard", salesPg());
+        const dashboard = await waitForWebview(
+            "dashboard",
+            `document.body.innerText.includes("Read at")`,
+        );
+        await dashboard.evaluate(`(() => {
+            const select = document.querySelector("select");
+            Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, "value").set.call(select, "1000");
+            select.dispatchEvent(new window.Event("change", { bubbles: true }));
+            document.querySelector('input[role="switch"]').click();
+        })()`);
+        await shopActivity(60000);
+        await dashboard.evaluate(`document.querySelector('input[role="switch"]').click()`);
+        await shot("dashboard");
     } finally {
         closeAllSessions();
     }
