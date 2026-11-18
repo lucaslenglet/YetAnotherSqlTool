@@ -99,7 +99,9 @@ async function clickDocumentCell(webview: Webview): Promise<void> {
     await waitFor("a document link in the results grid", () =>
         webview.evaluate<boolean>(`(() => {
             const link = document.querySelector('[data-fluent-result-grid="true"] .slick-cell a');
-            if (!link) return false;
+            // The grid draws the link of a row before its values are loaded: a click then opens
+            // an empty document (seen on a slow machine). Wait for the document's text.
+            if (!link || link.textContent.trim().length < 10) return false;
             for (const type of ["mousedown", "mouseup", "click"]) {
                 link.dispatchEvent(new window.MouseEvent(type, { bubbles: true, cancelable: true, view: window }));
             }
@@ -154,24 +156,28 @@ async function operatorProperties(webview: Webview, pattern: string): Promise<st
 
 /**
  * Operator names of the plan once it fits the pane: React Flow draws only the operators in view,
- * so the plan is zoomed to fit with its toolbar button first, as a user would.
+ * so the plan is zoomed to fit with its toolbar button, as a user would. The button is clicked
+ * again until the expected operators are there: a click that comes before the plan is laid out
+ * fits a part of it only (seen on a slow machine).
  */
 async function allPlanOperators(
     webview: Webview,
     what: string,
     accept: (operators: string[]) => boolean,
 ): Promise<string[]> {
-    // The toolbar shows once the plan is drawn.
-    await waitFor("the Zoom to Fit button of the plan", () =>
-        webview.evaluate<boolean>(`(() => {
-            const button = document.querySelector('#executionPlanResultsTab button[aria-label="Zoom to Fit"]');
-            button?.click();
-            return !!button;
-        })()`),
-    );
     return (await waitFor(
         what,
-        () => planOperators(webview),
+        async () => {
+            const operators = await planOperators(webview);
+            if (!operators || !accept(operators)) {
+                await webview.evaluate<boolean>(`(() => {
+                    const button = document.querySelector('#executionPlanResultsTab button[aria-label="Zoom to Fit"]');
+                    button?.click();
+                    return !!button;
+                })()`);
+            }
+            return operators;
+        },
         (operators) => !!operators && accept(operators),
     )) as string[];
 }
