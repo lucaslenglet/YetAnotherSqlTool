@@ -257,6 +257,12 @@
                 "command": "yast.scriptDatabase",
                 "title": "%yast.scriptDatabase%",
                 "category": "%yast.category%"
+            },
+            {
+                "command": "yast.openDashboard",
+                "title": "%yast.openDashboard%",
+                "category": "%yast.category%",
+                "icon": "$(dashboard)"
             }
         ],
         "submenus": [
@@ -479,6 +485,11 @@
                     "command": "yast.scriptDatabase",
                     "when": "view == yastObjectExplorer && viewItem =~ /\\btype=(Database)\\b/",
                     "group": "3_MSSQL_script@6"
+                },
+                {
+                    "command": "yast.openDashboard",
+                    "when": "view == yastObjectExplorer && viewItem =~ /\\btype=Server\\b.*\\bdashboard=true\\b/",
+                    "group": "1_MSSQL_primary@2"
                 }
             ],
             "editor/title": [
@@ -1163,6 +1174,29 @@
                     "default": true,
                     "description": "%yast.syntaxHighlighting.engineSpecific%"
                 },
+                "yast.dashboard.refreshInterval": {
+                    "type": "number",
+                    "default": 0,
+                    "enum": [
+                        0,
+                        1,
+                        2,
+                        5,
+                        10,
+                        30,
+                        60
+                    ],
+                    "enumDescriptions": [
+                        "%yast.dashboard.refreshInterval.enumDescriptions.0%",
+                        "%yast.dashboard.refreshInterval.enumDescriptions.1%",
+                        "%yast.dashboard.refreshInterval.enumDescriptions.2%",
+                        "%yast.dashboard.refreshInterval.enumDescriptions.5%",
+                        "%yast.dashboard.refreshInterval.enumDescriptions.10%",
+                        "%yast.dashboard.refreshInterval.enumDescriptions.30%",
+                        "%yast.dashboard.refreshInterval.enumDescriptions.60%"
+                    ],
+                    "description": "%yast.dashboard.refreshInterval%"
+                },
                 "yast.intelliSense.enableIntelliSense": {
                     "type": "boolean",
                     "default": true,
@@ -1305,6 +1339,7 @@
         "react-resizable": "^4.0.2",
         "slickgrid-react": "^10.11.3",
         "tedious": "20.3.9",
+        "uplot": "1.6.32",
         "vscode-jsonrpc": "^9.0.0",
         "xml-formatter": "^3.6.7"
     },

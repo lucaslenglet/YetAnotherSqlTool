@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Server dashboard: right-click a connected server in the Object Explorer and choose "Dashboard" (or run "Dashboard" from the Command Palette) for live charts of the server's activity. PostgreSQL: sessions, transactions, tuples in and out, block I/O. SQL Server: user sessions, batch requests and transactions, page I/O, file I/O, page life expectancy, buffer cache hit ratio. The dashboard reads the statistics when it opens and on Refresh; Auto refresh reads them every 1 s to 1 min and pauses while the panel is hidden (`yast.dashboard.refreshInterval` opens it in auto mode). A login without the monitoring permission (`pg_monitor` / `VIEW SERVER STATE`) gets a banner saying the data is partial. Each reading is one round trip on in-memory statistics views, on a connection of its own named "YAST dashboard", closed with the panel.
+
 ## [0.1.3] - 2026-11-17
 
 ### Added

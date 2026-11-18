@@ -23,6 +23,7 @@ A multi-database SQL client for Visual Studio Code, with a user experience inspi
 - **Script generation**: right-click an object for **Script as Create / Drop / Alter / Execute** (SQL Server scripts are the ones SSMS and Microsoft's extension produce; PostgreSQL scripts follow `pg_dump`). Right-click a database for **Generate Scripts...**: its schema, its data as `INSERT` statements, or both, into a new editor or a `.sql` file.
 - **Syntax highlighting of the connected engine**: a SQL editor is colored with the keywords, data types, functions and syntax of the database it is connected to (PostgreSQL `ILIKE`, `RETURNING`, `::type`, `$$ ... $$` bodies and `"quoted"` names; T-SQL `TOP`, `[name]`, `GO`). Turn it off with `yast.syntaxHighlighting.engineSpecific`.
 - **Object information** as in SSMS: select an object name and press `Alt+F1` to get its general information, columns, identity, indexes, constraints and the foreign keys and views that reference it; with nothing selected, the objects of the current database. SQL Server runs `sp_help`; PostgreSQL gets the equivalent grids from its catalog, for tables, views, functions and procedures (parameters of every overload), types and sequences.
+- **Server dashboard**: right-click a connected server in the Object Explorer and choose **Dashboard** for live charts of what it is doing: sessions, transactions per second, rows or pages read and written, I/O. Refresh on demand, or turn on Auto refresh (every second to every minute). See [Server dashboard](#server-dashboard).
 - **Large results**: a query returning millions of rows stays usable. Beyond a memory budget, rows are kept in a file instead of RAM; the grid pages anywhere in the result and "Save as" streams to the file.
 - **Results grid**: selection summary, copy, sorting and filtering (up to a configurable row threshold), and many display settings.
 
@@ -68,6 +69,28 @@ All settings are under `yast.*`; search for "YetAnotherSqlTool" in the Settings 
 | `yast.copyIncludeHeaders`, `yast.copyRemoveNewLine` | Behaviour of copy in the results grid. |
 | `yast.showBatchTime`, `yast.results.showBatchMessages` | Messages shown for each batch. |
 | `yast.maxRecentConnections` | Number of recent connections remembered. |
+| `yast.dashboard.refreshInterval` | Open the server dashboard with Auto refresh on, at this interval in seconds (0, the default: off). |
+
+## Server dashboard
+
+Right-click a connected server (or database connection) in the Object Explorer and choose **Dashboard**, or run **Dashboard** from the Command Palette and pick a connection. A panel opens with one chart per kind of activity, each with the last value of its series written above it:
+
+- **PostgreSQL**, as pgAdmin's dashboard: database sessions (total, active, idle), transactions per second (total, commits, rollbacks), tuples in (inserts, updates, deletes) and out (fetched, returned), block I/O (reads, cache hits).
+- **SQL Server**, from SSMS's Activity Monitor and the SQL Server performance counters: user sessions, batch requests and transactions per second, page reads and writes, file I/O, page life expectancy, buffer cache hit ratio.
+
+![The server dashboard of a PostgreSQL server with Auto refresh on: sessions, transactions per second, tuples in and out, block I/O](media/screenshots/dashboard.png)
+
+Nothing refreshes on its own unless you ask: the dashboard reads the statistics when it opens and when you click **Refresh**. **Auto refresh** reads them every 1, 2, 5, 10 or 30 seconds or every minute; it is off by default, the interval you pick is remembered, and `yast.dashboard.refreshInterval` opens dashboards in auto mode. Auto refresh pauses while the panel is hidden. Rates (per second) come from the difference of two readings, so opening the dashboard and every Refresh take two readings a second apart. Each reading adds a point at the time it was taken, so a few manual refreshes draw an irregular but honest curve; a pause, a failed reading or a reconnection leaves a gap in the lines rather than an invented value. The panel keeps about the last 600 points of each chart (ten minutes at one reading a second), in memory only: closing the panel discards them. A failed reading or a lost connection shows an error above the charts, with **Reconnect**.
+
+**Permissions.** Without them a login sees only part of the activity, and the dashboard says so in a banner above the charts instead of showing misleading numbers:
+
+- PostgreSQL: the session counts need `pg_read_all_stats`, part of `pg_monitor` (`GRANT pg_monitor TO some_role;`); without it PostgreSQL hides what the sessions of other roles are, and the sessions chart stays empty. The transaction, tuple and block counters are readable by everyone.
+- SQL Server: `VIEW SERVER STATE`, or `VIEW SERVER PERFORMANCE STATE` on SQL Server 2022 and later. Azure SQL Database: `VIEW DATABASE STATE` (or `VIEW DATABASE PERFORMANCE STATE`); there the sessions and file I/O are those of the database, not of the logical server.
+- Azure Synapse dedicated and serverless SQL pools and Microsoft Fabric have no dashboard (their statistics views are not SQL Server's): opening one shows why.
+
+The dashboard was tested on SQL Server 2022 and PostgreSQL 17 in containers. Azure SQL Database, Azure SQL Managed Instance, SQL Server before 2022, other PostgreSQL versions, Azure Database for PostgreSQL and Microsoft Entra ID sign-in on the dashboard's connection are expected to work but have not been tested.
+
+**Cost on the server.** Each reading is one round trip of queries on in-memory statistics views (`pg_stat_activity` and `pg_stat_database`; SQL Server's dynamic management views): no table is read and no lock is taken. It takes well under a millisecond on PostgreSQL and a few milliseconds on SQL Server. The dashboard uses a connection of its own, named "YAST dashboard" (`application_name` / `Application Name`) so that a DBA can recognize it; it is closed with the panel. A reading still running when the next one is due is not doubled: that tick is skipped. Expensive views such as the query statistics of SSMS's Activity Monitor are not read.
 
 ## Authentication
 

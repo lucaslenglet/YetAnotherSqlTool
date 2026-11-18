@@ -15,6 +15,7 @@ import { IConnectionProfile } from "../../models/interfaces";
 import * as Constants from "../../constants/constants";
 import { getDefaultConnection } from "../../models/connectionInfo";
 import * as LocalizedConstants from "../../constants/locConstants";
+import { hasDashboard } from "../../dashboard/dashboardSupport";
 
 // Constants for node types and icon names
 export const SERVER_NODE_DISCONNECTED = "disconnectedServer";
@@ -41,12 +42,17 @@ const createConnectedNodeContextValue = (
     connectionProfile: ConnectionProfile,
 ): vscodeMssql.TreeNodeContextValue => {
     const nodeSubType = connectionProfile.database ? DATABASE_SUBTYPE : undefined;
-    return {
+    const context: vscodeMssql.TreeNodeContextValue & { dashboard?: boolean } = {
         type: SERVER_NODE_CONNECTED,
         filterable: false,
         hasFilters: false,
         subType: nodeSubType,
     };
+    // YAST: the "Dashboard" menu item, for the engines whose driver has one.
+    if (hasDashboard(connectionProfile)) {
+        context.dashboard = true;
+    }
+    return context;
 };
 
 export class ConnectionNode extends TreeNodeInfo {

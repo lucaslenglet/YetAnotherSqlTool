@@ -35,6 +35,7 @@ Related document: `docs/vscode-mssql-analysis.md`, what is taken from Microsoft'
 | 19 | Connection color, in the spirit of SSMS: a profile's `color` (`#RRGGBB`, "Color" field of the connection dialog: palette of the connection groups or any color) is the text color of the connection and database items of the status bar and a bar in the gutter of every SQL editor using the connection; a color changed in the settings applies to connected editors without reconnecting. No inheritance from the group color |
 | 20 | Environment variables in connections: `${env:NAME}` in any text field of a profile sent to the driver, resolved from the extension host's environment in `openConnection` only (the values live in the driver's options; errors of the connection have them replaced by the typed text); `$${env:NAME}` escape; unset variable fails before any network attempt; a password holding a reference is kept as typed in settings, never in `SecretStorage`, and never prompted. References of profiles that are not in the user's settings (workspace settings, recent entries, dialog forms loaded from them) need a modal confirmation, remembered per engine, server, port, authentication, encryption options and references (`src/connections/environmentConsent.ts`) |
 | 21 | Import of the connections and groups of Microsoft's SQL Server extension (`yast.importMssqlConnections`, also an item of the empty Connections view): reads `mssql.connections` and `mssql.connectionGroups` of the user settings (read only), checked multi-select of the profiles (those already in YAST unchecked), group tree kept (groups recognized by id, then by name under the same parent, so a second run creates nothing), options and authentication types YAST does not handle left out or refused and listed per profile in the output channel. The logic is a pure function (`src/connections/mssqlImport.ts`). Passwords cannot be imported: a typed password is now saved to `SecretStorage` after a successful connection when "Save Password" is on |
+| 23 | Server dashboard (issue #46, step 1): "Dashboard" in the Object Explorer menu of a connected server whose driver has `openDashboard` (and in the palette, with a connection pick), one panel per connection on its own "YAST dashboard" connection opened by the connector (password, Entra ID, `${env:NAME}` with redacted errors), closed with the panel. Engine-neutral sampling in `src/dashboard/dashboardSampler.ts` (pure, unit-tested): counters become rates from two readings, the first and every manual refresh take two readings a second apart, points at their real time in a 600-point ring buffer, auto refresh (1 s to 1 min, off by default, last interval remembered, `yast.dashboard.refreshInterval`) paused while hidden, ticks skipped while a reading runs, gaps after a pause, a failure or a reconnection. Page with uPlot charts (theme colors, legend, hover readout, last values as text), notices of partial data, error state with Reconnect |
 
 ## Features required before publication
 
@@ -171,6 +172,26 @@ All done (steps 10 to 17 above).
 - [ ] SQLite (priority)
 - [ ] MySQL / MariaDB (priority)
 - [ ] Others later
+
+## Known dashboard limitations
+
+- Step 1 of issue #46 only: no Activity tab (sessions, waits, blocking, kill), no locks,
+  replication or configuration tabs, no Azure SQL Database resource charts
+  (`sys.dm_db_resource_stats`), no dashboard per database.
+- The history lives in the extension's memory: it is lost when the panel closes, and keeps the
+  last 600 points of each chart (10 minutes at one reading a second, longer at larger intervals).
+- The x axis uses the server's clock; a reading the server dates before the previous one (clock
+  set back) updates the tiles but adds no point.
+- The header shows the server's version only when the dashboard is opened from a connected
+  Object Explorer node (the dashboard's own connection does not report it).
+- The charts are canvases: their hover readout needs a mouse. The last values are text in the
+  tiles and each chart has an accessible name with them, but older points cannot be read with
+  the keyboard.
+- Azure Synapse dedicated and serverless SQL pools and Fabric have no dashboard (the item is
+  shown on their server node; opening it reports that the pool has none).
+- Not tested: Azure SQL Database, Azure SQL Managed Instance, SQL Server before 2022, PostgreSQL
+  other than 17, Azure Database for PostgreSQL, Entra ID authentication on the dashboard's
+  connection.
 
 ## Known driver limitations
 

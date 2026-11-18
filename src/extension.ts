@@ -5,6 +5,7 @@ import { ConnectionConfig } from "./connectionconfig/connectionconfig";
 import { ConnectionStore } from "./connections/connectionStore";
 import { Connector } from "./connections/connector";
 import { registerImportMssqlConnections } from "./connections/importMssqlConnectionsCommand";
+import { Dashboards, registerDashboards } from "./dashboard/dashboardCommands";
 import { registerSqlCompletion } from "./languageFeatures/completion/completionProvider";
 import { registerObjectExplorer } from "./objectExplorer/objectExplorerCommands";
 import { EditorConnections } from "./queries/editorConnections";
@@ -19,6 +20,8 @@ import { registerSemanticHighlighting } from "./languageFeatures/semanticHighlig
 
 /** Files of the large results of this window, deleted at deactivation. */
 let resultFiles: ResultFiles | undefined;
+/** Server dashboards, whose connections are closed at deactivation. */
+let dashboards: Dashboards | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
     IconUtils.initialize(context.extensionUri);
@@ -35,6 +38,9 @@ export function activate(context: vscode.ExtensionContext): void {
     );
 
     registerImportMssqlConnections(context, store);
+    dashboards = registerDashboards(context, store, connector, (node) =>
+        explorer.objectExplorerService.getSession(node),
+    );
 
     const results = new QueryResultWebviewController(context);
     context.subscriptions.push(
@@ -79,5 +85,7 @@ export async function deactivate(): Promise<void> {
     // the session directory now, so that no result stays on disk.
     const files = resultFiles;
     resultFiles = undefined;
-    await files?.removeSession();
+    const open = dashboards;
+    dashboards = undefined;
+    await Promise.all([files?.removeSession(), open?.closeAll()]);
 }

@@ -16,6 +16,9 @@ import { getDriver } from "../drivers";
 import {
     AuthenticationType,
     type ConnectionOptionValues,
+    type ConnectParams,
+    type DashboardSession,
+    type Driver,
     type DriverConnection,
 } from "../drivers/types";
 import { ConnectionStore } from "./connectionStore";
@@ -58,7 +61,40 @@ export class Connector {
      * Connects with the given profile. Returns undefined when the user cancels the
      * password prompt. Rejects with the driver's error when the connection fails.
      */
-    public async connect(profile: IConnectionProfile): Promise<DriverConnection | undefined> {
+    public connect(profile: IConnectionProfile): Promise<DriverConnection | undefined> {
+        return this.withPassword(profile, async (p) => {
+            const connection = await this.open(p, { interactive: true });
+            await this._store?.addRecentlyUsed(p);
+            return connection;
+        });
+    }
+
+    /**
+     * Opens the server dashboard's own connection, with the password, Entra ID and environment
+     * handling of `connect`. Resolves undefined when the user cancels the password prompt.
+     * The connection is not added to the recently used ones: the dashboard is not a connection
+     * the user picks.
+     */
+    public openDashboard(profile: IConnectionProfile): Promise<DashboardSession | undefined> {
+        // A dashboard can fail for reasons of its own (a server without one, a statistics view
+        // it cannot read): the password the Object Explorer connected with stays remembered.
+        return this.withPassword(
+            profile,
+            (p) => openDashboardSession(p, (q) => this.allowEnvironment(q, { interactive: true })),
+            true,
+        );
+    }
+
+    /**
+     * Gets the password of the profile when it needs one (saved, remembered or asked), then opens
+     * with it. Undefined when the prompt is cancelled.
+     */
+    private async withPassword<T>(
+        profile: IConnectionProfile,
+        open: (profile: IConnectionProfile) => Promise<T>,
+        /** Forget only a password typed for this opening when it fails, not one known before. */
+        forgetOnlyTyped = false,
+    ): Promise<T | undefined> {
         let typedPassword: string | undefined;
         if (needsPassword(profile)) {
             const answer = await this.getPassword(profile);
@@ -70,13 +106,14 @@ export class Connector {
         }
 
         try {
-            const connection = await this.open(profile, { interactive: true });
-            await this._store?.addRecentlyUsed(profile);
+            const opened = await open(profile);
             await this.savePasswordAfterSuccess(profile, typedPassword);
-            return connection;
+            return opened;
         } catch (error) {
             // The typed password may be the cause: ask again next time.
-            this._passwords.delete(profile.id);
+            if (!forgetOnlyTyped || typedPassword !== undefined) {
+                this._passwords.delete(profile.id);
+            }
             throw error;
         }
     }
@@ -89,10 +126,15 @@ export class Connector {
         profile: IConnectionProfile,
         request: EnvironmentAccessRequest,
     ): Promise<DriverConnection> {
-        return openConnection(profile, (p) => {
-            const consent = this._store?.environmentConsent;
-            return consent ? consent.ensureAllowed(p, request) : refuseEnvironment();
-        });
+        return openConnection(profile, (p) => this.allowEnvironment(p, request));
+    }
+
+    private allowEnvironment(
+        profile: IConnectionProfile,
+        request: EnvironmentAccessRequest,
+    ): Promise<void> {
+        const consent = this._store?.environmentConsent;
+        return consent ? consent.ensureAllowed(profile, request) : refuseEnvironment();
     }
 
     /** Keeps a password for this VS Code session (profiles that don't save their password). */
@@ -172,10 +214,31 @@ function needsPassword(profile: IConnectionProfile): boolean {
  * Opens a connection with the profile as is: no password lookup or prompt. `${env:NAME}`
  * references are resolved here, after `allowEnvironment`, and only the driver sees the values.
  */
-export async function openConnection(
+export function openConnection(
     profile: IConnectionProfile,
     allowEnvironment: (profile: IConnectionProfile) => Promise<void> = refuseEnvironment,
 ): Promise<DriverConnection> {
+    return openWithDriver(profile, allowEnvironment, (driver, params) => driver.connect(params));
+}
+
+/** `openConnection` for the connection of a server dashboard (`Driver.openDashboard`). */
+export function openDashboardSession(
+    profile: IConnectionProfile,
+    allowEnvironment: (profile: IConnectionProfile) => Promise<void> = refuseEnvironment,
+): Promise<DashboardSession> {
+    return openWithDriver(profile, allowEnvironment, (driver, params) => {
+        if (!driver.openDashboard) {
+            throw new Error(vscode.l10n.t("{0} has no server dashboard.", driver.displayName));
+        }
+        return driver.openDashboard(params);
+    });
+}
+
+async function openWithDriver<T extends object>(
+    profile: IConnectionProfile,
+    allowEnvironment: (profile: IConnectionProfile) => Promise<void>,
+    open: (driver: Driver, params: ConnectParams) => Promise<T>,
+): Promise<T> {
     const typed = toConnectionOptions(profile);
     if (environmentReferenceFields(typed).length > 0) {
         await allowEnvironment(profile);
@@ -183,10 +246,13 @@ export async function openConnection(
     // Before any network attempt: an unset variable fails here.
     const { options, redact } = resolveConnectionOptions(typed);
     if (!redact) {
-        return connectDriver(profile, options);
+        return open(getDriver(profile.provider), connectParams(profile, options));
     }
     try {
-        return redactConnectionErrors(await connectDriver(profile, options), redact);
+        return redactConnectionErrors(
+            await open(getDriver(profile.provider), connectParams(profile, options)),
+            redact,
+        );
     } catch (error) {
         throw redactError(error, redact);
     }
@@ -198,10 +264,10 @@ function refuseEnvironment(): Promise<void> {
     );
 }
 
-function connectDriver(
+function connectParams(
     profile: IConnectionProfile,
     options: ConnectionOptionValues,
-): Promise<DriverConnection> {
+): ConnectParams {
     // Application scope: only the user's own settings, never a workspace's, can widen this list.
     const entraAllowedServers = vscode.workspace
         .getConfiguration(Constants.extensionName)
@@ -211,13 +277,9 @@ function connectDriver(
         // Asked again for every physical connection: VS Code refreshes the token when it expires.
         const getAccessToken = (scope: string) =>
             acquireTokenFromVscodeAccount(scope, profile.accountId, tenantId);
-        return getDriver(profile.provider).connect({
-            options,
-            getAccessToken,
-            entraAllowedServers,
-        });
+        return { options, getAccessToken, entraAllowedServers };
     }
-    return getDriver(profile.provider).connect({ options, entraAllowedServers });
+    return { options, entraAllowedServers };
 }
 
 export function toConnectionOptions(profile: IConnectionProfile): ConnectionOptionValues {
