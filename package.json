@@ -1287,10 +1287,10 @@
     },
     "dependencies": {
         "@azure/identity": "^4.13.3",
-        "@ctrl/tinycolor": "^4.3.0",
+        "@ctrl/tinycolor": "^4.3.1",
         "@fluentui-contrib/react-data-grid-react-window": "^1.4.2",
         "@fluentui/react-components": "^9.75.2",
-        "@fluentui/react-icons": "^2.0.345",
+        "@fluentui/react-icons": "^2.0.346",
         "@monaco-editor/react": "^4.7.0",
         "@tanstack/react-virtual": "^3.14.26",
         "@vscode/l10n": "^0.0.18",
@@ -1306,7 +1306,7 @@
         "slickgrid-react": "^10.11.3",
         "tedious": "20.3.9",
         "vscode-jsonrpc": "^9.0.0",
-        "xml-formatter": "^3.6.7"
+        "xml-formatter": "^3.7.1"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
@@ -1325,7 +1325,7 @@
         "@vscode/test-electron": "^3.1.0",
         "@vscode/vsce": "^4.1.1",
         "esbuild": "^0.28.1",
-        "eslint": "^10.14.0",
+        "eslint": "^10.15.0",
         "eslint-config-prettier": "^10.1.8",
         "globals": "^17.14.0",
         "mocha": "^12.0.3",
@@ -1333,8 +1333,8 @@
         "prettier": "^3.10.1",
         "testcontainers": "^12.2.1",
         "typescript": "^6.0.3",
-        "typescript-eslint": "^8.72.2",
-        "vitest": "^5.1.0"
+        "typescript-eslint": "^8.73.0",
+        "vitest": "^5.1.1"
     },
     "overrides": {
         "minimatch@^10.0.0": "^11.0.1",
